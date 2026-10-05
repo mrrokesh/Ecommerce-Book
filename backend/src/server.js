@@ -23,6 +23,8 @@ async function setupDatabase() {
   }
   const { seedExtras } = await import('./db/extraSeed.js');
   await seedExtras();
+  const { replaceSapnaImages } = await import('./db/replaceSapnaImages.js');
+  await replaceSapnaImages();
   const { startErpAutoSync } = await import('./erp/syncProducts.js');
   startErpAutoSync();
 }

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query } from '../db/pool.js';
 import { mapBook } from '../utils/bookMapper.js';
+import { sanitizeImageUrl } from '../utils/covers.js';
 import { getReviewSummary, getReviewSummaries } from './reviews.js';
 
 const router = Router();
@@ -196,7 +197,7 @@ router.get('/:slugOrId', async (req, res) => {
       `SELECT image_url FROM book_images WHERE book_id = $1 ORDER BY sort_order, id`,
       [bookRow.id]
     );
-    book.images = imageRows.map((r) => r.image_url);
+    book.images = imageRows.map((r) => sanitizeImageUrl(r.image_url, bookRow.slug));
     if (!book.images.length && book.imageUrl) book.images = [book.imageUrl];
 
     // Similar books: shared category, else bestsellers

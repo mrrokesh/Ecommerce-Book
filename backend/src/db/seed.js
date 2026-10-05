@@ -186,7 +186,7 @@ export async function seedDatabase() {
         isbn13,
         book.isbn10 || null,
         book.description || `${book.title} by ${authorName}`,
-        book.image || book.imageUrl || null,
+        `/api/covers/${slug}.svg`,
         mrp,
         salePrice,
         discount,
@@ -198,7 +198,7 @@ export async function seedDatabase() {
         edition,
         isFeatured,
         isBestseller,
-        book.sourceUrl || null,
+        null,
       ]
     );
 

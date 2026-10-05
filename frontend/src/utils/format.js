@@ -10,18 +10,30 @@ export function discountLabel(percent) {
   return `(${Math.round(p)}% Off)`;
 }
 
-export function mediaUrl(url) {
-  const src = url || '/placeholder-book.svg';
+function isBlockedImage(url) {
+  return /sapnaonline|sapna\.com|cdn01\.sapna/i.test(String(url || ''));
+}
+
+export function mediaUrl(url, slug) {
+  const src = url || '';
+  if (!src || isBlockedImage(src)) {
+    if (slug) return `/api/covers/${encodeURIComponent(slug)}.svg`;
+    return '/placeholder-book.svg';
+  }
   if (/^https?:\/\//i.test(src) || src.startsWith('data:')) return src;
-  if (src.startsWith('/uploads')) {
+  if (typeof window !== 'undefined' && /\.vercel\.app$/.test(window.location.hostname)) {
+    return src;
+  }
+  if (src.startsWith('/uploads') || src.startsWith('/api/')) {
     const api = String(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '');
-    return api ? `${api}${src}` : src;
+    if (api && api.startsWith('http')) return `${api}${src}`;
   }
   return src;
 }
 
 export function bookImage(book) {
-  return mediaUrl(book?.image_url || book?.imageUrl || book?.image || '/placeholder-book.svg');
+  const src = book?.image_url || book?.imageUrl || book?.image || '';
+  return mediaUrl(src, book?.slug);
 }
 
 export function bookAuthor(book) {

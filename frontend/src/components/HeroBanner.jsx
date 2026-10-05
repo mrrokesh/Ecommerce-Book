@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { mediaUrl } from '../utils/format';
 
 export default function HeroBanner({ banners = [], loading = false }) {
   const [index, setIndex] = useState(0);
@@ -32,7 +33,8 @@ export default function HeroBanner({ banners = [], loading = false }) {
   const bg = slide.bg_color || slide.bgColor || '#f5c518';
   const color = slide.text_color || slide.textColor || '#163a6b';
   const link = slide.link || '/shop/books';
-  const image = slide.image_url || slide.imageUrl || slide.image;
+  const rawImage = slide.image_url || slide.imageUrl || slide.image;
+  const image = rawImage && !/sapna/i.test(rawImage) ? mediaUrl(rawImage) : '';
 
   return (
     <section className="hero-banner" style={{ background: bg, color }}>

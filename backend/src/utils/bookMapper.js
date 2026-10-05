@@ -1,6 +1,12 @@
+import { sanitizeImageUrl } from './covers.js';
+
 /** Normalize DB book row (+ optional categories / rating) to API list/detail shape. */
 export function mapBook(row, categories = [], rating = null) {
   if (!row) return null;
+  const imageUrl = sanitizeImageUrl(row.image_url, row.slug);
+  const images = Array.isArray(row.images)
+    ? row.images.map((u) => sanitizeImageUrl(u, row.slug))
+    : undefined;
   return {
     id: row.id,
     title: row.title,
@@ -10,7 +16,7 @@ export function mapBook(row, categories = [], rating = null) {
     isbn13: row.isbn13 ?? undefined,
     isbn10: row.isbn10 ?? undefined,
     description: row.description ?? undefined,
-    imageUrl: row.image_url,
+    imageUrl,
     mrp: Number(row.mrp),
     salePrice: Number(row.sale_price),
     discountPercent: Number(row.discount_percent) || 0,
@@ -26,7 +32,7 @@ export function mapBook(row, categories = [], rating = null) {
     sku: row.sku || row.isbn13 || `SBH-${row.id}`,
     erpId: row.erp_id || undefined,
     productType: row.product_type || 'book',
-    images: Array.isArray(row.images) ? row.images : undefined,
+    images,
     averageRating: rating?.average ?? (Number(row.average_rating) || 0),
     reviewCount: rating?.total ?? (Number(row.review_count) || 0),
     categories: categories.map((c) =>

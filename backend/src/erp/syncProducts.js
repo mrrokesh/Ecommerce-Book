@@ -37,9 +37,10 @@ export function mapErpProduct(raw) {
   const mrp = num(pick(raw, ['mrp', 'max_price', 'price_mrp', 'list_price'], 0));
   const sale = num(pick(raw, ['selling_price', 'sale_price', 'price', 'unit_price'], mrp));
   const stock = num(pick(raw, ['stock', 'qty', 'quantity', 'available_qty'], 0));
-  const image = String(
-    pick(raw, ['image', 'image_url', 'imageUrl', 'photo', 'thumbnail', 'cover'], '/placeholder-book.svg')
+  const rawImage = String(
+    pick(raw, ['image', 'image_url', 'imageUrl', 'photo', 'thumbnail', 'cover'], '')
   );
+  const image = /sapna/i.test(rawImage) ? '/placeholder-book.svg' : rawImage || '/placeholder-book.svg';
   const description = String(pick(raw, ['description', 'details', 'notes'], '') || '');
   const authorName = String(pick(raw, ['brand', 'author', 'author_name', 'manufacturer'], 'Salem Book House'));
   const publisher = String(pick(raw, ['publisher', 'brand', 'vendor'], 'Salem Book House'));
