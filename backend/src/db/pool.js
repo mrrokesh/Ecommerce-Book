@@ -46,8 +46,10 @@ export async function getPool() {
     const disableSsl = /sslmode=disable/i.test(databaseUrl);
     pool = new Pool({
       connectionString: databaseUrl,
-      ssl: disableSsl ? false : undefined,
-      connectionTimeoutMillis: 20000,
+      ssl: disableSsl ? false : { rejectUnauthorized: false },
+      connectionTimeoutMillis: 8000,
+      idleTimeoutMillis: 30_000,
+      max: 8,
     });
     console.log('Using DATABASE_URL (remote PostgreSQL)');
     return pool;

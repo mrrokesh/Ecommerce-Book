@@ -22,11 +22,13 @@ async function setupDatabase() {
     console.log(`Database ready with ${rows[0].c} books`);
   }
   const { seedExtras } = await import('./db/extraSeed.js');
-  await seedExtras();
   const { replaceSapnaImages } = await import('./db/replaceSapnaImages.js');
-  await replaceSapnaImages();
   const { startErpAutoSync } = await import('./erp/syncProducts.js');
   startErpAutoSync();
+  setTimeout(() => {
+    seedExtras().catch((err) => console.warn('seedExtras:', err.message || err));
+    replaceSapnaImages().catch((err) => console.warn('replaceSapnaImages:', err.message || err));
+  }, 15_000).unref();
 }
 
 app.listen(PORT, '0.0.0.0', () => {

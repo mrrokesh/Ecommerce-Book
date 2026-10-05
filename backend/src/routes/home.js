@@ -3,14 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { query } from '../db/pool.js';
-import { fetchBooksByCategorySlug } from './books.js';
+import { mapBook } from '../utils/bookMapper.js';
 
 const router = Router();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let metaCache = null;
 let homeCache = { at: 0, body: null };
-const HOME_TTL_MS = 20_000;
+const HOME_TTL_MS = 60_000;
 
 function loadSeedMeta() {
   if (metaCache) return metaCache;
@@ -39,10 +39,20 @@ function loadSeedMeta() {
   return metaCache;
 }
 
+function groupBooksBySlug(rows, slugs, limit) {
+  const grouped = new Map(slugs.map((s) => [s, []]));
+  for (const row of rows) {
+    const list = grouped.get(row.cat_slug);
+    if (!list || list.length >= limit) continue;
+    list.push(mapBook(row));
+  }
+  return grouped;
+}
+
 router.get('/', async (_req, res) => {
   try {
     if (homeCache.body && Date.now() - homeCache.at < HOME_TTL_MS) {
-      res.set('Cache-Control', 'public, max-age=20');
+      res.set('Cache-Control', 'public, max-age=30');
       return res.json(homeCache.body);
     }
     const meta = loadSeedMeta();
@@ -67,6 +77,29 @@ router.get('/', async (_req, res) => {
       query(`SELECT name, slug, category FROM exams ORDER BY exam_date NULLS LAST LIMIT 12`),
     ]);
 
+    const sectionSlugs = sectionsRes.rows.map((s) => s.category_slug || s.key).filter(Boolean);
+    const chartSlugs = meta.topCharts.map((c) => c.slug).filter(Boolean);
+    const allSlugs = [...new Set([...sectionSlugs, ...chartSlugs])];
+
+    let bookRows = [];
+    if (allSlugs.length) {
+      const booksRes = await query(
+        `SELECT * FROM (
+           SELECT b.*, c.slug AS cat_slug,
+             ROW_NUMBER() OVER (PARTITION BY c.slug ORDER BY b.discount_percent DESC, b.id) AS rn
+           FROM books b
+           JOIN book_categories bc ON bc.book_id = b.id
+           JOIN categories c ON c.id = bc.category_id
+           WHERE b.is_active = TRUE AND c.slug = ANY($1::text[])
+         ) ranked
+         WHERE rn <= 12`,
+        [allSlugs]
+      );
+      bookRows = booksRes.rows;
+    }
+
+    const bySlug = groupBooksBySlug(bookRows, allSlugs, 12);
+
     const banners = bannersRes.rows.map((b) => ({
       id: b.id,
       title: b.title,
@@ -78,19 +111,16 @@ router.get('/', async (_req, res) => {
       imageUrl: b.image_url && !/sapna/i.test(b.image_url) ? b.image_url : null,
     }));
 
-    const homepageSections = await Promise.all(
-      sectionsRes.rows.map(async (s) => {
-        const slug = s.category_slug || s.key;
-        const books = await fetchBooksByCategorySlug(slug, 12);
-        return {
-          id: s.id,
-          key: s.key,
-          title: s.title,
-          categorySlug: slug,
-          books,
-        };
-      })
-    );
+    const homepageSections = sectionsRes.rows.map((s) => {
+      const slug = s.category_slug || s.key;
+      return {
+        id: s.id,
+        key: s.key,
+        title: s.title,
+        categorySlug: slug,
+        books: bySlug.get(slug) || [],
+      };
+    });
 
     const featuredAuthors = authorsRes.rows.map((a) => ({
       id: a.id,
@@ -100,13 +130,11 @@ router.get('/', async (_req, res) => {
       featured: a.featured,
     }));
 
-    const topCharts = await Promise.all(
-      meta.topCharts.map(async (chart) => ({
-        name: chart.name,
-        slug: chart.slug,
-        books: await fetchBooksByCategorySlug(chart.slug, 8),
-      }))
-    );
+    const topCharts = meta.topCharts.map((chart) => ({
+      name: chart.name,
+      slug: chart.slug,
+      books: (bySlug.get(chart.slug) || []).slice(0, 8),
+    }));
 
     const exams =
       examsRes.rows.length > 0
@@ -126,11 +154,17 @@ router.get('/', async (_req, res) => {
       },
     };
     homeCache = { at: Date.now(), body };
-    res.set('Cache-Control', 'public, max-age=20');
+    res.set('Cache-Control', 'public, max-age=30');
     return res.json(body);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ success: false, error: 'Failed to load homepage' });
+    const hung = /timeout|ECONNREFUSED|ENOTFOUND|terminat/i.test(String(err?.message || err));
+    return res.status(503).json({
+      success: false,
+      error: hung
+        ? 'Catalog database is unreachable. Start the Rokesh Cloud Postgres instance, then refresh.'
+        : 'Failed to load homepage',
+    });
   }
 });
 

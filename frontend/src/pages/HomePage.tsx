@@ -7,20 +7,45 @@ import ExamGrid from '../components/ExamGrid';
 import FeaturedAuthors from '../components/FeaturedAuthors';
 import { EmptyState, LoadingState } from '../components/States';
 
+type HomePayload = {
+  banners?: unknown[];
+  sections?: { books?: unknown[]; categorySlug?: string; category_slug?: string; key?: string; id?: string; title?: string }[];
+  homepageSections?: { books?: unknown[]; categorySlug?: string; category_slug?: string; key?: string; id?: string; title?: string }[];
+  topCharts?: unknown[];
+  authors?: unknown[];
+  featuredAuthors?: unknown[];
+  exams?: unknown[];
+};
+
+async function loadHome(attempts = 3) {
+  let last: Error | null = null;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      const { data } = await api.get('/home');
+      return data as HomePayload;
+    } catch (err) {
+      last = err instanceof Error ? err : new Error('Failed to load homepage');
+      if (i < attempts - 1) {
+        await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+      }
+    }
+  }
+  throw last || new Error('Failed to load homepage');
+}
+
 export default function HomePage() {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<HomePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    api
-      .get('/home')
-      .then(({ data: payload }) => {
+    loadHome()
+      .then((payload) => {
         if (alive) setData(payload);
       })
-      .catch((err) => {
+      .catch((err: Error) => {
         if (alive) setError(err.message || 'Failed to load homepage');
       })
       .finally(() => {

@@ -58,7 +58,7 @@ function getOrCreateSessionId() {
 const api = axios.create({
   baseURL: resolveApiBase(),
   withCredentials: true,
-  timeout: 20000,
+  timeout: 45000,
   headers: {
     'Content-Type': 'application/json',
   },

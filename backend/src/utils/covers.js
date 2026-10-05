@@ -18,7 +18,7 @@ export function coverDataUri(title, slug) {
 
 export function sanitizeImageUrl(url, slug, title) {
   if (!url || isBlockedImage(url) || String(url).includes('/api/covers/')) {
-    return coverDataUri(title || slug, slug);
+    return '';
   }
   return url;
 }
