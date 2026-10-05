@@ -64,19 +64,20 @@ export function signToken(userId) {
   });
 }
 
-export function setAuthCookie(res, token) {
-  res.cookie('token', token, {
+function cookieOpts() {
+  const crossSite = process.env.NODE_ENV === 'production';
+  return {
     httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    sameSite: crossSite ? 'none' : 'lax',
+    secure: crossSite,
     maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  };
+}
+
+export function setAuthCookie(res, token) {
+  res.cookie('token', token, cookieOpts());
 }
 
 export function clearAuthCookie(res) {
-  res.clearCookie('token', {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-  });
+  res.clearCookie('token', cookieOpts());
 }

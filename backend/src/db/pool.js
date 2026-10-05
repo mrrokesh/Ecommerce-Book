@@ -6,6 +6,7 @@ import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../../.env') });
+dotenv.config({ path: path.join(__dirname, '../../../.env') });
 
 const { Pool } = pg;
 
@@ -50,6 +51,13 @@ export async function getPool() {
     });
     console.log('Using DATABASE_URL (remote PostgreSQL)');
     return pool;
+  }
+
+  const runningAsRoot = typeof process.getuid === 'function' && process.getuid() === 0;
+  if (process.env.NODE_ENV === 'production' || runningAsRoot) {
+    throw new Error(
+      'DATABASE_URL is missing. On Render, add it under Environment (your Rokesh Postgres URL). Embedded Postgres is not used in production.'
+    );
   }
 
   // Reuse already-running embedded Postgres when possible
