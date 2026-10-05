@@ -35,6 +35,12 @@ app.use(
   cors({
     origin: (origin, cb) => {
       if (!origin || origins.includes(origin) || origins.includes('*')) return cb(null, true);
+      try {
+        const host = new URL(origin).hostname;
+        if (host.endsWith('.vercel.app')) return cb(null, true);
+      } catch {
+        /* ignore */
+      }
       return cb(null, origins[0] || true);
     },
     credentials: true,

@@ -1,6 +1,17 @@
 import axios from 'axios';
 
 const SESSION_KEY = 'sbh_session_id';
+const RENDER_API = 'https://ecommerce-book-zb12.onrender.com/api';
+
+function resolveApiBase() {
+  let raw = String(import.meta.env.VITE_API_URL || '').trim();
+  if (!raw) {
+    return import.meta.env.PROD ? RENDER_API : '/api';
+  }
+  raw = raw.replace(/\/$/, '');
+  if (raw.endsWith('/api')) return raw;
+  return `${raw}/api`;
+}
 
 function getOrCreateSessionId() {
   let id = localStorage.getItem(SESSION_KEY);
@@ -12,7 +23,7 @@ function getOrCreateSessionId() {
 }
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: resolveApiBase(),
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

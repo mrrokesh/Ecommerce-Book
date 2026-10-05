@@ -36,7 +36,7 @@ export default function HomePage() {
     return (
       <EmptyState
         title="Unable to load homepage"
-        message="Please ensure the API is running on localhost:5000."
+        message={error}
       />
     );
   }
