@@ -265,12 +265,25 @@
   font-size: 0.82rem;
 }
 
-.erp-form .form-row,
-.erp-card .form-row {
+.erp-editor {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
   align-items: end;
+  margin-bottom: 1rem;
+}
+
+.erp-editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.erp-editor .erp-actions {
+  grid-column: 1 / -1;
 }
 
 .erp-form .stack {

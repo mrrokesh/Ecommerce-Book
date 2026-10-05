@@ -710,13 +710,34 @@ router.post('/coupons', async (req, res) => {
 });
 
 router.patch('/coupons/:id', async (req, res) => {
-  const { active } = req.body || {};
-  if (typeof active !== 'boolean') {
-    return res.status(400).json({ success: false, error: 'active must be true or false' });
-  }
-  const { rowCount } = await query(`UPDATE coupons SET active = $1 WHERE id = $2`, [active, req.params.id]);
-  if (!rowCount) return res.status(404).json({ success: false, error: 'Coupon not found' });
-  return res.json({ success: true, data: { id: Number(req.params.id), active } });
+  const { active, percentOff, amountOff, minOrder, description, expiresAt, code } = req.body || {};
+  const { rows } = await query(`SELECT * FROM coupons WHERE id = $1`, [req.params.id]);
+  if (!rows[0]) return res.status(404).json({ success: false, error: 'Coupon not found' });
+  const cur = rows[0];
+  const pct = percentOff != null ? Number(percentOff) : cur.percent_off;
+  const amt = amountOff != null ? Number(amountOff) : Number(cur.amount_off);
+  await query(
+    `UPDATE coupons SET
+       code = COALESCE($1, code),
+       description = COALESCE($2, description),
+       percent_off = $3,
+       amount_off = $4,
+       min_order = COALESCE($5, min_order),
+       expires_at = COALESCE($6, expires_at),
+       active = COALESCE($7, active)
+     WHERE id = $8`,
+    [
+      code ? String(code).trim().toUpperCase() : null,
+      description !== undefined ? description : null,
+      Number(pct) || 0,
+      Number(pct) ? 0 : Number(amt) || 0,
+      minOrder != null ? Number(minOrder) : null,
+      expiresAt !== undefined ? expiresAt : null,
+      typeof active === 'boolean' ? active : null,
+      req.params.id,
+    ]
+  );
+  return res.json({ success: true, data: { id: Number(req.params.id) } });
 });
 
 router.delete('/coupons/:id', async (req, res) => {
