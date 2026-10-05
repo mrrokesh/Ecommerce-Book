@@ -2,8 +2,8 @@ import jwt from 'jsonwebtoken';
 import { query } from '../db/pool.js';
 
 function extractToken(req) {
-  const header = req.headers.authorization;
-  if (header?.startsWith('Bearer ')) {
+  const header = String(req.headers.authorization || req.headers.Authorization || '');
+  if (header.toLowerCase().startsWith('bearer ')) {
     return header.slice(7).trim();
   }
   if (req.cookies?.token) {

@@ -5,6 +5,12 @@ const TOKEN_KEY = 'sbh_token';
 const RENDER_API = 'https://ecommerce-book-rbl2.onrender.com/api';
 
 function resolveApiBase() {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host.endsWith('.vercel.app') || host === 'localhost' || host === '127.0.0.1') {
+      return '/api';
+    }
+  }
   let raw = String(import.meta.env.VITE_API_URL || '').trim();
   if (!raw) {
     return import.meta.env.PROD ? RENDER_API : '/api';
