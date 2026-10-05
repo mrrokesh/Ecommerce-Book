@@ -6,6 +6,8 @@ import multer from 'multer';
 import { query } from '../db/pool.js';
 import { requireAdmin } from '../middleware/auth.js';
 import { mapBook } from '../utils/bookMapper.js';
+import { isErpConfigured } from '../erp/mcp.js';
+import { syncErpProducts } from '../erp/syncProducts.js';
 
 const router = Router();
 router.use(requireAdmin);
@@ -511,6 +513,26 @@ router.get('/emails', async (_req, res) => {
       })),
     },
   });
+});
+
+router.get('/erp/status', (_req, res) => {
+  return res.json({
+    success: true,
+    data: {
+      configured: isErpConfigured(),
+      host: process.env.ERP_MCP_URL || process.env.ERP_API_URL || 'https://muruga-api-bjmm.onrender.com/mcp',
+    },
+  });
+});
+
+router.post('/erp/sync', async (_req, res) => {
+  try {
+    const result = await syncErpProducts();
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ success: false, error: err.message || 'ERP sync failed' });
+  }
 });
 
 export default router;

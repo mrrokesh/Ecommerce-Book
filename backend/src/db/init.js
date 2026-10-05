@@ -113,6 +113,10 @@ const MIGRATIONS = [
     error TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
+  `ALTER TABLE books ADD COLUMN IF NOT EXISTS sku VARCHAR(80)`,
+  `ALTER TABLE books ADD COLUMN IF NOT EXISTS erp_id VARCHAR(80)`,
+  `ALTER TABLE books ALTER COLUMN isbn13 TYPE VARCHAR(32)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_books_erp_id ON books (erp_id) WHERE erp_id IS NOT NULL`,
 ];
 
 export async function initSchema() {

@@ -14,6 +14,8 @@ export default function AdminProducts() {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [erp, setErp] = useState({ configured: false });
+  const [syncing, setSyncing] = useState(false);
 
   async function load(nextPage = page) {
     setBusy(true);
@@ -35,8 +37,23 @@ export default function AdminProducts() {
 
   useEffect(() => {
     load(1);
+    api.get('/admin/erp/status').then(({ data }) => setErp(data)).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productType, stock, status]);
+
+  async function syncErp() {
+    setSyncing(true);
+    setError('');
+    try {
+      const { data } = await api.post('/admin/erp/sync');
+      setError(`Synced ${data.upserted || 0} ERP products via ${data.tool || 'MCP'}.`);
+      load(1);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   async function toggle(book) {
     await api.patch(`/admin/books/${book.id}`, { isActive: !book.isActive });
@@ -81,6 +98,9 @@ export default function AdminProducts() {
             Search
           </button>
         </form>
+        <button className="erp-btn ghost" type="button" disabled={syncing} onClick={syncErp}>
+          {syncing ? 'Syncing ERP…' : erp.configured ? 'Sync from ERP' : 'ERP key missing'}
+        </button>
         <Link className="erp-btn primary" to="/admin/products/new">
           Add product
         </Link>
