@@ -22,6 +22,8 @@ export function mapBook(row, categories = [], rating = null) {
     edition: row.edition ?? undefined,
     isFeatured: row.is_featured ?? undefined,
     isBestseller: row.is_bestseller ?? false,
+    isActive: row.is_active !== false,
+    sku: row.isbn13 || `SBH-${row.id}`,
     productType: row.product_type || 'book',
     images: Array.isArray(row.images) ? row.images : undefined,
     averageRating: rating?.average ?? (Number(row.average_rating) || 0),

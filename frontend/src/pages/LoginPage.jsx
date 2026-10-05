@@ -16,8 +16,10 @@ export default function LoginPage() {
     setBusy(true);
     setError('');
     try {
-      await login(email, password);
-      navigate(location.state?.from || '/account');
+      const data = await login(email, password);
+      const user = data.user || data;
+      const fallback = user?.role === 'admin' ? '/admin/products' : '/account';
+      navigate(location.state?.from || fallback);
     } catch (err) {
       setError(err.message || 'Invalid email or password');
     } finally {

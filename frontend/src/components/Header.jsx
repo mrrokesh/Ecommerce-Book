@@ -71,7 +71,7 @@ export default function Header() {
                 <UserIcon />
               </Link>
               {user?.role === 'admin' ? (
-                <Link to="/admin" className="text-btn">
+                <Link to="/admin/products" className="text-btn">
                   Admin
                 </Link>
               ) : null}

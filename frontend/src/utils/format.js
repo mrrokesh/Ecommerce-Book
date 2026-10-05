@@ -10,8 +10,18 @@ export function discountLabel(percent) {
   return `(${Math.round(p)}% Off)`;
 }
 
+export function mediaUrl(url) {
+  const src = url || '/placeholder-book.svg';
+  if (/^https?:\/\//i.test(src) || src.startsWith('data:')) return src;
+  if (src.startsWith('/uploads')) {
+    const api = String(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '');
+    return api ? `${api}${src}` : src;
+  }
+  return src;
+}
+
 export function bookImage(book) {
-  return book?.image_url || book?.imageUrl || book?.image || '/placeholder-book.svg';
+  return mediaUrl(book?.image_url || book?.imageUrl || book?.image || '/placeholder-book.svg');
 }
 
 export function bookAuthor(book) {

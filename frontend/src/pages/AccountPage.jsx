@@ -82,7 +82,7 @@ export default function AccountPage() {
             Wishlist
           </Link>
           {user.role === 'admin' ? (
-            <Link to="/admin" className="btn btn-gold">
+            <Link to="/admin/products" className="btn btn-gold">
               Admin
             </Link>
           ) : null}

@@ -21,7 +21,14 @@ import ExamsPage from './pages/ExamsPage';
 import TrackPage from './pages/TrackPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
-import AdminPage from './pages/AdminPage';
+import AdminLayout from './admin/AdminLayout';
+import AdminDashboard from './admin/AdminDashboard';
+import AdminProducts from './admin/AdminProducts';
+import AdminProductForm from './admin/AdminProductForm';
+import AdminOrders from './admin/AdminOrders';
+import AdminMarketing from './admin/AdminMarketing';
+import AdminCms from './admin/AdminCms';
+import AdminEmails from './admin/AdminEmails';
 
 export default function App() {
   return (
@@ -29,6 +36,16 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <Routes>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="products/new" element={<AdminProductForm />} />
+              <Route path="products/:id" element={<AdminProductForm />} />
+              <Route path="orders" element={<AdminOrders />} />
+              <Route path="marketing" element={<AdminMarketing />} />
+              <Route path="pages" element={<AdminCms />} />
+              <Route path="emails" element={<AdminEmails />} />
+            </Route>
             <Route element={<Layout />}>
               <Route index element={<HomePage />} />
               <Route path="shop" element={<ShopPage />} />
@@ -55,7 +72,6 @@ export default function App() {
               <Route path="track" element={<TrackPage />} />
               <Route path="forgot-password" element={<ForgotPasswordPage />} />
               <Route path="reset-password" element={<ResetPasswordPage />} />
-              <Route path="admin" element={<AdminPage />} />
             </Route>
           </Routes>
         </CartProvider>
