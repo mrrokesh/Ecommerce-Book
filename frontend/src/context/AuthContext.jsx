@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import api from '../api/client';
+import api, { setAuthToken, clearAuthToken, getAuthToken } from '../api/client';
 
 const AuthContext = createContext(null);
 
@@ -8,10 +8,16 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
+    if (!getAuthToken()) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     try {
       const { data } = await api.get('/auth/me');
       setUser(data.user || data || null);
     } catch {
+      clearAuthToken();
       setUser(null);
     } finally {
       setLoading(false);
@@ -24,12 +30,14 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
+    if (data.token) setAuthToken(data.token);
     setUser(data.user || data);
     return data;
   }, []);
 
   const register = useCallback(async (payload) => {
     const { data } = await api.post('/auth/register', payload);
+    if (data.token) setAuthToken(data.token);
     setUser(data.user || data);
     return data;
   }, []);
@@ -40,6 +48,7 @@ export function AuthProvider({ children }) {
     } catch {
       /* ignore */
     }
+    clearAuthToken();
     setUser(null);
   }, []);
 

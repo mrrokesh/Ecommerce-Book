@@ -44,6 +44,7 @@ app.use(
       return cb(null, origins[0] || true);
     },
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-session-id'],
   })
 );
 app.use(cookieParser());

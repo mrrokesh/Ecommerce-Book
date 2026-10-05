@@ -1,7 +1,39 @@
 import axios from 'axios';
 
 const SESSION_KEY = 'sbh_session_id';
+const TOKEN_KEY = 'sbh_token';
 const RENDER_API = 'https://ecommerce-book-zb12.onrender.com/api';
+
+function resolveApiBase() {
+  let raw = String(import.meta.env.VITE_API_URL || '').trim();
+  if (!raw) {
+    return import.meta.env.PROD ? RENDER_API : '/api';
+  }
+  raw = raw.replace(/\/$/, '');
+  if (raw.endsWith('/api')) return raw;
+  return `${raw}/api`;
+}
+
+export function getAuthToken() {
+  try {
+    return localStorage.getItem(TOKEN_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+export function setAuthToken(token) {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearAuthToken() {
+  setAuthToken('');
+}
 
 function resolveApiBase() {
   let raw = String(import.meta.env.VITE_API_URL || '').trim();
@@ -32,6 +64,10 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   config.headers['x-session-id'] = getOrCreateSessionId();
+  const token = getAuthToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
     delete config.headers['Content-Type'];
   }
