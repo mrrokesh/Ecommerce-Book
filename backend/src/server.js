@@ -23,6 +23,8 @@ async function setupDatabase() {
   }
   const { seedExtras } = await import('./db/extraSeed.js');
   await seedExtras();
+  const { startErpAutoSync } = await import('./erp/syncProducts.js');
+  startErpAutoSync();
 }
 
 app.listen(PORT, '0.0.0.0', () => {

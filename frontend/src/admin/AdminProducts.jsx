@@ -13,6 +13,7 @@ export default function AdminProducts() {
   const [stock, setStock] = useState('');
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [erp, setErp] = useState({ configured: false });
   const [syncing, setSyncing] = useState(false);
@@ -46,8 +47,9 @@ export default function AdminProducts() {
     setError('');
     try {
       const { data } = await api.post('/admin/erp/sync');
-      setError(`Synced ${data.upserted || 0} ERP products via ${data.tool || 'MCP'}.`);
+      setNotice(`Synced ${data.upserted || 0} of ${data.fetched || 0} ERP products via ${data.tool || 'MCP'}.`);
       load(1);
+      api.get('/admin/erp/status').then(({ data: s }) => setErp(s)).catch(() => {});
     } catch (err) {
       setError(err.message);
     } finally {
@@ -56,8 +58,25 @@ export default function AdminProducts() {
   }
 
   async function toggle(book) {
-    await api.patch(`/admin/books/${book.id}`, { isActive: !book.isActive });
-    load(page);
+    setError('');
+    try {
+      await api.patch(`/admin/books/${book.id}`, { isActive: !book.isActive });
+      load(page);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function remove(book) {
+    if (!window.confirm(`Delete "${book.title}"? Products that have been ordered are hidden instead.`)) return;
+    setError('');
+    try {
+      const { data } = await api.delete(`/admin/books/${book.id}`);
+      setNotice(data.deleted ? `Deleted "${book.title}".` : `"${book.title}" has orders, so it was hidden instead.`);
+      load(page);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   return (
@@ -98,7 +117,17 @@ export default function AdminProducts() {
             Search
           </button>
         </form>
-        <button className="erp-btn ghost" type="button" disabled={syncing} onClick={syncErp}>
+        <button
+          className="erp-btn ghost"
+          type="button"
+          disabled={syncing || !erp.configured}
+          onClick={syncErp}
+          title={
+            erp.lastSync
+              ? `Last sync ${new Date(erp.lastSync.at).toLocaleString('en-IN')}: ${erp.lastSync.ok ? 'ok' : erp.lastSync.error}`
+              : 'Not synced yet'
+          }
+        >
           {syncing ? 'Syncing ERP…' : erp.configured ? 'Sync from ERP' : 'ERP key missing'}
         </button>
         <Link className="erp-btn primary" to="/admin/products/new">
@@ -106,6 +135,10 @@ export default function AdminProducts() {
         </Link>
       </div>
       {error ? <p className="erp-error" style={{ padding: '0 0.85rem' }}>{error}</p> : null}
+      {notice ? <p className="erp-ok" style={{ padding: '0 0.85rem' }}>{notice}</p> : null}
+      {erp.lastSync && !erp.lastSync.ok ? (
+        <p className="erp-error" style={{ padding: '0 0.85rem' }}>Last ERP sync failed: {erp.lastSync.error}</p>
+      ) : null}
       <table className="erp-table">
         <thead>
           <tr>
@@ -151,6 +184,9 @@ export default function AdminProducts() {
                   </Link>
                   <button type="button" className="erp-btn ghost" onClick={() => toggle(b)}>
                     {b.isActive ? 'Hide' : 'Show'}
+                  </button>
+                  <button type="button" className="erp-btn danger" onClick={() => remove(b)}>
+                    Delete
                   </button>
                 </div>
               </td>

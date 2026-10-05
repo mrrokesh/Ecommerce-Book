@@ -29,6 +29,7 @@ import AdminOrders from './admin/AdminOrders';
 import AdminMarketing from './admin/AdminMarketing';
 import AdminCms from './admin/AdminCms';
 import AdminEmails from './admin/AdminEmails';
+import AdminCustomers from './admin/AdminCustomers';
 
 export default function App() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
               <Route path="products/new" element={<AdminProductForm />} />
               <Route path="products/:id" element={<AdminProductForm />} />
               <Route path="orders" element={<AdminOrders />} />
+              <Route path="customers" element={<AdminCustomers />} />
               <Route path="marketing" element={<AdminMarketing />} />
               <Route path="pages" element={<AdminCms />} />
               <Route path="emails" element={<AdminEmails />} />

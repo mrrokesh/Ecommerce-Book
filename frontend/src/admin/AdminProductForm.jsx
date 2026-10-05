@@ -34,7 +34,10 @@ export default function AdminProductForm() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    api.get('/admin/categories').then(({ data }) => setCategories(data.categories || []));
+    api
+      .get('/admin/categories')
+      .then(({ data }) => setCategories(data.categories || []))
+      .catch((err) => setError(err.message));
     if (!id) return;
     api
       .get(`/admin/books/${id}`)
@@ -84,12 +87,23 @@ export default function AdminProductForm() {
     if (!file) return;
     const fd = new FormData();
     fd.append('file', file);
-    const { data } = await api.post('/admin/upload', fd);
-    set('imageUrl', data.url);
+    setError('');
+    try {
+      const { data } = await api.post('/admin/upload', fd);
+      set('imageUrl', data.url);
+    } catch (err) {
+      setError(`Image upload failed: ${err.message}`);
+    } finally {
+      e.target.value = '';
+    }
   }
 
   async function onSubmit(e) {
     e.preventDefault();
+    if (form.salePrice !== '' && Number(form.salePrice) > Number(form.mrp)) {
+      setError('Sale price cannot be higher than MRP');
+      return;
+    }
     setBusy(true);
     setError('');
     const payload = {

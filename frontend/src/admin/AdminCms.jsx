@@ -5,6 +5,7 @@ export default function AdminCms() {
   const [pages, setPages] = useState([]);
   const [edit, setEdit] = useState(null);
   const [error, setError] = useState('');
+  const [saved, setSaved] = useState('');
 
   function load() {
     api
@@ -29,22 +30,36 @@ export default function AdminCms() {
             style={{ padding: '1rem' }}
             onSubmit={async (e) => {
               e.preventDefault();
-              await api.put(`/admin/pages/${p.slug}`, { title: cur.title, body: cur.body });
-              load();
+              setError('');
+              setSaved('');
+              try {
+                await api.put(`/admin/pages/${p.slug}`, { title: cur.title, body: cur.body });
+                setEdit(null);
+                setSaved(p.slug);
+                load();
+              } catch (err) {
+                setError(err.message);
+              }
             }}
           >
             <h2>/{p.slug}</h2>
             <label>
               Title
-              <input value={cur.title} onChange={(e) => setEdit({ ...cur, title: e.target.value })} />
+              <input required value={cur.title} onChange={(e) => setEdit({ ...cur, title: e.target.value })} />
             </label>
             <label>
               Body
-              <textarea rows={6} value={cur.body} onChange={(e) => setEdit({ ...cur, body: e.target.value })} />
+              <textarea
+                required
+                rows={6}
+                value={cur.body}
+                onChange={(e) => setEdit({ ...cur, body: e.target.value })}
+              />
             </label>
             <button className="erp-btn primary" type="submit" style={{ marginTop: '0.75rem' }}>
               Save page
             </button>
+            {saved === p.slug ? <span className="erp-ok"> Saved — live on the storefront.</span> : null}
           </form>
         );
       })}

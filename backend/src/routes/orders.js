@@ -243,7 +243,7 @@ router.post('/', async (req, res) => {
       `SELECT ci.quantity, b.id AS book_id, b.title, b.author_name, b.image_url, b.sale_price, b.stock, b.product_type
        FROM cart_items ci
        JOIN books b ON b.id = ci.book_id
-       WHERE ci.cart_id = $1`,
+       WHERE ci.cart_id = $1 AND b.is_active = TRUE`,
       [cart.id]
     );
 
@@ -369,10 +369,18 @@ router.post('/', async (req, res) => {
           unit * qty,
         ]
       );
-      await client.query(`UPDATE books SET stock = stock - $1 WHERE id = $2`, [
-        qty,
-        item.book_id,
-      ]);
+      // Guarded decrement so two concurrent checkouts can't oversell the same stock.
+      const dec = await client.query(
+        `UPDATE books SET stock = stock - $1 WHERE id = $2 AND stock >= $1`,
+        [qty, item.book_id]
+      );
+      if (!dec.rowCount) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          success: false,
+          error: `"${item.title}" just sold out. Update your cart and try again.`,
+        });
+      }
     }
 
     const giftCodes = [];
@@ -470,7 +478,7 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 });
 
-async function restockOrder(client, orderId) {
+export async function restockOrder(client, orderId) {
   const items = await client.query(
     `SELECT book_id, quantity FROM order_items WHERE order_id = $1 AND book_id IS NOT NULL`,
     [orderId]
@@ -480,7 +488,7 @@ async function restockOrder(client, orderId) {
   }
 }
 
-function nextPaymentStatus(order, kind) {
+export function nextPaymentStatus(order, kind) {
   if (kind === 'cancel' || kind === 'return') {
     if (order.payment_method === 'cod' && order.payment_status !== 'paid') return 'cancelled';
     if (order.payment_status === 'paid' || order.payment_status === 'refunded') return 'refunded';
@@ -516,7 +524,8 @@ router.patch('/:id/cancel', requireAuth, async (req, res) => {
     await restockOrder(client, order.id);
     const paymentStatus = nextPaymentStatus(order, 'cancel');
     const { rows } = await client.query(
-      `UPDATE orders SET status = 'cancelled', payment_status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      `UPDATE orders SET status = 'cancelled', payment_status = $1, stock_restored = TRUE, updated_at = NOW()
+       WHERE id = $2 RETURNING *`,
       [paymentStatus, order.id]
     );
     await client.query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,'cancelled',$2)`, [
@@ -577,7 +586,8 @@ router.patch('/:id/return', requireAuth, async (req, res) => {
     await restockOrder(client, order.id);
     const paymentStatus = nextPaymentStatus(order, 'return');
     const { rows } = await client.query(
-      `UPDATE orders SET status = 'returned', payment_status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      `UPDATE orders SET status = 'returned', payment_status = $1, stock_restored = TRUE, updated_at = NOW()
+       WHERE id = $2 RETURNING *`,
       [paymentStatus, order.id]
     );
     await client.query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,'returned',$2)`, [

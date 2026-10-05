@@ -80,6 +80,8 @@ export async function getPool() {
       password: 'salem',
       port: EMBEDDED_PORT,
       persistent: true,
+      // Windows defaults to WIN1252, which can't store ₹ in order emails.
+      initdbFlags: ['--encoding=UTF8', '--locale=C'],
     });
 
     const alreadyInit = fs.existsSync(path.join(dataDir, 'PG_VERSION'));

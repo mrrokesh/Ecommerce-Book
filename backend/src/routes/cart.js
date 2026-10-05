@@ -41,7 +41,7 @@ async function loadCartPayload(cart) {
             b.mrp, b.sale_price, b.discount_percent, b.language, b.stock
      FROM cart_items ci
      JOIN books b ON b.id = ci.book_id
-     WHERE ci.cart_id = $1
+     WHERE ci.cart_id = $1 AND b.is_active = TRUE
      ORDER BY ci.id`,
     [cart.id]
   );

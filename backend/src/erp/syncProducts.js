@@ -59,7 +59,46 @@ export function mapErpProduct(raw) {
   };
 }
 
-export async function syncErpProducts() {
+let lastSync = null;
+let running = null;
+
+export function lastErpSync() {
+  return lastSync;
+}
+
+/** Runs one sync at a time; concurrent callers share the in-flight run. */
+export function syncErpProducts() {
+  if (!running) {
+    running = runSync()
+      .then((result) => {
+        lastSync = { at: new Date().toISOString(), ok: true, ...result, tools: undefined };
+        return result;
+      })
+      .catch((err) => {
+        lastSync = { at: new Date().toISOString(), ok: false, error: err.message || String(err) };
+        throw err;
+      })
+      .finally(() => {
+        running = null;
+      });
+  }
+  return running;
+}
+
+/** Pull ERP products every ERP_SYNC_MINUTES (default 15) so stock/prices stay current without clicking Sync. */
+export function startErpAutoSync() {
+  if (!isErpConfigured()) return;
+  const minutes = Number(process.env.ERP_SYNC_MINUTES ?? 15);
+  if (!(minutes > 0)) return;
+  const tick = () =>
+    syncErpProducts()
+      .then((r) => console.log(`ERP sync: ${r.upserted} products upserted`))
+      .catch((err) => console.warn('ERP sync failed:', err.message || err));
+  setTimeout(tick, 30_000).unref();
+  setInterval(tick, minutes * 60_000).unref();
+}
+
+async function runSync() {
   if (!isErpConfigured()) {
     throw new Error('Set ERP_API_KEY (MCP key from ERP → /settings/mcp)');
   }

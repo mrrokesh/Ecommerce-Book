@@ -22,6 +22,7 @@ import pagesRoutes from './routes/pages.js';
 import adminRoutes from './routes/admin.js';
 import paymentsRoutes from './routes/payments.js';
 import couponsRoutes from './routes/coupons.js';
+import { query } from './db/pool.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -52,6 +53,14 @@ app.use(express.json({ limit: '2mb' }));
 
 const uploadsDir = path.join(__dirname, '../uploads');
 fs.mkdirSync(uploadsDir, { recursive: true });
+app.get('/uploads/media/:id', async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/i.test(req.params.id)) return res.status(404).end();
+  const { rows } = await query(`SELECT mime, data FROM media WHERE id = $1`, [req.params.id]);
+  if (!rows[0]) return res.status(404).end();
+  res.set('Content-Type', rows[0].mime);
+  res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  return res.send(rows[0].data);
+});
 app.use('/uploads', express.static(uploadsDir));
 
 app.get('/api/health', (_req, res) => {

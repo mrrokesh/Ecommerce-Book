@@ -4,9 +4,9 @@ import { bookAuthor, bookImage, discountLabel, formatPrice } from '../utils/form
 import StarRating from './StarRating';
 
 export default function ProductCard({ book, showAddToCart = false, compact = false }) {
+  const { addItem } = useCart();
   if (!book) return null;
 
-  const { addItem } = useCart();
   const slug = book.slug;
   const title = book.title;
   const author = bookAuthor(book);

@@ -8,6 +8,7 @@ const TITLES = {
   '/admin/products': 'Products',
   '/admin/products/new': 'New product',
   '/admin/orders': 'Orders',
+  '/admin/customers': 'Customers',
   '/admin/marketing': 'Banners & coupons',
   '/admin/pages': 'CMS pages',
   '/admin/emails': 'Email outbox',
@@ -45,6 +46,7 @@ export default function AdminLayout() {
           <NavLink to="/admin/products/new">Add product</NavLink>
           <div className="erp-group">Sales</div>
           <NavLink to="/admin/orders">Orders</NavLink>
+          <NavLink to="/admin/customers">Customers</NavLink>
           <div className="erp-group">Content</div>
           <NavLink to="/admin/marketing">Banners & coupons</NavLink>
           <NavLink to="/admin/pages">CMS pages</NavLink>

@@ -30,11 +30,19 @@ async function mcpRpc(session, method, params, id = 1) {
     'Mcp-Protocol-Version': '2024-11-05',
   };
   if (session) headers['Mcp-Session-Id'] = session;
-  const res = await fetch(mcpUrl, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ jsonrpc: '2.0', id, method, params }),
-  });
+  let res;
+  try {
+    res = await fetch(mcpUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ jsonrpc: '2.0', id, method, params }),
+      // Render free instances can take ~60s to wake; never hang the admin request forever.
+      signal: AbortSignal.timeout(90_000),
+    });
+  } catch (err) {
+    if (err?.name === 'TimeoutError') throw new Error('ERP did not respond within 90s. Try again in a minute.');
+    throw new Error(`Could not reach ERP at ${mcpUrl}: ${err?.message || err}`);
+  }
   const text = await res.text();
   const nextSession = res.headers.get('mcp-session-id') || session;
   if (res.status === 401 || res.status === 403) {
@@ -50,6 +58,29 @@ async function mcpRpc(session, method, params, id = 1) {
   return { session: nextSession, result: body.result };
 }
 
+// JSON-RPC notifications carry no id and get no response body.
+async function mcpNotify(session, method) {
+  const { mcpUrl, apiKey } = erpConfig();
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json, text/event-stream',
+    Authorization: `Bearer ${apiKey}`,
+    'Mcp-Protocol-Version': '2024-11-05',
+  };
+  if (session) headers['Mcp-Session-Id'] = session;
+  try {
+    const res = await fetch(mcpUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ jsonrpc: '2.0', method }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    await res.body?.cancel();
+  } catch {
+    /* notifications are best-effort */
+  }
+}
+
 export function isErpConfigured() {
   return Boolean(erpConfig().apiKey);
 }
@@ -60,7 +91,7 @@ export async function listErpTools() {
     capabilities: {},
     clientInfo: { name: 'salem-book-house', version: '1.0.0' },
   });
-  await mcpRpc(init.session, 'notifications/initialized', {}, 2).catch(() => {});
+  await mcpNotify(init.session, 'notifications/initialized');
   const listed = await mcpRpc(init.session, 'tools/list', {}, 3);
   const tools = listed.result?.tools || listed.result || [];
   return { session: listed.session || init.session, tools: Array.isArray(tools) ? tools : [] };

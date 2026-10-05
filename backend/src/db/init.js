@@ -117,6 +117,15 @@ const MIGRATIONS = [
   `ALTER TABLE books ADD COLUMN IF NOT EXISTS erp_id VARCHAR(80)`,
   `ALTER TABLE books ALTER COLUMN isbn13 TYPE VARCHAR(32)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_books_erp_id ON books (erp_id) WHERE erp_id IS NOT NULL`,
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS stock_restored BOOLEAN NOT NULL DEFAULT FALSE`,
+  `UPDATE orders SET stock_restored = TRUE WHERE status IN ('cancelled','returned') AND stock_restored = FALSE`,
+  `CREATE TABLE IF NOT EXISTS media (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    filename VARCHAR(200),
+    mime VARCHAR(80) NOT NULL,
+    data BYTEA NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
 ];
 
 export async function initSchema() {

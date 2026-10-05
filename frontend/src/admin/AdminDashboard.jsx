@@ -43,13 +43,21 @@ export default function AdminDashboard() {
           <strong>{formatPrice(summary.stats.revenue)}</strong>
           <span>Revenue</span>
         </div>
+        <div className="erp-stat">
+          <strong>{summary.stats.pendingOrders ?? 0}</strong>
+          <span>Orders to ship</span>
+        </div>
+        <div className="erp-stat">
+          <strong>{summary.stats.lowStock ?? 0}</strong>
+          <span>Low stock (≤5)</span>
+        </div>
       </div>
       <div className="erp-card">
         <div className="erp-toolbar">
           <strong>Recent orders</strong>
           <span className="erp-grow" />
-          <Link className="erp-btn primary" to="/admin/products">
-            Open products
+          <Link className="erp-btn primary" to="/admin/orders">
+            Manage orders
           </Link>
         </div>
         <table className="erp-table">
