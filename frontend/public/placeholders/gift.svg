@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#1e3a5f"/>
+  <rect x="50" y="110" width="300" height="180" rx="16" fill="#c9a227"/>
+  <text x="200" y="200" text-anchor="middle" font-family="Georgia, serif" font-size="28" fill="#1e3a5f">E-Gift Card</text>
+  <text x="200" y="235" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#1e3a5f">Salem Book House</text>
+</svg>

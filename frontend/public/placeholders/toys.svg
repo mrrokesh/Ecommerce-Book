@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#fff6e8"/>
+  <circle cx="200" cy="180" r="90" fill="#e8b84a"/>
+  <rect x="120" y="250" width="160" height="40" rx="8" fill="#c45c26"/>
+  <text x="200" y="360" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#1e3a5f">Toys</text>
+</svg>

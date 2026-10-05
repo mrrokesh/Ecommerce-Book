@@ -1,0 +1,2856 @@
+{
+  "scrapedAt": "2026-10-02T12:09:35.813Z",
+  "source": "https://www.sapnaonline.com/",
+  "brand": "Salem Book House",
+  "tagline": "Salem's Favourite Book Mall",
+  "categories": [
+    {
+      "name": "Books",
+      "slug": "books",
+      "parent": null,
+      "sortOrder": 1
+    },
+    {
+      "name": "Fiction",
+      "slug": "fiction",
+      "parent": "books",
+      "sortOrder": 2
+    },
+    {
+      "name": "Non Fiction",
+      "slug": "non-fiction",
+      "parent": "books",
+      "sortOrder": 3
+    },
+    {
+      "name": "Young Adult",
+      "slug": "young-adult",
+      "parent": "books",
+      "sortOrder": 4
+    },
+    {
+      "name": "Kannada",
+      "slug": "kannada",
+      "parent": null,
+      "sortOrder": 5
+    },
+    {
+      "name": "Stationery",
+      "slug": "stationery",
+      "parent": null,
+      "sortOrder": 6,
+      "badge": "NEW"
+    },
+    {
+      "name": "Toys",
+      "slug": "toys",
+      "parent": null,
+      "sortOrder": 7
+    },
+    {
+      "name": "Competitive Exams",
+      "slug": "competitive-exams",
+      "parent": null,
+      "sortOrder": 8
+    },
+    {
+      "name": "Pre-Order",
+      "slug": "pre-order",
+      "parent": "books",
+      "sortOrder": 9
+    },
+    {
+      "name": "New Arrivals",
+      "slug": "new-arrivals",
+      "parent": "books",
+      "sortOrder": 10
+    },
+    {
+      "name": "Best Sellers",
+      "slug": "best-sellers",
+      "parent": "books",
+      "sortOrder": 11
+    },
+    {
+      "name": "Children",
+      "slug": "children",
+      "parent": "books",
+      "sortOrder": 12
+    },
+    {
+      "name": "Featured Author",
+      "slug": "featured-author",
+      "parent": "books",
+      "sortOrder": 13
+    }
+  ],
+  "topCharts": [
+    {
+      "name": "Kannada",
+      "slug": "kannada"
+    },
+    {
+      "name": "Young Adult",
+      "slug": "young-adult"
+    },
+    {
+      "name": "Fiction",
+      "slug": "fiction"
+    },
+    {
+      "name": "Non Fiction",
+      "slug": "non-fiction"
+    }
+  ],
+  "exams": [
+    "UPSC",
+    "Banking",
+    "Govt Exam",
+    "State Level Administration",
+    "Engineering",
+    "Management",
+    "Medical",
+    "Law",
+    "International Exams",
+    "Defence",
+    "Software Certifications",
+    "Finance"
+  ],
+  "banners": [
+    {
+      "title": "Behind Every Masterpiece Lies a Story",
+      "subtitle": "Discover curated reads handpicked for Salem Book House.",
+      "cta": "BUY NOW",
+      "bgColor": "#f5c518",
+      "textColor": "#1a3a6b",
+      "link": "/shop/new-arrivals",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780063345058/sm_9780063345058_080820261256932.jpg"
+    },
+    {
+      "title": "Your Ultimate Destination for Books & Beyond",
+      "subtitle": "Fiction, non-fiction, exams & stationery — delivered across Salem.",
+      "cta": "SHOP NOW",
+      "bgColor": "#1e4d8c",
+      "textColor": "#ffffff",
+      "link": "/shop/books",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789377308476/sm_9789377308476_190920261150574.jpg"
+    },
+    {
+      "title": "Express Delivery on Selected Pin Codes",
+      "subtitle": "Shop bestsellers and get them delivered faster.",
+      "cta": "EXPLORE",
+      "bgColor": "#c62828",
+      "textColor": "#ffffff",
+      "link": "/shop/best-sellers",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780241817018/sm_9780241817018_160420261532967.jpg"
+    }
+  ],
+  "authors": [
+    {
+      "name": "Thibaut Meurisse",
+      "bio": "Author of 20+ books including Master Your Emotions, translated into 30+ languages.",
+      "featured": true
+    },
+    {
+      "name": "Sudha Murty",
+      "bio": "Acclaimed Indian author and philanthropist.",
+      "featured": true
+    },
+    {
+      "name": "K Shivarama Karanth",
+      "bio": "Jnanpith awardee and Kannada literary giant.",
+      "featured": true
+    },
+    {
+      "name": "Kuvempu",
+      "bio": "Rashtrakavi and pillar of Kannada literature.",
+      "featured": true
+    },
+    {
+      "name": "S L Bhyrappa",
+      "bio": "Renowned Kannada novelist.",
+      "featured": true
+    }
+  ],
+  "homepageSections": [
+    {
+      "key": "pre-order",
+      "title": "Pre-Order",
+      "categorySlug": "pre-order"
+    },
+    {
+      "key": "new-arrivals",
+      "title": "New Arrivals",
+      "categorySlug": "new-arrivals"
+    },
+    {
+      "key": "non-fiction",
+      "title": "Top Non Fiction",
+      "categorySlug": "non-fiction"
+    },
+    {
+      "key": "fiction",
+      "title": "Top Fiction",
+      "categorySlug": "fiction"
+    },
+    {
+      "key": "young-adult",
+      "title": "Top Young Adult",
+      "categorySlug": "young-adult"
+    },
+    {
+      "key": "best-sellers",
+      "title": "Best Sellers",
+      "categorySlug": "best-sellers"
+    },
+    {
+      "key": "featured-author",
+      "title": "Author of the Day",
+      "categorySlug": "featured-author"
+    }
+  ],
+  "books": [
+    {
+      "title": "Noor and the Storyteller",
+      "author": "Seina Wedlick, Leah Giles",
+      "isbn13": "9780063345058",
+      "isbn10": "0063345056",
+      "slug": "noor-and-the-storyteller-9780063345058",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780063345058/sm_9780063345058_080820261256932.jpg",
+      "salePrice": 1235,
+      "mrp": 1650,
+      "discountPercent": 25,
+      "category": "Pre-Order",
+      "categorySlug": "pre-order",
+      "sections": [
+        "Pre-Order"
+      ],
+      "sectionSlugs": [
+        "pre-order"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/noor-storyteller-seina-wedlick-0063345056-9780063345058",
+      "stock": 78,
+      "language": "English",
+      "description": "Noor and the Storyteller by Seina Wedlick, Leah Giles. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Tiki Factor, The: 4 Key Principles to Turn Your Losses into Wins",
+      "author": "Tiki Davis",
+      "isbn13": "9780063346345",
+      "isbn10": "0063346346",
+      "slug": "tiki-factor-the-4-key-principles-to-turn-your-losses-into-wins-9780063346345",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780063346345/sm_9780063346345_060820261417025.jpg",
+      "salePrice": 1303,
+      "mrp": 1750,
+      "discountPercent": 26,
+      "category": "Pre-Order",
+      "categorySlug": "pre-order",
+      "sections": [
+        "Pre-Order"
+      ],
+      "sectionSlugs": [
+        "pre-order"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/tiki-factor-4-key-principles-tiki-davis-0063346346-9780063346345",
+      "stock": 65,
+      "language": "English",
+      "description": "Tiki Factor, The: 4 Key Principles to Turn Your Losses into Wins by Tiki Davis. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Warriors: Changing Skies 4: Guiding Light",
+      "author": "Erin Hunter",
+      "isbn13": "9780063357211",
+      "isbn10": "0063357216",
+      "slug": "warriors-changing-skies-4-guiding-light-9780063357211",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780063357211/sm_9780063357211_080820261256232.jpg",
+      "salePrice": 1235,
+      "mrp": 1650,
+      "discountPercent": 25,
+      "category": "Pre-Order",
+      "categorySlug": "pre-order",
+      "sections": [
+        "Pre-Order"
+      ],
+      "sectionSlugs": [
+        "pre-order"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/warriors-changing-skies-4-guiding-erin-hunter-0063357216-9780063357211",
+      "stock": 31,
+      "language": "English",
+      "description": "Warriors: Changing Skies 4: Guiding Light by Erin Hunter. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "What Rough Beast",
+      "author": "Mindy McGinnis",
+      "isbn13": "9780063370746",
+      "isbn10": "0063370743",
+      "slug": "what-rough-beast-9780063370746",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780063370746/sm_9780063370746_080820261257790.jpg",
+      "salePrice": 1201,
+      "mrp": 1599,
+      "discountPercent": 25,
+      "category": "Pre-Order",
+      "categorySlug": "pre-order",
+      "sections": [
+        "Pre-Order"
+      ],
+      "sectionSlugs": [
+        "pre-order"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/rough-beast-mindy-mcginnis-0063370743-9780063370746",
+      "stock": 66,
+      "language": "English",
+      "description": "What Rough Beast by Mindy McGinnis. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Upstate Dispatch: A Novel",
+      "author": "Kim van Alkemade",
+      "isbn13": "9780063438033",
+      "isbn10": "0063438038",
+      "slug": "upstate-dispatch-a-novel-9780063438033",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780063438033/sm_9780063438033_060820261417278.jpg",
+      "salePrice": 936,
+      "mrp": 1199,
+      "discountPercent": 22,
+      "category": "Pre-Order",
+      "categorySlug": "pre-order",
+      "sections": [
+        "Pre-Order"
+      ],
+      "sectionSlugs": [
+        "pre-order"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/upstate-dispatch-novel-kim-van-0063438038-9780063438033",
+      "stock": 53,
+      "language": "English",
+      "description": "Upstate Dispatch: A Novel by Kim van Alkemade. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Robot & The Gardener",
+      "author": "Robin Sharma",
+      "isbn13": "9789377308476",
+      "isbn10": "937730847X",
+      "slug": "robot-the-gardener-9789377308476",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789377308476/sm_9789377308476_190920261150574.jpg",
+      "salePrice": 449,
+      "mrp": 599,
+      "discountPercent": 25,
+      "category": "Pre-Order",
+      "categorySlug": "pre-order",
+      "sections": [
+        "Pre-Order"
+      ],
+      "sectionSlugs": [
+        "pre-order"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/robot-gardener-robin-sharma-937730847x-9789377308476",
+      "stock": 96,
+      "language": "English",
+      "description": "Robot & The Gardener by Robin Sharma. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Table Hopping",
+      "author": "Dylan Jones",
+      "isbn13": "9780349000732",
+      "isbn10": "0349000735",
+      "slug": "table-hopping-9780349000732",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780349000732/sm_9780349000732_120820261247602.jpg",
+      "salePrice": 1178,
+      "mrp": 1399,
+      "discountPercent": 16,
+      "category": "Pre-Order",
+      "categorySlug": "pre-order",
+      "sections": [
+        "Pre-Order"
+      ],
+      "sectionSlugs": [
+        "pre-order"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/table-hopping-dylan-jones-0349000735-9780349000732",
+      "stock": 52,
+      "language": "English",
+      "description": "Table Hopping by Dylan Jones. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Quaint Folk",
+      "author": "Bitter Karella",
+      "isbn13": "9780356528328",
+      "isbn10": "0356528324",
+      "slug": "quaint-folk-9780356528328",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780356528328/sm_9780356528328_110820261311087.jpg",
+      "salePrice": 707,
+      "mrp": 799,
+      "discountPercent": 12,
+      "category": "Pre-Order",
+      "categorySlug": "pre-order",
+      "sections": [
+        "Pre-Order"
+      ],
+      "sectionSlugs": [
+        "pre-order"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/quaint-folk-bitter-karella-0356528324-9780356528328",
+      "stock": 48,
+      "language": "English",
+      "description": "Quaint Folk by Bitter Karella. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Dark Is When The Devil Comes",
+      "author": "Daisy Pearce",
+      "isbn13": "9780356529196",
+      "isbn10": "0356529193",
+      "slug": "dark-is-when-the-devil-comes-9780356529196",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780356529196/sm_9780356529196_120820261247335.jpg",
+      "salePrice": 707,
+      "mrp": 799,
+      "discountPercent": 12,
+      "category": "Pre-Order",
+      "categorySlug": "pre-order",
+      "sections": [
+        "Pre-Order"
+      ],
+      "sectionSlugs": [
+        "pre-order"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/dark-devil-comes-daisy-pearce-0356529193-9780356529196",
+      "stock": 36,
+      "language": "English",
+      "description": "Dark Is When The Devil Comes by Daisy Pearce. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Through the Wardrobe: How C. S. Lewis Created Narnia",
+      "author": "Lina Maslo",
+      "isbn13": "9780062798572",
+      "isbn10": "006279857X",
+      "slug": "through-the-wardrobe-how-c-s-lewis-created-narnia-9780062798572",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780062798572/sm_9780062798572_080820261256937.jpg",
+      "salePrice": 646,
+      "mrp": 799,
+      "discountPercent": 19,
+      "category": "Pre-Order",
+      "categorySlug": "pre-order",
+      "sections": [
+        "Pre-Order"
+      ],
+      "sectionSlugs": [
+        "pre-order"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/through-wardrobe-c-s-lewis-lina-maslo-006279857x-9780062798572",
+      "stock": 92,
+      "language": "English",
+      "description": "Through the Wardrobe: How C. S. Lewis Created Narnia by Lina Maslo. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Light & Thread",
+      "author": "Han Kang",
+      "isbn13": "9780241817018",
+      "isbn10": "0241817013",
+      "slug": "light-thread-9780241817018",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780241817018/sm_9780241817018_160420261532967.jpg",
+      "salePrice": 639,
+      "mrp": 799,
+      "discountPercent": 20,
+      "category": "New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/light-thread-han-kang-0241817013-9780241817018",
+      "stock": 38,
+      "language": "English",
+      "description": "Light & Thread by Han Kang. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Defender : Gods Of The Game Series Book 2",
+      "author": "Ana Huang",
+      "isbn13": "9780349442273",
+      "isbn10": "0349442274",
+      "slug": "defender-gods-of-the-game-series-book-2-9780349442273",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780349442273/sm_9780349442273_151020251211605.jpg",
+      "salePrice": 646,
+      "mrp": 799,
+      "discountPercent": 19,
+      "category": "New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/defender-huang-0349442274-9780349442273",
+      "stock": 93,
+      "language": "English",
+      "description": "Defender : Gods Of The Game Series Book 2 by Ana Huang. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Hidden Nature",
+      "author": "Nora Roberts",
+      "isbn13": "9780349443324",
+      "isbn10": "0349443327",
+      "slug": "hidden-nature-9780349443324",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780349443324/sm_9780349443324_170420261334658.jpg",
+      "salePrice": 712,
+      "mrp": 899,
+      "discountPercent": 21,
+      "category": "New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/hidden-nature-nora-roberts-0349443327-9780349443324",
+      "stock": 44,
+      "language": "English",
+      "description": "Hidden Nature by Nora Roberts. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Cruel King",
+      "author": "Rina Kent",
+      "isbn13": "9781911746430",
+      "isbn10": "191174643X",
+      "slug": "cruel-king-9781911746430",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781911746430/sm_9781911746430_281120251417197.jpg",
+      "salePrice": 524,
+      "mrp": 699,
+      "discountPercent": 25,
+      "category": "New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/cruel-king-special-edition-print-rina-kent-191174643x-9781911746430",
+      "stock": 50,
+      "language": "English",
+      "description": "Cruel King by Rina Kent. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "All The Way To The River",
+      "author": "Elizabeth Gilbert",
+      "isbn13": "9781526654588",
+      "isbn10": "152665458X",
+      "slug": "all-the-way-to-the-river-9781526654588",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781526654588/sm_9781526654588_020820251706592.jpg",
+      "salePrice": 580,
+      "mrp": 699,
+      "discountPercent": 17,
+      "category": "New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/way-river-love-loss-liberation-elizabeth-gilbert-152665458x-9781526654588",
+      "stock": 28,
+      "language": "English",
+      "description": "All The Way To The River by Elizabeth Gilbert. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Time Masters : 11 Secrets To Greater Productivity & Life Fulfillment",
+      "author": "Jan Yager",
+      "isbn13": "9788199070721",
+      "isbn10": "8199070722",
+      "slug": "time-masters-11-secrets-to-greater-productivity-life-fulfillment-9788199070721",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788199070721/sm_9788199070721_020120261235679.jpg",
+      "salePrice": 427,
+      "mrp": 499,
+      "discountPercent": 14,
+      "category": "New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/time-masters-11-secrets-greater-jan-yager-8199070722-9788199070721",
+      "stock": 41,
+      "language": "English",
+      "description": "Time Masters : 11 Secrets To Greater Productivity & Life Fulfillment by Jan Yager. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Escape From Kabul",
+      "author": "Enakshi Sengupta",
+      "isbn13": "9789369891283",
+      "isbn10": "9369891285",
+      "slug": "escape-from-kabul-9789369891283",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789369891283/sm_9789369891283_170920251700649.jpg",
+      "salePrice": 336,
+      "mrp": 399,
+      "discountPercent": 16,
+      "category": "New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/escape-kabul-true-story-escape-enakshi-sengupta-9369891285-9789369891283",
+      "stock": 23,
+      "language": "English",
+      "description": "Escape From Kabul by Enakshi Sengupta. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Framed In Death : An Eve Dallas Thriller",
+      "author": "Jd Robb",
+      "isbn13": "9780349443409",
+      "isbn10": "0349443408",
+      "slug": "framed-in-death-an-eve-dallas-thriller-9780349443409",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780349443409/sm_9780349443409_121120251658877.jpg",
+      "salePrice": 624,
+      "mrp": 799,
+      "discountPercent": 22,
+      "category": "New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/framed-death-eve-dallas-thriller-j-d-0349443408-9780349443409",
+      "stock": 29,
+      "language": "English",
+      "description": "Framed In Death : An Eve Dallas Thriller by Jd Robb. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Every Spiral Of Fate",
+      "author": "Tahereh Mafi",
+      "isbn13": "9780008629243",
+      "isbn10": "0008629242",
+      "slug": "every-spiral-of-fate-9780008629243",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780008629243/sm_9780008629243_281020251228963.jpg",
+      "salePrice": 514,
+      "mrp": 599,
+      "discountPercent": 14,
+      "category": "New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/every-spiral-fate-woven-kingdom-tahereh-mafi-0008629242-9780008629243",
+      "stock": 63,
+      "language": "English",
+      "description": "Every Spiral Of Fate by Tahereh Mafi. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "This Is Where The Serpent Lives",
+      "author": "Daniyal Mueenuddin",
+      "isbn13": "9780143482031",
+      "isbn10": "0143482033",
+      "slug": "this-is-where-the-serpent-lives-9780143482031",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780143482031/sm_9780143482031_270220261237802.jpg",
+      "salePrice": 646,
+      "mrp": 799,
+      "discountPercent": 19,
+      "category": "New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/serpent-lives-daniyal-mueenuddin-0143482033-9780143482031",
+      "stock": 51,
+      "language": "English",
+      "description": "This Is Where The Serpent Lives by Daniyal Mueenuddin. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Tom Gates #24 : Pesky Pets & Parties",
+      "author": "Liz Pichon",
+      "isbn13": "9789359542744",
+      "isbn10": "9359542741",
+      "slug": "tom-gates-24-pesky-pets-parties-9789359542744",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789359542744/sm_9789359542744_210920261431173.jpg",
+      "salePrice": 360,
+      "mrp": 450,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/gates-pesky-pets-pichon-9359542741-9789359542744",
+      "stock": 64,
+      "language": "English",
+      "description": "Tom Gates #24 : Pesky Pets & Parties by Liz Pichon. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Aryans",
+      "author": "Charles Allen",
+      "isbn13": "9789357314640",
+      "isbn10": "9357314644",
+      "slug": "aryans-9789357314640",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789357314640/sm_9789357314640_290820261800406.jpg",
+      "salePrice": 559,
+      "mrp": 699,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/aryans-charles-allen-9357314644-9789357314640",
+      "stock": 60,
+      "language": "English",
+      "description": "Aryans by Charles Allen. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Margarettown",
+      "author": "Gabrielle Zevin",
+      "isbn13": "9781399766968",
+      "isbn10": "1399766961",
+      "slug": "margarettown-9781399766968",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781399766968/sm_9781399766968_030920261757666.jpg",
+      "salePrice": 479,
+      "mrp": 599,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/margaret-town-gabrielle-zevin-1399766961-9781399766968",
+      "stock": 88,
+      "language": "English",
+      "description": "Margarettown by Gabrielle Zevin. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Musafir Cafe",
+      "author": "Divya Prakash Dubey",
+      "isbn13": "9789373076690",
+      "isbn10": "9373076698",
+      "slug": "musafir-cafe-9789373076690",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789373076690/sm_9789373076690_030920261757203.jpg",
+      "salePrice": 239,
+      "mrp": 299,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/musafir-cafe-divya-prakash-9373076698-9789373076690",
+      "stock": 30,
+      "language": "English",
+      "description": "Musafir Cafe by Divya Prakash Dubey. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Ashwatthama : The Immortal Warrior",
+      "author": "Ashutosh Garg",
+      "isbn13": "9789377300395",
+      "isbn10": "9377300398",
+      "slug": "ashwatthama-the-immortal-warrior-9789377300395",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789377300395/sm_9789377300395_030920261757622.jpg",
+      "salePrice": 339,
+      "mrp": 399,
+      "discountPercent": 15,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/ashwatthama-immortal-warrior-ashutosh-garg-9377300398-9789377300395",
+      "stock": 35,
+      "language": "English",
+      "description": "Ashwatthama : The Immortal Warrior by Ashutosh Garg. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "There Is Nothing That Wouldnt Change",
+      "author": "Perumal Murugan,Kavitha Muralidharan",
+      "isbn13": "9789377301477",
+      "isbn10": "9377301475",
+      "slug": "there-is-nothing-that-wouldnt-change-9789377301477",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789377301477/sm_9789377301477_250820261351592.jpg",
+      "salePrice": 399,
+      "mrp": 499,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/there-nothing-that-perumal-murugan-9377301475-9789377301477",
+      "stock": 97,
+      "language": "English",
+      "description": "There Is Nothing That Wouldnt Change by Perumal Murugan,Kavitha Muralidharan. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "More Days At The Torunka Cafe",
+      "author": "Satoshi Yagisawa",
+      "isbn13": "9781786589651",
+      "isbn10": "1786589656",
+      "slug": "more-days-at-the-torunka-cafe-9781786589651",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781786589651/sm_9781786589651_030920261757390.jpg",
+      "salePrice": 399,
+      "mrp": 499,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/days-torunka-caf-satoshi-yagisawa-1786589656-9781786589651",
+      "stock": 71,
+      "language": "English",
+      "description": "More Days At The Torunka Cafe by Satoshi Yagisawa. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Practical Intelligence : How To Think Critically Deconstruct Situations Analyze Deeply & Never B",
+      "author": "Patrick King",
+      "isbn13": "9789347027000",
+      "isbn10": "9347027006",
+      "slug": "practical-intelligence-how-to-think-critically-deconstruct-situations-analyze-de-9789347027000",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789347027000/sm_9789347027000_030920261757563.jpg",
+      "salePrice": 251,
+      "mrp": 299,
+      "discountPercent": 16,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/practical-intelligence-think-critically-deconstruct-patrick-king-9347027006-9789347027000",
+      "stock": 20,
+      "language": "English",
+      "description": "Practical Intelligence : How To Think Critically Deconstruct Situations Analyze Deeply & Never B by Patrick King. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Embrace",
+      "author": "Bal Khabra",
+      "isbn13": "9781037201554",
+      "isbn10": "1037201558",
+      "slug": "embrace-9781037201554",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781037201554/sm_9781037201554_120820261407291.jpg",
+      "salePrice": 399,
+      "mrp": 499,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/embrace-brand-new-sizzling-ice-bal-khabra-1037201558-9781037201554",
+      "stock": 74,
+      "language": "English",
+      "description": "Embrace by Bal Khabra. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "True Meaning Of Love",
+      "author": "Danielle Steel",
+      "isbn13": "9781529086270",
+      "isbn10": "1529086272",
+      "slug": "true-meaning-of-love-9781529086270",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781529086270/sm_9781529086270_030920261757197.jpg",
+      "salePrice": 639,
+      "mrp": 799,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/true-meaning-love-powerful-story-danielle-steel-1529086272-9781529086270",
+      "stock": 90,
+      "language": "English",
+      "description": "True Meaning Of Love by Danielle Steel. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "What Happened To Liberal Democracy : Remaking A Politics Of Shared Prosperity",
+      "author": "Daron Acemoglu",
+      "isbn13": "9781805228677",
+      "isbn10": "1805228676",
+      "slug": "what-happened-to-liberal-democracy-remaking-a-politics-of-shared-prosperity-9781805228677",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781805228677/sm_9781805228677_040920261210123.jpg",
+      "salePrice": 646,
+      "mrp": 799,
+      "discountPercent": 19,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/what-happened-liberal-daron-acemoglu-1805228676-9781805228677",
+      "stock": 97,
+      "language": "English",
+      "description": "What Happened To Liberal Democracy : Remaking A Politics Of Shared Prosperity by Daron Acemoglu. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Build A Mathematical Mind",
+      "author": "Albert Rutherford",
+      "isbn13": "9789369527281",
+      "isbn10": "9369527281",
+      "slug": "build-a-mathematical-mind-9789369527281",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789369527281/sm_9789369527281_040920261211571.jpg",
+      "salePrice": 304,
+      "mrp": 350,
+      "discountPercent": 13,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/build-mathematical-mind-albert-rutherford-9369527281-9789369527281",
+      "stock": 21,
+      "language": "English",
+      "description": "Build A Mathematical Mind by Albert Rutherford. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Chhatrapati Shivaji Maharaj : The Lion Of The Deccan",
+      "author": "Archana Garodia Gupta,Shruti Garodia",
+      "isbn13": "9789357312899",
+      "isbn10": "9357312897",
+      "slug": "chhatrapati-shivaji-maharaj-the-lion-of-the-deccan-9789357312899",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789357312899/sm_9789357312899_020920261733125.jpg",
+      "salePrice": 399,
+      "mrp": 499,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/chhatrapati-shivaji-maharaj-archana-garodia-9357312897-9789357312899",
+      "stock": 39,
+      "language": "English",
+      "description": "Chhatrapati Shivaji Maharaj : The Lion Of The Deccan by Archana Garodia Gupta,Shruti Garodia. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Drawn Together",
+      "author": "Mercedes Ron",
+      "isbn13": "9781398561731",
+      "isbn10": "1398561738",
+      "slug": "drawn-together-9781398561731",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781398561731/sm_9781398561731_210920261430092.jpg",
+      "salePrice": 479,
+      "mrp": 599,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/drawn-together-mercedes-ron-1398561738-9781398561731",
+      "stock": 51,
+      "language": "English",
+      "description": "Drawn Together by Mercedes Ron. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Deviant King : The Royal Elite Book 1",
+      "author": "Rina Kent",
+      "isbn13": "9781911746447",
+      "isbn10": "1911746448",
+      "slug": "deviant-king-the-royal-elite-book-1-9781911746447",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781911746447/sm_9781911746447_030920261757227.jpg",
+      "salePrice": 559,
+      "mrp": 699,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/deviant-king-rina-kent-1911746448-9781911746447",
+      "stock": 67,
+      "language": "English",
+      "description": "Deviant King : The Royal Elite Book 1 by Rina Kent. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "How To Deal With Your : So Your Kids Dont Have To",
+      "author": "Eli Harwood",
+      "isbn13": "9788183287210",
+      "isbn10": "8183287212",
+      "slug": "how-to-deal-with-your-so-your-kids-dont-have-to-9788183287210",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788183287210/sm_9788183287210_270820261728530.jpg",
+      "salePrice": 421,
+      "mrp": 495,
+      "discountPercent": 15,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/deal-eli-harwood-8183287212-9788183287210",
+      "stock": 30,
+      "language": "English",
+      "description": "How To Deal With Your : So Your Kids Dont Have To by Eli Harwood. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Steel Princess : The Royal Elite Book 2",
+      "author": "Rina Kent",
+      "isbn13": "9781911746478",
+      "isbn10": "1911746472",
+      "slug": "steel-princess-the-royal-elite-book-2-9781911746478",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781911746478/sm_9781911746478_030920261757781.jpg",
+      "salePrice": 559,
+      "mrp": 699,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/steel-princess-rina-kent-1911746472-9781911746478",
+      "stock": 98,
+      "language": "English",
+      "description": "Steel Princess : The Royal Elite Book 2 by Rina Kent. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Lunatics",
+      "author": "Navessa Allen",
+      "isbn13": "9781529452778",
+      "isbn10": "1529452775",
+      "slug": "lunatics-9781529452778",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781529452778/sm_9781529452778_030920261757795.jpg",
+      "salePrice": 559,
+      "mrp": 699,
+      "discountPercent": 20,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/lunatics-navessa-allen-1529452775-9781529452778",
+      "stock": 98,
+      "language": "English",
+      "description": "Lunatics by Navessa Allen. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Ai For Amazing Kids",
+      "author": "Raja Gupta",
+      "isbn13": "9789353451943",
+      "isbn10": "9353451949",
+      "slug": "ai-for-amazing-kids-9789353451943",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789353451943/sm_9789353451943_030920261757784.jpg",
+      "salePrice": 298,
+      "mrp": 350,
+      "discountPercent": 15,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/amazing-kids-raja-gupta-9353451949-9789353451943",
+      "stock": 63,
+      "language": "English",
+      "description": "Ai For Amazing Kids by Raja Gupta. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Geronimo Stilton: Mice To The Rescue Sos Were Swamped With Trash",
+      "author": "Geronimo Stilton",
+      "isbn13": "9789359549958",
+      "isbn10": "9359549959",
+      "slug": "geronimo-stilton-mice-to-the-rescue-sos-were-swamped-with-trash-9789359549958",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789359549958/sm_9789359549958_030820261322351.jpg",
+      "salePrice": 336,
+      "mrp": 399,
+      "discountPercent": 16,
+      "category": "Top New Arrivals",
+      "categorySlug": "new-arrivals",
+      "sections": [
+        "Top New Arrivals"
+      ],
+      "sectionSlugs": [
+        "new-arrivals"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/geronimo-stilton-mice-geronimo-stilton-9359549959-9789359549958",
+      "stock": 78,
+      "language": "English",
+      "description": "Geronimo Stilton: Mice To The Rescue Sos Were Swamped With Trash by Geronimo Stilton. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "How To Win Friends & Influence People : Bm 001",
+      "author": "Dale Carnegie",
+      "isbn13": "9788193411001",
+      "isbn10": "8193411005",
+      "slug": "how-to-win-friends-influence-people-bm-001-9788193411001",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788193411001/sm_9788193411001.jpg",
+      "salePrice": 209,
+      "mrp": 299,
+      "discountPercent": 30,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/win-friends-influence-people-dale-carnegie-8193411005-9788193411001",
+      "stock": 21,
+      "language": "English",
+      "description": "How To Win Friends & Influence People : Bm 001 by Dale Carnegie. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Ikigai : The Japanese Secret To A Long & Happy Life",
+      "author": "Unknown",
+      "isbn13": "9781786330895",
+      "isbn10": "178633089X",
+      "slug": "ikigai-the-japanese-secret-to-a-long-happy-life-9781786330895",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781786330895/sm_9781786330895.jpg",
+      "salePrice": 514,
+      "mrp": 599,
+      "discountPercent": 14,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/ikigai-japanese-secret-hector-garcia-178633089x-9781786330895",
+      "stock": 35,
+      "language": "English",
+      "description": "Ikigai : The Japanese Secret To A Long & Happy Life by Unknown. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Monk Who Sold His Ferrari",
+      "author": "Robin Sharma",
+      "isbn13": "9788179921623",
+      "isbn10": "817992162X",
+      "slug": "monk-who-sold-his-ferrari-9788179921623",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788179921623/sm_9788179921623.jpg",
+      "salePrice": 261,
+      "mrp": 299,
+      "discountPercent": 13,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/monk-sold-ferrari-robin-sharma-817992162x-9788179921623",
+      "stock": 43,
+      "language": "English",
+      "description": "Monk Who Sold His Ferrari by Robin Sharma. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "You Become What You Think : Master Your Life Master Your Mind",
+      "author": "Shubham Kumar Singh",
+      "isbn13": "9780143475279",
+      "isbn10": "0143475274",
+      "slug": "you-become-what-you-think-master-your-life-master-your-mind-9780143475279",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780143475279/sm_9780143475279_180420251613542.jpg",
+      "salePrice": 261,
+      "mrp": 299,
+      "discountPercent": 13,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/become-think-master-life-master-shubham-kumar-0143475274-9780143475279",
+      "stock": 99,
+      "language": "English",
+      "description": "You Become What You Think : Master Your Life Master Your Mind by Shubham Kumar Singh. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Gita For Gen Z : Clarity In Chaos",
+      "author": "Rania Sen",
+      "isbn13": "9780143482383",
+      "isbn10": "0143482386",
+      "slug": "gita-for-gen-z-clarity-in-chaos-9780143482383",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780143482383/sm_9780143482383_080820261711013.jpg",
+      "salePrice": 299,
+      "mrp": 399,
+      "discountPercent": 25,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/gita-gen-z-clarity-chaos-rania-sen-0143482386-9780143482383",
+      "stock": 23,
+      "language": "English",
+      "description": "Gita For Gen Z : Clarity In Chaos by Rania Sen. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Dont Believe Everything You Think : Why Your Thinking Is The Beginning & End Of Suffering",
+      "author": "Joseph Nguyen",
+      "isbn13": "9789355431356",
+      "isbn10": "935543135X",
+      "slug": "dont-believe-everything-you-think-why-your-thinking-is-the-beginning-end-of-suff-9789355431356",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789355431356/sm_9789355431356_130820251418377.jpg",
+      "salePrice": 261,
+      "mrp": 299,
+      "discountPercent": 13,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/dont-believe-everything-joseph-nguyen-935543135x-9789355431356",
+      "stock": 76,
+      "language": "English",
+      "description": "Dont Believe Everything You Think : Why Your Thinking Is The Beginning & End Of Suffering by Joseph Nguyen. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Dont Leave Anything For Later : Stop Waiting Start Living",
+      "author": "Library Mindset",
+      "isbn13": "9780143469155",
+      "isbn10": "0143469150",
+      "slug": "dont-leave-anything-for-later-stop-waiting-start-living-9780143469155",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780143469155/sm_9780143469155_231020251048809.jpg",
+      "salePrice": 254,
+      "mrp": 299,
+      "discountPercent": 15,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/dont-leave-anything-later-stop-library-mindset-0143469150-9780143469155",
+      "stock": 75,
+      "language": "English",
+      "description": "Dont Leave Anything For Later : Stop Waiting Start Living by Library Mindset. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "How To Stop Overthinking Forever",
+      "author": "Rithvik Singh",
+      "isbn13": "9780143477815",
+      "isbn10": "0143477811",
+      "slug": "how-to-stop-overthinking-forever-9780143477815",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780143477815/sm_9780143477815_110720251226866.jpg",
+      "salePrice": 258,
+      "mrp": 299,
+      "discountPercent": 14,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/stop-overthinking-forever-rithvik-singh-0143477811-9780143477815",
+      "stock": 35,
+      "language": "English",
+      "description": "How To Stop Overthinking Forever by Rithvik Singh. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Deep Work : Rules For Focused Success In A Distracted World",
+      "author": "Cal Newport",
+      "isbn13": "9780349413686",
+      "isbn10": "0349413681",
+      "slug": "deep-work-rules-for-focused-success-in-a-distracted-world-9780349413686",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780349413686/sm_9780349413686.jpg",
+      "salePrice": 336,
+      "mrp": 399,
+      "discountPercent": 16,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/deep-work-rules-focused-success-cal-newport-0349413681-9780349413686",
+      "stock": 26,
+      "language": "English",
+      "description": "Deep Work : Rules For Focused Success In A Distracted World by Cal Newport. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "48 Laws Of Power",
+      "author": "Robert Greene",
+      "isbn13": "9781861972781",
+      "isbn10": "1861972784",
+      "slug": "48-laws-of-power-9781861972781",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781861972781/sm_9781861972781_301020241011583.jpg",
+      "salePrice": 779,
+      "mrp": 999,
+      "discountPercent": 22,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/48-laws-power-robert-greene-1861972784-9781861972781",
+      "stock": 21,
+      "language": "English",
+      "description": "48 Laws Of Power by Robert Greene. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "11 Rules For Life : Secrets To Level Up",
+      "author": "Chetan Bhagat",
+      "isbn13": "9789356999978",
+      "isbn10": "935699997X",
+      "slug": "11-rules-for-life-secrets-to-level-up-9789356999978",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789356999978/sm_9789356999978_220220241021844.jpg",
+      "salePrice": 229,
+      "mrp": 250,
+      "discountPercent": 8,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/11-rules-life-secrets-level-chetan-bhagat-935699997x-9789356999978",
+      "stock": 98,
+      "language": "English",
+      "description": "11 Rules For Life : Secrets To Level Up by Chetan Bhagat. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Mountain Is You : Transforming Self Sabotage Into Self Mastery",
+      "author": "Brianna Wiest",
+      "isbn13": "9789355434142",
+      "isbn10": "9355434146",
+      "slug": "mountain-is-you-transforming-self-sabotage-into-self-mastery-9789355434142",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789355434142/sm_9789355434142_070320241400496.jpg",
+      "salePrice": 336,
+      "mrp": 399,
+      "discountPercent": 16,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/mountain-brianna-wiest-9355434146-9789355434142",
+      "stock": 62,
+      "language": "English",
+      "description": "Mountain Is You : Transforming Self Sabotage Into Self Mastery by Brianna Wiest. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Art Of Letting Go : Move Beyond The Hurt Find Emotional Freedom",
+      "author": "Nick Trenton",
+      "isbn13": "9780143465065",
+      "isbn10": "0143465066",
+      "slug": "art-of-letting-go-move-beyond-the-hurt-find-emotional-freedom-9780143465065",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780143465065/sm_9780143465065_080620241142404.jpg",
+      "salePrice": 261,
+      "mrp": 299,
+      "discountPercent": 13,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/art-letting-beyond-hurt-emotional-nick-trenton-0143465066-9780143465065",
+      "stock": 85,
+      "language": "English",
+      "description": "Art Of Letting Go : Move Beyond The Hurt Find Emotional Freedom by Nick Trenton. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Atomic Habits : An Easy & Proven Way To Build Good Habits & Break Bad Ones",
+      "author": "James Clear",
+      "isbn13": "9781847941831",
+      "isbn10": "1847941834",
+      "slug": "atomic-habits-an-easy-proven-way-to-build-good-habits-break-bad-ones-9781847941831",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781847941831/sm_9781847941831_051020241203850.jpg",
+      "salePrice": 779,
+      "mrp": 999,
+      "discountPercent": 22,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/atomic-habits-easy-james-clear-1847941834-9781847941831",
+      "stock": 51,
+      "language": "English",
+      "description": "Atomic Habits : An Easy & Proven Way To Build Good Habits & Break Bad Ones by James Clear. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Psychology Of Money : Timeless Lessons On Wealth Greed & Happiness",
+      "author": "Morgan Housel",
+      "isbn13": "9789390166268",
+      "isbn10": "9390166268",
+      "slug": "psychology-of-money-timeless-lessons-on-wealth-greed-happiness-9789390166268",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789390166268/sm_9789390166268_200920251518340.jpg",
+      "salePrice": 380,
+      "mrp": 399,
+      "discountPercent": 5,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/psychology-money-timeless-lessons-wealth-morgan-housel-9390166268-9789390166268",
+      "stock": 88,
+      "language": "English",
+      "description": "Psychology Of Money : Timeless Lessons On Wealth Greed & Happiness by Morgan Housel. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Rich Dad Poor Dad : 25th Anniversary Edition",
+      "author": "Robert T Kiyosaki",
+      "isbn13": "9781612681139",
+      "isbn10": "1612681131",
+      "slug": "rich-dad-poor-dad-25th-anniversary-edition-9781612681139",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781612681139/sm_9781612681139_231120221646149.jpg",
+      "salePrice": 514,
+      "mrp": 599,
+      "discountPercent": 14,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/rich-dad-poor-dad-25th-robert-t-1612681131-9781612681139",
+      "stock": 59,
+      "language": "English",
+      "description": "Rich Dad Poor Dad : 25th Anniversary Edition by Robert T Kiyosaki. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Courage To Be Ordinary",
+      "author": "Ichiro Kishimi",
+      "isbn13": "9781785047046",
+      "isbn10": "1785047043",
+      "slug": "courage-to-be-ordinary-9781785047046",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781785047046/sm_9781785047046_170720261759619.jpg",
+      "salePrice": 559,
+      "mrp": 699,
+      "discountPercent": 20,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/courage-ordinary-ichiro-kishimi-1785047043-9781785047046",
+      "stock": 66,
+      "language": "English",
+      "description": "Courage To Be Ordinary by Ichiro Kishimi. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Art Of Being Alone : Loneliness Was My Cage Solitude Is My Home",
+      "author": "Renuka Gavrani",
+      "isbn13": "9789355434029",
+      "isbn10": "9355434022",
+      "slug": "art-of-being-alone-loneliness-was-my-cage-solitude-is-my-home-9789355434029",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789355434029/sm_9789355434029_140920241030101.jpg",
+      "salePrice": 261,
+      "mrp": 299,
+      "discountPercent": 13,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/being-alone-loneliness-renuka-gavrani-9355434022-9789355434029",
+      "stock": 49,
+      "language": "English",
+      "description": "Art Of Being Alone : Loneliness Was My Cage Solitude Is My Home by Renuka Gavrani. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Tuesdays With Morrie : An Old Man A Young Man & Lifes Greatest Lesson",
+      "author": "Mitch Albom",
+      "isbn13": "9781408724682",
+      "isbn10": "1408724685",
+      "slug": "tuesdays-with-morrie-an-old-man-a-young-man-lifes-greatest-lesson-9781408724682",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781408724682/sm_9781408724682_270920251625559.jpg",
+      "salePrice": 524,
+      "mrp": 550,
+      "discountPercent": 5,
+      "category": "Non Fiction",
+      "categorySlug": "non-fiction",
+      "sections": [
+        "Non Fiction"
+      ],
+      "sectionSlugs": [
+        "non-fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/tuesdays-morrie-old-man-young-mitch-albom-1408724685-9781408724682",
+      "stock": 22,
+      "language": "English",
+      "description": "Tuesdays With Morrie : An Old Man A Young Man & Lifes Greatest Lesson by Mitch Albom. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Alchemist",
+      "author": "Paulo Coelho",
+      "isbn13": "9788172234980",
+      "isbn10": "8172234988",
+      "slug": "alchemist-9788172234980",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788172234980/sm_9788172234980.jpg",
+      "salePrice": 336,
+      "mrp": 399,
+      "discountPercent": 16,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/alchemist-paulo-coelho-8172234988-9788172234980",
+      "stock": 20,
+      "language": "English",
+      "description": "Alchemist by Paulo Coelho. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Yesteryear",
+      "author": "Caro Claire Burke",
+      "isbn13": "9780008839048",
+      "isbn10": "0008839042",
+      "slug": "yesteryear-9780008839048",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780008839048/sm_9780008839048_050320261733034.jpg",
+      "salePrice": 507,
+      "mrp": 599,
+      "discountPercent": 15,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/yesteryear-stepford-wives-meets-handmaids-caro-claire-0008839042-9780008839048",
+      "stock": 68,
+      "language": "English",
+      "description": "Yesteryear by Caro Claire Burke. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Never Lie",
+      "author": "Freida Mcfadden",
+      "isbn13": "9780143464525",
+      "isbn10": "0143464523",
+      "slug": "never-lie-9780143464525",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780143464525/sm_9780143464525_310120241211539.jpg",
+      "salePrice": 482,
+      "mrp": 550,
+      "discountPercent": 12,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/lie-freida-mcfadden-0143464523-9780143464525",
+      "stock": 45,
+      "language": "English",
+      "description": "Never Lie by Freida Mcfadden. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "White Nights : Select Classics",
+      "author": "Fyodor Dostoevsky",
+      "isbn13": "9789815266306",
+      "isbn10": "9815266306",
+      "slug": "white-nights-select-classics-9789815266306",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789815266306/sm_9789815266306_260920251409136.jpg",
+      "salePrice": 125,
+      "mrp": 125,
+      "discountPercent": 0,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/select-classics-white-nights-fyodor-dostoyevsky-9815266306-9789815266306",
+      "stock": 26,
+      "language": "English",
+      "description": "White Nights : Select Classics by Fyodor Dostoevsky. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Silent Patient",
+      "author": "Alex Michaelides",
+      "isbn13": "9781409181637",
+      "isbn10": "1409181634",
+      "slug": "silent-patient-9781409181637",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781409181637/sm_9781409181637_080820241012194.jpg",
+      "salePrice": 336,
+      "mrp": 399,
+      "discountPercent": 16,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/silent-patient-alex-michaelides-1409181634-9781409181637",
+      "stock": 57,
+      "language": "English",
+      "description": "Silent Patient by Alex Michaelides. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "12 Years : My Messed-Up Love Story",
+      "author": "Chetan Bhagat",
+      "isbn13": "9789369896875",
+      "isbn10": "9369896872",
+      "slug": "12-years-my-messed-up-love-story-9789369896875",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789369896875/sm_9789369896875_010920251204829.jpg",
+      "salePrice": 336,
+      "mrp": 399,
+      "discountPercent": 16,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/years-messed-love-chetan-bhagat-9369896872-9789369896875",
+      "stock": 95,
+      "language": "English",
+      "description": "12 Years : My Messed-Up Love Story by Chetan Bhagat. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "You Were Never Meant To Read This : The Story Dev Never Told You",
+      "author": "Shrijeet Shandilya",
+      "isbn13": "9789377302726",
+      "isbn10": "9377302722",
+      "slug": "you-were-never-meant-to-read-this-the-story-dev-never-told-you-9789377302726",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789377302726/sm_9789377302726_170720261821267.jpg",
+      "salePrice": 254,
+      "mrp": 299,
+      "discountPercent": 15,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/meant-read-story-dev-told-shrijeet-shandilya-9377302722-9789377302726",
+      "stock": 46,
+      "language": "English",
+      "description": "You Were Never Meant To Read This : The Story Dev Never Told You by Shrijeet Shandilya. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Palace Of Illusions",
+      "author": "Chitra Banerjee Divakaruni",
+      "isbn13": "9789386215963",
+      "isbn10": "9386215969",
+      "slug": "palace-of-illusions-9789386215963",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789386215963/sm_9789386215963.jpg",
+      "salePrice": 414,
+      "mrp": 499,
+      "discountPercent": 17,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/palace-illusions-10th-anniversary-edition-chitra-banerjee-9386215969-9789386215963",
+      "stock": 83,
+      "language": "English",
+      "description": "Palace Of Illusions by Chitra Banerjee Divakaruni. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Thousand Splendid Suns",
+      "author": "Khaled Hosseini",
+      "isbn13": "9781408844441",
+      "isbn10": "1408844443",
+      "slug": "thousand-splendid-suns-9781408844441",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781408844441/sm_9781408844441.jpg",
+      "salePrice": 514,
+      "mrp": 599,
+      "discountPercent": 14,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/thousand-splendid-suns-khaled-hosseini-1408844443-9781408844441",
+      "stock": 61,
+      "language": "English",
+      "description": "Thousand Splendid Suns by Khaled Hosseini. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Verity",
+      "author": "Colleen Hoover",
+      "isbn13": "9781408726600",
+      "isbn10": "1408726602",
+      "slug": "verity-9781408726600",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781408726600/sm_9781408726600_080820241012645.jpg",
+      "salePrice": 427,
+      "mrp": 499,
+      "discountPercent": 14,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/verity-colleen-hoover-1408726602-9781408726600",
+      "stock": 20,
+      "language": "English",
+      "description": "Verity by Colleen Hoover. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Butter",
+      "author": "Asako Yuzuki",
+      "isbn13": "9780008710637",
+      "isbn10": "0008710635",
+      "slug": "butter-9780008710637",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780008710637/sm_9780008710637_120620241032887.jpg",
+      "salePrice": 507,
+      "mrp": 599,
+      "discountPercent": 15,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/butter-asako-yuzuki-0008710635-9780008710637",
+      "stock": 57,
+      "language": "English",
+      "description": "Butter by Asako Yuzuki. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Vegetarian",
+      "author": "Han Kang",
+      "isbn13": "9781846276033",
+      "isbn10": "1846276039",
+      "slug": "vegetarian-9781846276033",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781846276033/sm_9781846276033_181120241700755.jpg",
+      "salePrice": 427,
+      "mrp": 499,
+      "discountPercent": 14,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/vegetarian-han-kang-winner-2024-han-kang-1846276039-9781846276033",
+      "stock": 53,
+      "language": "English",
+      "description": "Vegetarian by Han Kang. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Chola Tigers : Avengers Of Somnath",
+      "author": "Amish",
+      "isbn13": "9789369896097",
+      "isbn10": "9369896090",
+      "slug": "chola-tigers-avengers-of-somnath-9789369896097",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789369896097/sm_9789369896097_040820261655620.jpg",
+      "salePrice": 427,
+      "mrp": 499,
+      "discountPercent": 14,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/chola-tigers-avengers-amish-9369896090-9789369896097",
+      "stock": 37,
+      "language": "English",
+      "description": "Chola Tigers : Avengers Of Somnath by Amish. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Secret Of Secrets",
+      "author": "Dan Brown",
+      "isbn13": "9780552178013",
+      "isbn10": "0552178012",
+      "slug": "secret-of-secrets-9780552178013",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780552178013/sm_9780552178013_270720261149812.jpg",
+      "salePrice": 559,
+      "mrp": 699,
+      "discountPercent": 20,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/secret-secrets-brown-0552178012-9780552178013",
+      "stock": 33,
+      "language": "English",
+      "description": "Secret Of Secrets by Dan Brown. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "We Are There For Each Other",
+      "author": "Sagar Chudesara",
+      "isbn13": "9789334416381",
+      "isbn10": "9334416386",
+      "slug": "we-are-there-for-each-other-9789334416381",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789334416381/sm_9789334416381_210220261055419.jpg",
+      "salePrice": 499,
+      "mrp": 499,
+      "discountPercent": 0,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/there-each-other-sagar-chudesara-9334416386-9789334416381",
+      "stock": 21,
+      "language": "English",
+      "description": "We Are There For Each Other by Sagar Chudesara. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Parashurama : The Axe Of Rudra Book 1",
+      "author": "Kevin Missal",
+      "isbn13": "9789370894723",
+      "isbn10": "9370894721",
+      "slug": "parashurama-the-axe-of-rudra-book-1-9789370894723",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789370894723/sm_9789370894723_100720261124118.jpg",
+      "salePrice": 239,
+      "mrp": 299,
+      "discountPercent": 20,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/parashurama-rudra-book-kevin-missal-9370894721-9789370894723",
+      "stock": 43,
+      "language": "English",
+      "description": "Parashurama : The Axe Of Rudra Book 1 by Kevin Missal. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Did You Ever Love Me",
+      "author": "Rithvik Singh",
+      "isbn13": "9789377300500",
+      "isbn10": "9377300509",
+      "slug": "did-you-ever-love-me-9789377300500",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789377300500/sm_9789377300500_130720261033314.jpg",
+      "salePrice": 319,
+      "mrp": 399,
+      "discountPercent": 20,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/ever-love-rithvik-singh-9377300509-9789377300500",
+      "stock": 20,
+      "language": "English",
+      "description": "Did You Ever Love Me by Rithvik Singh. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Project Hail Mary",
+      "author": "Andy Weir",
+      "isbn13": "9781529157468",
+      "isbn10": "1529157463",
+      "slug": "project-hail-mary-9781529157468",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781529157468/sm_9781529157468_131120241136652.jpg",
+      "salePrice": 514,
+      "mrp": 599,
+      "discountPercent": 14,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/project-hail-mary-andy-weir-1529157463-9781529157468",
+      "stock": 88,
+      "language": "English",
+      "description": "Project Hail Mary by Andy Weir. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Better Than The Movies",
+      "author": "Lynn Painter",
+      "isbn13": "9781534467637",
+      "isbn10": "1534467637",
+      "slug": "better-than-the-movies-9781534467637",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781534467637/sm_9781534467637_250320241035427.jpg",
+      "salePrice": 427,
+      "mrp": 499,
+      "discountPercent": 14,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/better-than-movies-lynn-painter-1534467637-9781534467637",
+      "stock": 57,
+      "language": "English",
+      "description": "Better Than The Movies by Lynn Painter. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Little Life",
+      "author": "Hanya Yanagihara",
+      "isbn13": "9781529077216",
+      "isbn10": "1529077214",
+      "slug": "little-life-9781529077216",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781529077216/sm_9781529077216_150620261417916.jpg",
+      "salePrice": 580,
+      "mrp": 699,
+      "discountPercent": 17,
+      "category": "Fiction",
+      "categorySlug": "fiction",
+      "sections": [
+        "Fiction"
+      ],
+      "sectionSlugs": [
+        "fiction"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/little-life-hanya-yanagihara-1529077214-9781529077216",
+      "stock": 36,
+      "language": "English",
+      "description": "Little Life by Hanya Yanagihara. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Harry Potter & The Philosophers Stone 1",
+      "author": "Jk Rowling",
+      "isbn13": "9781408855652",
+      "isbn10": "1408855658",
+      "slug": "harry-potter-the-philosophers-stone-1-9781408855652",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781408855652/sm_9781408855652_290720241309750.jpg",
+      "salePrice": 497,
+      "mrp": 599,
+      "discountPercent": 17,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/harry-potter-philosophers-rowling-1408855658-9781408855652",
+      "stock": 72,
+      "language": "English",
+      "description": "Harry Potter & The Philosophers Stone 1 by Jk Rowling. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "555 Sticker Fun Farm",
+      "author": "Na",
+      "isbn13": "9781787009707",
+      "isbn10": "178700970X",
+      "slug": "555-sticker-fun-farm-9781787009707",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781787009707/sm_9781787009707_181020251034856.jpg",
+      "salePrice": 395,
+      "mrp": 395,
+      "discountPercent": 0,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/555-sticker-fun-farm-na-178700970x-9781787009707",
+      "stock": 27,
+      "language": "English",
+      "description": "555 Sticker Fun Farm by Na. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Percy Jackson & The Lightning Thief",
+      "author": "Rick Riordan",
+      "isbn13": "9780141346809",
+      "isbn10": "0141346809",
+      "slug": "percy-jackson-the-lightning-thief-9780141346809",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780141346809/sm_9780141346809_161020251237827.jpg",
+      "salePrice": 482,
+      "mrp": 550,
+      "discountPercent": 12,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/percy-jackson-olympians-book-1-rick-riordan-0141346809-9780141346809",
+      "stock": 29,
+      "language": "English",
+      "description": "Percy Jackson & The Lightning Thief by Rick Riordan. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Swaish My Hair Hairy Tales Roarsome",
+      "author": "Na",
+      "isbn13": "9781801057615",
+      "isbn10": "1801057613",
+      "slug": "swaish-my-hair-hairy-tales-roarsome-9781801057615",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781801057615/sm_9781801057615_090220261035199.jpg",
+      "salePrice": 360,
+      "mrp": 450,
+      "discountPercent": 20,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/swaish-hair-hairy-tales-roarsome-na-1801057613-9781801057615",
+      "stock": 35,
+      "language": "English",
+      "description": "Swaish My Hair Hairy Tales Roarsome by Na. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "When I Worry",
+      "author": "Lou Treleaven",
+      "isbn13": "9781801055710",
+      "isbn10": "1801055718",
+      "slug": "when-i-worry-9781801055710",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781801055710/sm_9781801055710_100220261747942.jpg",
+      "salePrice": 339,
+      "mrp": 399,
+      "discountPercent": 15,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/worry-lou-treleaven-1801055718-9781801055710",
+      "stock": 30,
+      "language": "English",
+      "description": "When I Worry by Lou Treleaven. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Whos The Roariest Dinosaur",
+      "author": "Na",
+      "isbn13": "9781801057875",
+      "isbn10": "1801057877",
+      "slug": "whos-the-roariest-dinosaur-9781801057875",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781801057875/sm_9781801057875_100220261747806.jpg",
+      "salePrice": 339,
+      "mrp": 399,
+      "discountPercent": 15,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/whos-roariest-dinosaur-lou-treleaven-1801057877-9781801057875",
+      "stock": 95,
+      "language": "English",
+      "description": "Whos The Roariest Dinosaur by Na. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Powerless",
+      "author": "Lauren Roberts",
+      "isbn13": "9781398529489",
+      "isbn10": "1398529486",
+      "slug": "powerless-9781398529489",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781398529489/sm_9781398529489_220720231039775.jpg",
+      "salePrice": 497,
+      "mrp": 599,
+      "discountPercent": 17,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/powerless-lauren-roberts-1398529486-9781398529489",
+      "stock": 29,
+      "language": "English",
+      "description": "Powerless by Lauren Roberts. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Inheritance Games",
+      "author": "Jennifer Lynn Barnes",
+      "isbn13": "9780241476178",
+      "isbn10": "0241476178",
+      "slug": "inheritance-games-9780241476178",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780241476178/sm_9780241476178_190620231015447.jpg",
+      "salePrice": 482,
+      "mrp": 550,
+      "discountPercent": 12,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/inheritance-games-jennifer-lynn-0241476178-9780241476178",
+      "stock": 98,
+      "language": "English",
+      "description": "Inheritance Games by Jennifer Lynn Barnes. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Shark Scramble Spot The Difference : A Pull The Tab Wipe Clean Book 3+",
+      "author": "Na",
+      "isbn13": "9781789588729",
+      "isbn10": "1789588723",
+      "slug": "shark-scramble-spot-the-difference-a-pull-the-tab-wipe-clean-book-3-9781789588729",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781789588729/sm_9781789588729_050220261538730.jpg",
+      "salePrice": 495,
+      "mrp": 495,
+      "discountPercent": 0,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/shark-scramble-spot-difference-pull-na-1789588723-9781789588729",
+      "stock": 49,
+      "language": "English",
+      "description": "Shark Scramble Spot The Difference : A Pull The Tab Wipe Clean Book 3+ by Na. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Good Girls Guide To Murder Book 1",
+      "author": "Holly Jackson",
+      "isbn13": "9780008782092",
+      "isbn10": "0008782091",
+      "slug": "good-girls-guide-to-murder-book-1-9780008782092",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780008782092/sm_9780008782092_050920251616716.jpg",
+      "salePrice": 482,
+      "mrp": 550,
+      "discountPercent": 12,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/good-girls-guide-holly-jackson-0008782091-9780008782092",
+      "stock": 32,
+      "language": "English",
+      "description": "Good Girls Guide To Murder Book 1 by Holly Jackson. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Dhruv & Tara : The Great Indian History Quiz Book 1",
+      "author": "Amish",
+      "isbn13": "9789379852281",
+      "isbn10": "9379852282",
+      "slug": "dhruv-tara-the-great-indian-history-quiz-book-1-9789379852281",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789379852281/sm_9789379852281_110820261400611.jpg",
+      "salePrice": 280,
+      "mrp": 350,
+      "discountPercent": 20,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/dhruv-tara-great-amish-9379852282-9789379852281",
+      "stock": 21,
+      "language": "English",
+      "description": "Dhruv & Tara : The Great Indian History Quiz Book 1 by Amish. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Rowley Jeffersons Awesome Friendly Spooky Stories 2",
+      "author": "Jeff Kinney",
+      "isbn13": "9780241820865",
+      "isbn10": "0241820863",
+      "slug": "rowley-jeffersons-awesome-friendly-spooky-stories-2-9780241820865",
+      "image": "https://cdn01.sapnaonline.com/product_media/9780241820865/sm_9780241820865_210920261816996.jpg",
+      "salePrice": 559,
+      "mrp": 699,
+      "discountPercent": 20,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/rowley-jeffersons-awesome-jeff-kinney-0241820863-9780241820865",
+      "stock": 85,
+      "language": "English",
+      "description": "Rowley Jeffersons Awesome Friendly Spooky Stories 2 by Jeff Kinney. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Cruel Prince : The Folk Of The Air",
+      "author": "Holly Black",
+      "isbn13": "9781471407277",
+      "isbn10": "1471407276",
+      "slug": "cruel-prince-the-folk-of-the-air-9781471407277",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781471407277/sm_9781471407277_080520241254759.jpg",
+      "salePrice": 477,
+      "mrp": 550,
+      "discountPercent": 13,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/cruel-prince-folk-air-holly-black-1471407276-9781471407277",
+      "stock": 97,
+      "language": "English",
+      "description": "Cruel Prince : The Folk Of The Air by Holly Black. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Seek & Find Searchlight : Dinosaurs",
+      "author": "Kit Elliot,Amanda Shufflebotham",
+      "isbn13": "9781801052832",
+      "isbn10": "1801052832",
+      "slug": "seek-find-searchlight-dinosaurs-9781801052832",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781801052832/sm_9781801052832_141220231645843.jpg",
+      "salePrice": 476,
+      "mrp": 595,
+      "discountPercent": 20,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/seek-searchlight-dinosaurs-kit-elliot-1801052832-9781801052832",
+      "stock": 52,
+      "language": "English",
+      "description": "Seek & Find Searchlight : Dinosaurs by Kit Elliot,Amanda Shufflebotham. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Goldilocks & The Three Bears Five 16 Piece Jigsaws",
+      "author": "Na",
+      "isbn13": "9781801056762",
+      "isbn10": "1801056765",
+      "slug": "goldilocks-the-three-bears-five-16-piece-jigsaws-9781801056762",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781801056762/sm_9781801056762_050220261538037.jpg",
+      "salePrice": 450,
+      "mrp": 450,
+      "discountPercent": 0,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/goldilocks-three-bears-five-16-na-1801056765-9781801056762",
+      "stock": 82,
+      "language": "English",
+      "description": "Goldilocks & The Three Bears Five 16 Piece Jigsaws by Na. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Easy Peely : Unicorns Peel Stick Play",
+      "author": "Holly Hall",
+      "isbn13": "9781801059107",
+      "isbn10": "1801059101",
+      "slug": "easy-peely-unicorns-peel-stick-play-9781801059107",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781801059107/sm_9781801059107_100220261747230.jpg",
+      "salePrice": 734,
+      "mrp": 799,
+      "discountPercent": 8,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/easy-peely-unicorns-peel-stick-holly-hall-1801059101-9781801059107",
+      "stock": 27,
+      "language": "English",
+      "description": "Easy Peely : Unicorns Peel Stick Play by Holly Hall. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "How The Chilli Became Hot",
+      "author": "Sudha Murty",
+      "isbn13": "9789377307622",
+      "isbn10": "9377307627",
+      "slug": "how-the-chilli-became-hot-9789377307622",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789377307622/sm_9789377307622_190620261736657.jpg",
+      "salePrice": 200,
+      "mrp": 250,
+      "discountPercent": 20,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/chilli-became-sudha-murty-9377307627-9789377307622",
+      "stock": 42,
+      "language": "English",
+      "description": "How The Chilli Became Hot by Sudha Murty. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Fingerprint Mini Beasts : Big Ideas For Busy Little Fingers",
+      "author": "Na",
+      "isbn13": "9781801052290",
+      "isbn10": "1801052298",
+      "slug": "fingerprint-mini-beasts-big-ideas-for-busy-little-fingers-9781801052290",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781801052290/sm_9781801052290_100220261747538.jpg",
+      "salePrice": 347,
+      "mrp": 495,
+      "discountPercent": 30,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/fingerprint-mini-beasts-big-ideas-na-1801052298-9781801052290",
+      "stock": 30,
+      "language": "English",
+      "description": "Fingerprint Mini Beasts : Big Ideas For Busy Little Fingers by Na. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Seek & Find Searchlight Ocean Animals",
+      "author": "Susie Rae,Diego Vaisberg",
+      "isbn13": "9781801056274",
+      "isbn10": "1801056277",
+      "slug": "seek-find-searchlight-ocean-animals-9781801056274",
+      "image": "https://cdn01.sapnaonline.com/product_media/9781801056274/sm_9781801056274_090220261035619.jpg",
+      "salePrice": 476,
+      "mrp": 595,
+      "discountPercent": 20,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/seel-searchlight-ocean-animals-susie-rae-1801056277-9781801056274",
+      "stock": 94,
+      "language": "English",
+      "description": "Seek & Find Searchlight Ocean Animals by Susie Rae,Diego Vaisberg. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Ikigai For Teens : Finding Your Reason For Being",
+      "author": "Hector Garcia,Francesc Miralles",
+      "isbn13": "9789354712098",
+      "isbn10": "9354712096",
+      "slug": "ikigai-for-teens-finding-your-reason-for-being-9789354712098",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789354712098/sm_9789354712098_280320221053875.jpg",
+      "salePrice": 365,
+      "mrp": 450,
+      "discountPercent": 19,
+      "category": "Young Adult",
+      "categorySlug": "young-adult",
+      "sections": [
+        "Young Adult"
+      ],
+      "sectionSlugs": [
+        "young-adult"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/ikigai-teens-finding-hector-garcia-9354712096-9789354712098",
+      "stock": 38,
+      "language": "English",
+      "description": "Ikigai For Teens : Finding Your Reason For Being by Hector Garcia,Francesc Miralles. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Dopamine Detox",
+      "author": "Thibaut Meurisse",
+      "isbn13": "9788183286015",
+      "isbn10": "8183286011",
+      "slug": "dopamine-detox-9788183286015",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788183286015/sm_9788183286015_151020241051162.jpg",
+      "salePrice": 226,
+      "mrp": 245,
+      "discountPercent": 8,
+      "category": "Featured Author",
+      "categorySlug": "featured-author",
+      "sections": [
+        "Featured Author"
+      ],
+      "sectionSlugs": [
+        "featured-author"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/dopamine-detox-thibaut-meurisse-8183286011-9788183286015",
+      "stock": 35,
+      "language": "English",
+      "description": "Dopamine Detox by Thibaut Meurisse. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Essays To Change Your Life : Think Better Act Smarter Work With Meaning",
+      "author": "Unknown",
+      "isbn13": "9788183286633",
+      "isbn10": "8183286631",
+      "slug": "essays-to-change-your-life-think-better-act-smarter-work-with-meaning-9788183286633",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788183286633/sm_9788183286633_131020251304920.jpg",
+      "salePrice": 356,
+      "mrp": 395,
+      "discountPercent": 10,
+      "category": "Featured Author",
+      "categorySlug": "featured-author",
+      "sections": [
+        "Featured Author"
+      ],
+      "sectionSlugs": [
+        "featured-author"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/essays-change-life-think-better-thibaut-meurisse-8183286631-9788183286633",
+      "stock": 53,
+      "language": "English",
+      "description": "Essays To Change Your Life : Think Better Act Smarter Work With Meaning by Unknown. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Master Your Decisions : A Practical Guide To Make Better Decisions Faster & Stack The Odds In Your F",
+      "author": "Thibaut Meurisse",
+      "isbn13": "9788183286732",
+      "isbn10": "8183286739",
+      "slug": "master-your-decisions-a-practical-guide-to-make-better-decisions-faster-stack-th-9788183286732",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788183286732/sm_9788183286732_291220251403406.jpg",
+      "salePrice": 329,
+      "mrp": 395,
+      "discountPercent": 17,
+      "category": "Featured Author",
+      "categorySlug": "featured-author",
+      "sections": [
+        "Featured Author"
+      ],
+      "sectionSlugs": [
+        "featured-author"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/master-decisions-practical-guide-make-thibaut-meurisse-8183286739-9788183286732",
+      "stock": 52,
+      "language": "English",
+      "description": "Master Your Decisions : A Practical Guide To Make Better Decisions Faster & Stack The Odds In Your F by Thibaut Meurisse. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Master Your Focus : A Practical Guide To Stop Chasing The Next Thing & Focus On What Matters",
+      "author": "Thibaut Meurisse",
+      "isbn13": "9788183286121",
+      "isbn10": "8183286127",
+      "slug": "master-your-focus-a-practical-guide-to-stop-chasing-the-next-thing-focus-on-what-9788183286121",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788183286121/sm_9788183286121_271020231050095.jpg",
+      "salePrice": 320,
+      "mrp": 345,
+      "discountPercent": 7,
+      "category": "Featured Author",
+      "categorySlug": "featured-author",
+      "sections": [
+        "Featured Author"
+      ],
+      "sectionSlugs": [
+        "featured-author"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/master-focus-practical-guide-stop-thibaut-meurisse-8183286127-9788183286121",
+      "stock": 41,
+      "language": "English",
+      "description": "Master Your Focus : A Practical Guide To Stop Chasing The Next Thing & Focus On What Matters by Thibaut Meurisse. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Master Your Emotions : A Practical Guide To Overcome Negativity & Better Manage Your Feelings",
+      "author": "Thibaut Meurisse",
+      "isbn13": "9788183285520",
+      "isbn10": "818328552X",
+      "slug": "master-your-emotions-a-practical-guide-to-overcome-negativity-better-manage-your-9788183285520",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788183285520/sm_9788183285520_170820241111763.jpg",
+      "salePrice": 334,
+      "mrp": 395,
+      "discountPercent": 15,
+      "category": "Featured Author",
+      "categorySlug": "featured-author",
+      "sections": [
+        "Featured Author"
+      ],
+      "sectionSlugs": [
+        "featured-author"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/master-emotions-practical-guide-overcome-thibautmeurisse-818328552x-9788183285520",
+      "stock": 40,
+      "language": "English",
+      "description": "Master Your Emotions : A Practical Guide To Overcome Negativity & Better Manage Your Feelings by Thibaut Meurisse. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Samanyaralli Asamanyaru",
+      "author": "Sudha Murty",
+      "isbn13": "9788128005039",
+      "isbn10": "8128005030",
+      "slug": "samanyaralli-asamanyaru-9788128005039",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788128005039/sm_9788128005039_161120221147071.jpg",
+      "salePrice": 153,
+      "mrp": 170,
+      "discountPercent": 10,
+      "category": "Best Sellers",
+      "categorySlug": "best-sellers",
+      "sections": [
+        "Best Sellers",
+        "Kannada"
+      ],
+      "sectionSlugs": [
+        "best-sellers",
+        "kannada"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/samanyaralli-asamanyaru-sudha-murty-8128005030-9788128005039",
+      "stock": 59,
+      "language": "Kannada",
+      "description": "Samanyaralli Asamanyaru by Sudha Murty. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Bettada Jeeva",
+      "author": "K Shivarama Karanth",
+      "isbn13": "9788128016691",
+      "isbn10": "8128016695",
+      "slug": "bettada-jeeva-9788128016691",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788128016691/sm_9788128016691_170720261708432.jpg",
+      "salePrice": 135,
+      "mrp": 150,
+      "discountPercent": 10,
+      "category": "Best Sellers",
+      "categorySlug": "best-sellers",
+      "sections": [
+        "Best Sellers",
+        "Kannada"
+      ],
+      "sectionSlugs": [
+        "best-sellers",
+        "kannada"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/bettada-jeeva-k-shivarama-8128016695-9788128016691",
+      "stock": 31,
+      "language": "Kannada",
+      "description": "Bettada Jeeva by K Shivarama Karanth. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Mookajjiya Kanasugalu",
+      "author": "K Shivarama Karanth",
+      "isbn13": "9788172850623",
+      "isbn10": "817285062X",
+      "slug": "mookajjiya-kanasugalu-9788172850623",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788172850623/sm_9788172850623.jpg",
+      "salePrice": 225,
+      "mrp": 250,
+      "discountPercent": 10,
+      "category": "Best Sellers",
+      "categorySlug": "best-sellers",
+      "sections": [
+        "Best Sellers",
+        "Kannada"
+      ],
+      "sectionSlugs": [
+        "best-sellers",
+        "kannada"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/mookajjiya-kanasugalu-shivarama-karanth-817285062x-9788172850623",
+      "stock": 43,
+      "language": "Kannada",
+      "description": "Mookajjiya Kanasugalu by K Shivarama Karanth. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Etige Eduretu",
+      "author": "Dv Guruprasad",
+      "isbn13": "9789354560453",
+      "isbn10": "9354560458",
+      "slug": "etige-eduretu-9789354560453",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789354560453/sm_9789354560453_090720221025422.jpg",
+      "salePrice": 203,
+      "mrp": 225,
+      "discountPercent": 10,
+      "category": "Best Sellers",
+      "categorySlug": "best-sellers",
+      "sections": [
+        "Best Sellers",
+        "Kannada"
+      ],
+      "sectionSlugs": [
+        "best-sellers",
+        "kannada"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/etige-eduretu-dv-guruprasad-9354560458-9789354560453",
+      "stock": 73,
+      "language": "Kannada",
+      "description": "Etige Eduretu by Dv Guruprasad. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "C/O Charmadi",
+      "author": "Sachin Theerthahalli",
+      "isbn13": "9789354563713",
+      "isbn10": "9354563716",
+      "slug": "c-o-charmadi-9789354563713",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789354563713/sm_9789354563713_270920251816833.jpg",
+      "salePrice": 99,
+      "mrp": 110,
+      "discountPercent": 10,
+      "category": "Best Sellers",
+      "categorySlug": "best-sellers",
+      "sections": [
+        "Best Sellers",
+        "Kannada"
+      ],
+      "sectionSlugs": [
+        "best-sellers",
+        "kannada"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/c-o-charmudi-sachin-theerthahalli-9354563716-9789354563713",
+      "stock": 33,
+      "language": "Kannada",
+      "description": "C/O Charmadi by Sachin Theerthahalli. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Maarikaadu",
+      "author": "Chandrashekhara Kambara",
+      "isbn13": "9788128020643",
+      "isbn10": "8128020641",
+      "slug": "maarikaadu-9788128020643",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788128020643/sm_9788128020643_251020251016364.jpg",
+      "salePrice": 63,
+      "mrp": 70,
+      "discountPercent": 10,
+      "category": "Best Sellers",
+      "categorySlug": "best-sellers",
+      "sections": [
+        "Best Sellers",
+        "Kannada"
+      ],
+      "sectionSlugs": [
+        "best-sellers",
+        "kannada"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/maarikaadu-chandrashekhara-kambara-8128020641-9788128020643",
+      "stock": 63,
+      "language": "Kannada",
+      "description": "Maarikaadu by Chandrashekhara Kambara. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Sanyasiya Baduku",
+      "author": "K Shivarama Karanth",
+      "isbn13": "9788128024160",
+      "isbn10": "8128024167",
+      "slug": "sanyasiya-baduku-9788128024160",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788128024160/sm_9788128024160_261220221235548.jpg",
+      "salePrice": 144,
+      "mrp": 160,
+      "discountPercent": 10,
+      "category": "Best Sellers",
+      "categorySlug": "best-sellers",
+      "sections": [
+        "Best Sellers",
+        "Kannada"
+      ],
+      "sectionSlugs": [
+        "best-sellers",
+        "kannada"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/sanyasiya-baduku-k-shivarama-8128024167-9788128024160",
+      "stock": 80,
+      "language": "Kannada",
+      "description": "Sanyasiya Baduku by K Shivarama Karanth. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Yerilitada Dariyalli",
+      "author": "Sudha Murty",
+      "isbn13": "9789386381835",
+      "isbn10": "9386381834",
+      "slug": "yerilitada-dariyalli-9789386381835",
+      "image": "https://cdn01.sapnaonline.com/product_media/9789386381835/sm_9789386381835_160420261534236.jpg",
+      "salePrice": 144,
+      "mrp": 160,
+      "discountPercent": 10,
+      "category": "Best Sellers",
+      "categorySlug": "best-sellers",
+      "sections": [
+        "Best Sellers",
+        "Kannada"
+      ],
+      "sectionSlugs": [
+        "best-sellers",
+        "kannada"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/yerilitada-dariyalli-sudha-murty-9386381834-9789386381835",
+      "stock": 55,
+      "language": "Kannada",
+      "description": "Yerilitada Dariyalli by Sudha Murty. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Chomana Dudi",
+      "author": "K Shivarama Karanth",
+      "isbn13": "9788128022081",
+      "isbn10": "8128022083",
+      "slug": "chomana-dudi-9788128022081",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788128022081/sm_9788128022081_041020251058341.jpg",
+      "salePrice": 90,
+      "mrp": 100,
+      "discountPercent": 10,
+      "category": "Best Sellers",
+      "categorySlug": "best-sellers",
+      "sections": [
+        "Best Sellers",
+        "Kannada"
+      ],
+      "sectionSlugs": [
+        "best-sellers",
+        "kannada"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/chomana-dudi-k-shivarama-8128022083-9788128022081",
+      "stock": 21,
+      "language": "Kannada",
+      "description": "Chomana Dudi by K Shivarama Karanth. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    },
+    {
+      "title": "Maigallana Dinachariyinda",
+      "author": "K Shivarama Karanth",
+      "isbn13": "9788128024191",
+      "isbn10": "8128024191",
+      "slug": "maigallana-dinachariyinda-9788128024191",
+      "image": "https://cdn01.sapnaonline.com/product_media/9788128024191/sm_9788128024191_150620261402145.jpg",
+      "salePrice": 86,
+      "mrp": 95,
+      "discountPercent": 10,
+      "category": "Best Sellers",
+      "categorySlug": "best-sellers",
+      "sections": [
+        "Best Sellers",
+        "Kannada"
+      ],
+      "sectionSlugs": [
+        "best-sellers",
+        "kannada"
+      ],
+      "sourceUrl": "https://www.sapnaonline.com/books/maigallana-dinachariyinda-k-shivarama-8128024191-9788128024191",
+      "stock": 31,
+      "language": "Kannada",
+      "description": "Maigallana Dinachariyinda by K Shivarama Karanth. Available at Salem Book House — India's trusted bookstore experience for Salem readers."
+    }
+  ]
+}
