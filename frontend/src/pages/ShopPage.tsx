@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import { loadCategories } from '../api/cache';
 import ProductCard from '../components/ProductCard';
 import { EmptyState, LoadingState } from '../components/States';
 
@@ -36,9 +37,8 @@ export default function ShopPage() {
   }, [categorySlug]);
 
   useEffect(() => {
-    api
-      .get('/categories')
-      .then(({ data }) => setCategories(data.categories || data || []))
+    loadCategories()
+      .then((data) => setCategories(data.categories || data.tree || []))
       .catch(() => setCategories([]));
   }, []);
 
@@ -46,7 +46,7 @@ export default function ShopPage() {
     let alive = true;
     setLoading(true);
     setError('');
-    const params = {
+    const params: Record<string, string | number> = {
       page,
       limit: 24,
       sort,

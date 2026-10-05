@@ -3,9 +3,9 @@ import { sanitizeImageUrl } from './covers.js';
 /** Normalize DB book row (+ optional categories / rating) to API list/detail shape. */
 export function mapBook(row, categories = [], rating = null) {
   if (!row) return null;
-  const imageUrl = sanitizeImageUrl(row.image_url, row.slug);
+  const imageUrl = sanitizeImageUrl(row.image_url, row.slug, row.title);
   const images = Array.isArray(row.images)
-    ? row.images.map((u) => sanitizeImageUrl(u, row.slug))
+    ? row.images.map((u) => sanitizeImageUrl(u, row.slug, row.title))
     : undefined;
   return {
     id: row.id,

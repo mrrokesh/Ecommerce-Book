@@ -1,10 +1,29 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import api, { setAuthToken, clearAuthToken, getAuthToken } from '../api/client';
+import type { User } from '../types';
 
-const AuthContext = createContext(null);
+type AuthValue = {
+  user: User | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<unknown>;
+  register: (payload: Record<string, unknown>) => Promise<unknown>;
+  logout: () => Promise<void>;
+  refresh: () => Promise<void>;
+};
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+const AuthContext = createContext<AuthValue | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -15,7 +34,7 @@ export function AuthProvider({ children }) {
     }
     try {
       const { data } = await api.get('/auth/me');
-      setUser(data.user || data || null);
+      setUser((data.user || data || null) as User | null);
     } catch {
       clearAuthToken();
       setUser(null);
@@ -28,17 +47,17 @@ export function AuthProvider({ children }) {
     refresh();
   }, [refresh]);
 
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (email: string, password: string) => {
     const { data } = await api.post('/auth/login', { email, password });
     if (data.token) setAuthToken(data.token);
-    setUser(data.user || data);
+    setUser((data.user || data) as User);
     return data;
   }, []);
 
-  const register = useCallback(async (payload) => {
+  const register = useCallback(async (payload: Record<string, unknown>) => {
     const { data } = await api.post('/auth/register', payload);
     if (data.token) setAuthToken(data.token);
-    setUser(data.user || data);
+    setUser((data.user || data) as User);
     return data;
   }, []);
 

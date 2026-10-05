@@ -95,7 +95,7 @@ export function startErpAutoSync() {
     syncErpProducts()
       .then((r) => console.log(`ERP sync: ${r.upserted} products upserted`))
       .catch((err) => console.warn('ERP sync failed:', err.message || err));
-  setTimeout(tick, 30_000).unref();
+  setTimeout(tick, 120_000).unref();
   setInterval(tick, minutes * 60_000).unref();
 }
 

@@ -1,9 +1,18 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import type { Book } from '../types';
 import { bookAuthor, bookImage, discountLabel, formatPrice } from '../utils/format';
 import StarRating from './StarRating';
 
-export default function ProductCard({ book, showAddToCart = false, compact = false }) {
+export default function ProductCard({
+  book,
+  showAddToCart = false,
+  compact = false,
+}: {
+  book?: Book | null;
+  showAddToCart?: boolean;
+  compact?: boolean;
+}) {
   const { addItem } = useCart();
   if (!book) return null;
 

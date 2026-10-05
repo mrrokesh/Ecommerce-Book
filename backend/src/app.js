@@ -67,15 +67,9 @@ app.get('/api/covers/:file', async (req, res) => {
   const { renderCoverSvg } = await import('./utils/covers.js');
   const slug = String(req.params.file || '').replace(/\.svg$/i, '');
   if (!slug) return res.status(404).end();
-  let title = slug.replace(/-/g, ' ');
-  try {
-    const { rows } = await query(`SELECT title FROM books WHERE slug = $1`, [slug]);
-    if (rows[0]) title = rows[0].title;
-  } catch {
-    /* still return a cover */
-  }
+  const title = slug.replace(/-/g, ' ');
   res.set('Content-Type', 'image/svg+xml; charset=utf-8');
-  res.set('Cache-Control', 'public, max-age=86400');
+  res.set('Cache-Control', 'public, max-age=604800, immutable');
   return res.send(renderCoverSvg(title, slug));
 });
 

@@ -12,8 +12,14 @@ export function coverPath(slug) {
   return `/api/covers/${s}.svg`;
 }
 
-export function sanitizeImageUrl(url, slug) {
-  if (!url || isBlockedImage(url)) return coverPath(slug);
+export function coverDataUri(title, slug) {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(renderCoverSvg(title, slug))}`;
+}
+
+export function sanitizeImageUrl(url, slug, title) {
+  if (!url || isBlockedImage(url) || String(url).includes('/api/covers/')) {
+    return coverDataUri(title || slug, slug);
+  }
   return url;
 }
 

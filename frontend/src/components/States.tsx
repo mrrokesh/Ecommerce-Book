@@ -1,4 +1,6 @@
-export function LoadingState({ label = 'Loading…' }) {
+import type { ReactNode } from 'react';
+
+export function LoadingState({ label = 'Loading…' }: { label?: string }) {
   return (
     <div className="state-box">
       <div className="spinner" aria-hidden="true" />
@@ -7,7 +9,15 @@ export function LoadingState({ label = 'Loading…' }) {
   );
 }
 
-export function EmptyState({ title = 'Nothing here yet', message, action }) {
+export function EmptyState({
+  title = 'Nothing here yet',
+  message,
+  action,
+}: {
+  title?: string;
+  message?: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="state-box empty">
       <h3>{title}</h3>

@@ -1,4 +1,12 @@
-export default function StarRating({ value = 0, size = 'md', showValue = false }) {
+export default function StarRating({
+  value = 0,
+  size = 'md',
+  showValue = false,
+}: {
+  value?: number;
+  size?: string;
+  showValue?: boolean;
+}) {
   const rating = Math.max(0, Math.min(5, Number(value) || 0));
   const full = Math.floor(rating);
   const half = rating - full >= 0.4 && rating - full < 0.9;

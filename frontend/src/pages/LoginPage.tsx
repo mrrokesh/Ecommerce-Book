@@ -16,7 +16,7 @@ export default function LoginPage() {
     setBusy(true);
     setError('');
     try {
-      const data = await login(email, password);
+      const data = (await login(email, password)) as { user?: { role?: string }; role?: string };
       const user = data.user || data;
       const fallback = user?.role === 'admin' ? '/admin/products' : '/account';
       navigate(location.state?.from || fallback);

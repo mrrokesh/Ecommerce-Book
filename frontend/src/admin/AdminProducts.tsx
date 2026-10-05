@@ -15,7 +15,9 @@ export default function AdminProducts() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
-  const [erp, setErp] = useState({ configured: false });
+  const [erp, setErp] = useState<{ configured: boolean; lastSync?: { at?: string; ok?: boolean; error?: string } }>({
+    configured: false,
+  });
   const [syncing, setSyncing] = useState(false);
 
   async function load(nextPage = page) {

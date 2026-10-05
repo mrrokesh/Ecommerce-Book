@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import api from '../api/client';
+import type { CategoryNode } from '../types';
+import { loadCategories } from '../api/cache';
 
 const NAV = [
   { label: 'BOOKS', to: '/shop/books', slug: 'books' },
@@ -16,16 +17,15 @@ const NAV = [
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const { itemCount } = useCart();
-  const [tree, setTree] = useState([]);
+  const [tree, setTree] = useState<CategoryNode[]>([]);
 
   useEffect(() => {
-    api
-      .get('/categories')
-      .then(({ data }) => setTree(data.tree || []))
+    loadCategories()
+      .then((data) => setTree(data.tree || []))
       .catch(() => setTree([]));
   }, []);
 
-  function childrenFor(slug) {
+  function childrenFor(slug: string) {
     const node = tree.find((c) => c.slug === slug);
     return node?.children || [];
   }

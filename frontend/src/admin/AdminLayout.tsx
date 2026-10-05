@@ -23,7 +23,7 @@ export default function AdminLayout() {
 
   if (loading) return <LoadingState />;
   if (!isAuthenticated) return <Navigate to="/login" state={{ from: loc.pathname }} replace />;
-  if (user.role !== 'admin') {
+  if (user?.role !== 'admin') {
     return <EmptyState title="Admin only" message="Sign in as admin@salembookhouse.com" />;
   }
 

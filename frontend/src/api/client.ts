@@ -58,32 +58,33 @@ function getOrCreateSessionId() {
 const api = axios.create({
   baseURL: resolveApiBase(),
   withCredentials: true,
+  timeout: 20000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 api.interceptors.request.use((config) => {
-  config.headers['x-session-id'] = getOrCreateSessionId();
+  config.headers.set('x-session-id', getOrCreateSessionId());
   const token = getAuthToken();
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.set('Authorization', `Bearer ${token}`);
   }
   if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
-    delete config.headers['Content-Type'];
+    config.headers.delete('Content-Type');
   }
   return config;
 });
 
 api.interceptors.response.use(
   (response) => {
-    const body = response.data;
+    const body = response.data as { success?: boolean; data?: unknown };
     if (body && typeof body === 'object' && 'success' in body && 'data' in body) {
       response.data = body.data;
     }
     return response;
   },
-  (error) => {
+  (error: { response?: { data?: { error?: string; message?: string } }; message?: string }) => {
     const msg = error.response?.data?.error || error.response?.data?.message || error.message;
     return Promise.reject(new Error(typeof msg === 'string' ? msg : 'Request failed'));
   }

@@ -7,11 +7,11 @@ import { formatPrice } from '../utils/format';
 import { EmptyState, LoadingState } from '../components/States';
 
 function loadRazorpay() {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     if (window.Razorpay) return resolve();
     const s = document.createElement('script');
     s.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    s.onload = resolve;
+    s.onload = () => resolve();
     s.onerror = () => reject(new Error('Could not load Razorpay'));
     document.body.appendChild(s);
   });
@@ -92,8 +92,8 @@ export default function CheckoutPage() {
     setGiftOff(data.credit || 0);
   }
 
-  function buildPayload(extra = {}) {
-    const payload = {
+  function buildPayload(extra: Record<string, unknown> = {}) {
+    const payload: Record<string, unknown> = {
       paymentMethod: form.paymentMethod,
       sessionId: getSessionId(),
       couponCode: form.couponCode || undefined,
@@ -117,7 +117,7 @@ export default function CheckoutPage() {
     return payload;
   }
 
-  async function place(extra) {
+  async function place(extra: Record<string, unknown> = {}) {
     const { data } = await api.post('/orders', buildPayload(extra));
     await clear();
     await refresh();
@@ -143,14 +143,19 @@ export default function CheckoutPage() {
       if (form.paymentMethod !== 'cod' && due > 0 && payMode === 'razorpay') {
         const { data: intent } = await api.post('/payments/create-order', { amount: due });
         await loadRazorpay();
-        await new Promise((resolve, reject) => {
-          const rzp = new window.Razorpay({
+        await new Promise<void>((resolve, reject) => {
+          const Rzp = window.Razorpay;
+          if (!Rzp) {
+            reject(new Error('Razorpay unavailable'));
+            return;
+          }
+          const rzp = new Rzp({
             key: rzpKey,
             order_id: intent.orderId,
             amount: intent.amount,
             currency: intent.currency || 'INR',
             name: 'Salem Book House',
-            handler: async (response) => {
+            handler: async (response: Record<string, string>) => {
               try {
                 await place({
                   razorpayOrderId: response.razorpay_order_id,
@@ -165,7 +170,7 @@ export default function CheckoutPage() {
             },
             modal: { ondismiss: () => reject(new Error('Payment cancelled')) },
             prefill: { name: form.fullName, email: form.email || user?.email, contact: form.phone },
-          });
+          } as Record<string, unknown>);
           rzp.open();
         });
         return;
