@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://ecommerce-book-zb12.onrender.com/api/:path*"
+      "destination": "https://ecommerce-book-rbl2.onrender.com/api/:path*"
     },
     {
       "source": "/uploads/:path*",
-      "destination": "https://ecommerce-book-zb12.onrender.com/uploads/:path*"
+      "destination": "https://ecommerce-book-rbl2.onrender.com/uploads/:path*"
     },
     { "source": "/((?!api/|uploads/).*)", "destination": "/index.html" }
   ]

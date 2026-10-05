@@ -11,7 +11,14 @@ export default function AdminDashboard() {
     api
       .get('/admin/summary')
       .then(({ data }) => setSummary(data))
-      .catch((err) => setError(err.message));
+      .catch((err) => {
+        const msg = err.message || 'Failed to load dashboard';
+        if (/auth/i.test(msg)) {
+          setError('Session is not reaching the API. Sign out, wait for the latest Vercel deploy, then sign in again.');
+        } else {
+          setError(msg);
+        }
+      });
   }, []);
 
   if (error) return <p className="erp-error">{error}</p>;

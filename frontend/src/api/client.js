@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const SESSION_KEY = 'sbh_session_id';
 const TOKEN_KEY = 'sbh_token';
-const RENDER_API = 'https://ecommerce-book-zb12.onrender.com/api';
+const RENDER_API = 'https://ecommerce-book-rbl2.onrender.com/api';
 
 function resolveApiBase() {
   let raw = String(import.meta.env.VITE_API_URL || '').trim();
@@ -14,15 +14,20 @@ function resolveApiBase() {
   return `${raw}/api`;
 }
 
+let memoryToken = '';
+
 export function getAuthToken() {
+  if (memoryToken) return memoryToken;
   try {
-    return localStorage.getItem(TOKEN_KEY) || '';
+    memoryToken = localStorage.getItem(TOKEN_KEY) || '';
   } catch {
-    return '';
+    memoryToken = '';
   }
+  return memoryToken;
 }
 
 export function setAuthToken(token) {
+  memoryToken = token || '';
   try {
     if (token) localStorage.setItem(TOKEN_KEY, token);
     else localStorage.removeItem(TOKEN_KEY);
@@ -33,16 +38,6 @@ export function setAuthToken(token) {
 
 export function clearAuthToken() {
   setAuthToken('');
-}
-
-function resolveApiBase() {
-  let raw = String(import.meta.env.VITE_API_URL || '').trim();
-  if (!raw) {
-    return import.meta.env.PROD ? RENDER_API : '/api';
-  }
-  raw = raw.replace(/\/$/, '');
-  if (raw.endsWith('/api')) return raw;
-  return `${raw}/api`;
 }
 
 function getOrCreateSessionId() {
