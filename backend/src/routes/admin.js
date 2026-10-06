@@ -809,7 +809,7 @@ router.get('/erp/status', (_req, res) => {
     data: {
       configured: isErpConfigured(),
       lastSync: lastErpSync(),
-      host: process.env.ERP_MCP_URL || process.env.ERP_API_URL || 'https://muruga-api-bjmm.onrender.com/mcp',
+      host: process.env.ERP_API_URL || process.env.ERP_MCP_URL || 'https://muruga-api-bjmm.onrender.com',
     },
   });
 });

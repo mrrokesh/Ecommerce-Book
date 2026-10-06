@@ -1,10 +1,12 @@
-const DEFAULT_URL = 'https://muruga-api-bjmm.onrender.com/mcp';
+const DEFAULT_ORIGIN = 'https://muruga-api-bjmm.onrender.com';
 
 function erpConfig() {
-  const url = (process.env.ERP_MCP_URL || process.env.ERP_API_URL || DEFAULT_URL).replace(/\/$/, '');
-  const mcpUrl = url.endsWith('/mcp') ? url : `${url}/mcp`;
+  const raw = (process.env.ERP_API_URL || process.env.ERP_MCP_URL || DEFAULT_ORIGIN).replace(/\/$/, '');
+  const origin = raw.replace(/\/mcp$/i, '') || DEFAULT_ORIGIN;
+  const mcpUrl = `${origin}/mcp`;
+  const storeUrl = `${origin}/api/store/products`;
   const apiKey = (process.env.ERP_API_KEY || process.env.ERP_MCP_KEY || '').trim();
-  return { mcpUrl, apiKey };
+  return { origin, mcpUrl, storeUrl, apiKey };
 }
 
 function parseRpc(text) {
@@ -126,6 +128,10 @@ function parseToolText(result) {
 }
 
 export async function fetchErpProducts() {
+  const store = await fetchStoreProducts();
+  if (store.products.length || store.ok) {
+    return { tool: 'GET /api/store/products', tools: ['store-products'], products: store.products };
+  }
   const { session, tools } = await listErpTools();
   const names = tools.map((t) => t.name || t);
   const preferred =
@@ -137,4 +143,55 @@ export async function fetchErpProducts() {
   const result = await callErpTool(session, preferred, { limit: 500, page: 1, pageSize: 500 });
   const products = parseToolText(result);
   return { tool: preferred, tools: names, products };
+}
+
+async function fetchStoreProducts() {
+  const { storeUrl, apiKey } = erpConfig();
+  if (!apiKey) throw new Error('ERP_API_KEY is not set');
+  const products = [];
+  let page = 1;
+  let pages = 1;
+  do {
+    const url = new URL(storeUrl);
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('limit', '100');
+    let res;
+    try {
+      res = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          'X-Api-Key': apiKey,
+          Authorization: `Bearer ${apiKey}`,
+        },
+        signal: AbortSignal.timeout(90_000),
+      });
+    } catch (err) {
+      if (err?.name === 'TimeoutError') throw new Error('ERP store API did not respond within 90s. Try again in a minute.');
+      throw new Error(`Could not reach ERP store API: ${err?.message || err}`);
+    }
+    const text = await res.text();
+    if (res.status === 401 || res.status === 403) {
+      throw new Error('ERP rejected the store API key. Use an mrerp_ key from ERP store settings in ERP_API_KEY.');
+    }
+    if (!res.ok) {
+      throw new Error(`ERP store HTTP ${res.status}: ${text.slice(0, 240)}`);
+    }
+    let body = {};
+    try {
+      body = JSON.parse(text);
+    } catch {
+      throw new Error('ERP store returned non-JSON');
+    }
+    const batch = Array.isArray(body.products)
+      ? body.products
+      : Array.isArray(body.data)
+        ? body.data
+        : Array.isArray(body.items)
+          ? body.items
+          : [];
+    products.push(...batch);
+    pages = Number(body.pages) || 1;
+    page += 1;
+  } while (page <= pages && page <= 50);
+  return { ok: true, products };
 }

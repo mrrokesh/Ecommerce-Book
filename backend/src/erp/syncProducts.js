@@ -22,6 +22,16 @@ function num(v, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+async function attachCategory(bookId, slug) {
+  if (!bookId || !slug) return;
+  const { rows } = await query(`SELECT id FROM categories WHERE slug = $1`, [slug]);
+  if (!rows[0]) return;
+  await query(
+    `INSERT INTO book_categories (book_id, category_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+    [bookId, rows[0].id]
+  );
+}
+
 async function upsertAuthor(name) {
   const { rows } = await query(
     `INSERT INTO authors (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
@@ -34,16 +44,17 @@ export function mapErpProduct(raw) {
   const title = String(pick(raw, ['name', 'title', 'product_name', 'productName', 'item_name'], '')).trim();
   const sku = String(pick(raw, ['sku', 'barcode', 'item_code', 'code', 'hsn'], '')).trim();
   const erpId = String(pick(raw, ['id', '_id', 'product_id', 'uuid'], sku || title)).trim();
-  const mrp = num(pick(raw, ['mrp', 'max_price', 'price_mrp', 'list_price'], 0));
-  const sale = num(pick(raw, ['selling_price', 'sale_price', 'price', 'unit_price'], mrp));
-  const stock = num(pick(raw, ['stock', 'qty', 'quantity', 'available_qty'], 0));
+  const mrp = num(pick(raw, ['mrp', 'compare_price', 'max_price', 'price_mrp', 'list_price'], 0));
+  const sale = num(pick(raw, ['effective_price', 'price', 'selling_price', 'sale_price', 'unit_price'], mrp));
+  const stock = num(pick(raw, ['stock_quantity', 'stock', 'qty', 'quantity', 'available_qty'], 0));
   const rawImage = String(
-    pick(raw, ['image', 'image_url', 'imageUrl', 'photo', 'thumbnail', 'cover'], '')
+    pick(raw, ['cover_image', 'image', 'image_url', 'imageUrl', 'photo', 'thumbnail', 'cover'], '')
   );
   const image = /sapna/i.test(rawImage) ? '/placeholder-book.svg' : rawImage || '/placeholder-book.svg';
-  const description = String(pick(raw, ['description', 'details', 'notes'], '') || '');
+  const description = String(pick(raw, ['description', 'short_description', 'details', 'notes'], '') || '');
   const authorName = String(pick(raw, ['brand', 'author', 'author_name', 'manufacturer'], 'Salem Book House'));
   const publisher = String(pick(raw, ['publisher', 'brand', 'vendor'], 'Salem Book House'));
+  const categorySlug = String(pick(raw, ['category_slug', 'categorySlug'], '')).trim();
   return {
     erpId,
     title,
@@ -56,6 +67,7 @@ export function mapErpProduct(raw) {
     description,
     authorName,
     publisher,
+    categorySlug,
     active: raw.active !== false && raw.is_active !== false && raw.status !== 'inactive',
   };
 }
@@ -101,7 +113,7 @@ export function startErpAutoSync() {
 
 async function runSync() {
   if (!isErpConfigured()) {
-    throw new Error('Set ERP_API_KEY (MCP key from ERP → /settings/mcp)');
+    throw new Error('Set ERP_API_KEY (store key, header X-Api-Key)');
   }
   const { tool, tools, products } = await fetchErpProducts();
   let upserted = 0;
@@ -116,7 +128,9 @@ async function runSync() {
     const discount =
       p.mrp > p.salePrice && p.mrp > 0 ? Math.round(((p.mrp - p.salePrice) / p.mrp) * 100) : 0;
     const existing = await query(`SELECT id, slug FROM books WHERE erp_id = $1`, [p.erpId]);
+    let bookId;
     if (existing.rows[0]) {
+      bookId = existing.rows[0].id;
       await query(
         `UPDATE books SET
            title = $1, author_id = $2, author_name = $3, sku = $4, isbn13 = COALESCE($5, isbn13),
@@ -138,16 +152,17 @@ async function runSync() {
           p.stock,
           p.publisher,
           p.active,
-          existing.rows[0].id,
+          bookId,
         ]
       );
     } else {
       const slug = `${slugify(p.title) || 'product'}-${Date.now().toString(36)}${upserted}`;
-      await query(
+      const inserted = await query(
         `INSERT INTO books (
            title, slug, author_id, author_name, sku, isbn13, description, image_url,
            mrp, sale_price, discount_percent, stock, publisher, product_type, is_active, erp_id
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'book',$14,$15)`,
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'book',$14,$15)
+         RETURNING id`,
         [
           p.title,
           slug,
@@ -166,7 +181,9 @@ async function runSync() {
           p.erpId,
         ]
       );
+      bookId = inserted.rows[0].id;
     }
+    await attachCategory(bookId, p.categorySlug);
     upserted += 1;
   }
   return { tool, tools, fetched: products.length, upserted, skipped };
