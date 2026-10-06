@@ -3,9 +3,10 @@ import { sanitizeImageUrl } from './covers.js';
 /** Normalize DB book row (+ optional categories / rating) to API list/detail shape. */
 export function mapBook(row, categories = [], rating = null) {
   if (!row) return null;
-  const imageUrl = sanitizeImageUrl(row.image_url, row.slug, row.title);
+  const isbn = row.isbn13 || row.isbn10;
+  const imageUrl = sanitizeImageUrl(row.image_url, row.slug, row.title, isbn);
   const images = Array.isArray(row.images)
-    ? row.images.map((u) => sanitizeImageUrl(u, row.slug, row.title))
+    ? row.images.map((u) => sanitizeImageUrl(u, row.slug, row.title, isbn))
     : undefined;
   return {
     id: row.id,

@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { bookAuthor, bookImage, discountLabel, formatPrice } from '../utils/format';
+import { bookAuthor, bookImage, discountLabel, formatPrice, onCoverError } from '../utils/format';
 import { EmptyState, LoadingState } from '../components/States';
 import StarRating from '../components/StarRating';
 import ReviewsSection from '../components/ReviewsSection';
@@ -143,9 +143,7 @@ export default function BookDetailPage() {
               <img
                 src={activeImage || bookImage(book)}
                 alt={book.title}
-                onError={(e) => {
-                  e.currentTarget.src = '/placeholder-book.svg';
-                }}
+                onError={(e) => onCoverError(e, book)}
               />
             </div>
             {(book.images || []).length > 1 ? (

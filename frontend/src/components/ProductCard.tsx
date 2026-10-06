@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import type { Book } from '../types';
-import { bookAuthor, bookImage, discountLabel, formatPrice } from '../utils/format';
+import { bookAuthor, bookImage, discountLabel, formatPrice, onCoverError } from '../utils/format';
 import StarRating from './StarRating';
 
 export default function ProductCard({
@@ -50,9 +50,7 @@ export default function ProductCard({
             src={img}
             alt={title}
             loading="lazy"
-            onError={(e) => {
-              e.currentTarget.src = '/placeholder-book.svg';
-            }}
+            onError={(e) => onCoverError(e, book)}
           />
         </div>
         <h3 className="product-title">{title}</h3>
