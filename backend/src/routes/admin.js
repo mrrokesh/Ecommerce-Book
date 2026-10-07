@@ -27,6 +27,7 @@ const ORDER_STATUSES = [
   'delivered',
   'cancelled',
   'return_requested',
+  'return_approved',
   'returned',
 ];
 const RESTOCK_STATUSES = ['cancelled', 'returned'];
@@ -383,6 +384,10 @@ function mapAdminOrder(o) {
     email: o.user_email || o.guest_email || null,
     couponCode: o.coupon_code,
     giftCardCode: o.gift_card_code,
+    awb: o.awb || null,
+    courier: o.courier || null,
+    trackingUrl: o.tracking_url || null,
+    invoiceNumber: o.invoice_number || null,
     itemCount: o.item_count != null ? Number(o.item_count) : undefined,
     createdAt: o.created_at,
     updatedAt: o.updated_at,

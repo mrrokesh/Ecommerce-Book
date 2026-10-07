@@ -237,6 +237,44 @@ p {
   text-decoration: underline;
 }
 
+.promo-strip-pin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem 1.25rem;
+}
+
+.header-pin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 500;
+}
+
+.header-pin input {
+  width: 5.5rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid #d4c49a;
+  border-radius: 4px;
+}
+
+.header-pin button {
+  padding: 0.2rem 0.55rem;
+  border: 0;
+  border-radius: 4px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.header-pin .pin-msg {
+  font-size: 0.75rem;
+  color: var(--navy-dark);
+}
+
 /* Search bar — navy with book pattern */
 .search-bar {
   background:
@@ -1986,6 +2024,42 @@ textarea:focus {
 
 .mega-menu a:hover {
   background: #f6f1e8;
+}
+
+.mega-menu-cols {
+  flex-direction: row;
+  min-width: min(720px, 90vw);
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.mega-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  flex: 1;
+}
+
+.mega-col .mega-parent {
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.author-day-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 800px) {
+  .author-day-grid {
+    grid-template-columns: 1fr;
+  }
+  .mega-menu-cols {
+    flex-direction: column;
+    min-width: 220px;
+  }
 }
 
 .gallery-thumbs {

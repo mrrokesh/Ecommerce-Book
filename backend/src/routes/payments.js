@@ -15,6 +15,20 @@ export function verifyRazorpaySignature({ orderId, paymentId, signature }) {
   return expected === signature;
 }
 
+/** Refund a captured Razorpay payment. Returns null when Razorpay is not configured. */
+export async function refundRazorpayPayment(paymentId, amountRupees) {
+  if (!razorpayEnabled() || !paymentId) return { skipped: true, reason: 'not_configured' };
+  const rzp = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+  const amount = Math.round(Number(amountRupees) * 100);
+  const refund = await rzp.payments.refund(paymentId, {
+    amount: Number.isFinite(amount) && amount > 0 ? amount : undefined,
+  });
+  return { skipped: false, refundId: refund.id, status: refund.status };
+}
+
 router.get('/config', (_req, res) => {
   const live = razorpayEnabled();
   return res.json({

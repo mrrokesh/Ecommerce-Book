@@ -49,6 +49,27 @@ function OrderDetail({ id, onChanged, onClose }) {
     }
   }
 
+  async function createShipment() {
+    setBusy(true);
+    setError('');
+    try {
+      const awbMatch = note.match(/AWB[:\s]*([A-Z0-9-]+)/i);
+      const { data } = await api.post(`/shipping/admin/orders/${id}/ship`, {
+        awb: awbMatch?.[1] || undefined,
+        trackingUrl: undefined,
+      });
+      const refreshed = await api.get(`/admin/orders/${id}`);
+      setOrder(refreshed.data.order);
+      onChanged(refreshed.data.order);
+      setNote('');
+      if (data.result?.message) setError(''); // clear
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!order) {
     return (
       <div className="erp-card erp-detail">
@@ -73,7 +94,35 @@ function OrderDetail({ id, onChanged, onClose }) {
         {order.email ? ` · ${order.email}` : ''}
         <br />
         <span className="muted">{order.shippingAddress}</span>
+        <br />
+        {order.courier || order.awb ? (
+          <span className="muted">
+            Courier: {order.courier || '—'} · AWB: {order.awb || 'pending'}
+            {order.trackingUrl ? (
+              <>
+                {' '}
+                ·{' '}
+                <a href={order.trackingUrl} target="_blank" rel="noreferrer">
+                  Track
+                </a>
+              </>
+            ) : null}
+          </span>
+        ) : (
+          <span className="muted">No shipment yet</span>
+        )}
+        {order.invoiceNumber ? (
+          <>
+            <br />
+            <a href={`/api/orders/${order.id}/invoice`} target="_blank" rel="noreferrer">
+              Invoice {order.invoiceNumber}
+            </a>
+          </>
+        ) : null}
       </p>
+      <button type="button" className="erp-btn primary" disabled={busy} onClick={createShipment}>
+        {order.awb ? 'Refresh / re-ship' : 'Create shipment'}
+      </button>
       <table className="erp-table">
         <tbody>
           {order.items.map((it) => (

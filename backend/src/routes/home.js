@@ -130,9 +130,42 @@ router.get('/', async (_req, res) => {
       featured: a.featured,
     }));
 
-    const topCharts = meta.topCharts.map((chart) => ({
+    // Author of the day: rotate featured authors by day-of-year.
+    const authorOfDay =
+      featuredAuthors.length > 0
+        ? featuredAuthors[
+            Math.floor(
+              (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+            ) % featuredAuthors.length
+          ]
+        : null;
+
+    let authorOfDayBooks = [];
+    if (authorOfDay?.id) {
+      const ab = await query(
+        `SELECT * FROM books WHERE author_id = $1 AND is_active = TRUE ORDER BY discount_percent DESC, id LIMIT 6`,
+        [authorOfDay.id]
+      );
+      authorOfDayBooks = ab.rows.map((r) => mapBook(r));
+    }
+
+    // Ranked top charts: bestsellers by order volume when available.
+    const ranked = await query(
+      `SELECT c.slug, c.name, COUNT(oi.id)::int AS sales
+       FROM categories c
+       JOIN book_categories bc ON bc.category_id = c.id
+       JOIN order_items oi ON oi.book_id = bc.book_id
+       JOIN orders o ON o.id = oi.order_id AND o.status NOT IN ('cancelled')
+       WHERE c.slug = ANY($1::text[])
+       GROUP BY c.slug, c.name
+       ORDER BY sales DESC`,
+      [meta.topCharts.map((c) => c.slug)]
+    ).catch(() => ({ rows: [] }));
+
+    const topCharts = (ranked.rows.length ? ranked.rows : meta.topCharts).map((chart) => ({
       name: chart.name,
       slug: chart.slug,
+      sales: chart.sales || 0,
       books: (bySlug.get(chart.slug) || []).slice(0, 8),
     }));
 
@@ -150,6 +183,9 @@ router.get('/', async (_req, res) => {
         topCharts,
         homepageSections,
         featuredAuthors,
+        authorOfDay: authorOfDay
+          ? { ...authorOfDay, books: authorOfDayBooks }
+          : null,
         exams,
       },
     };

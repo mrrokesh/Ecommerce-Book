@@ -5,6 +5,7 @@ import TopCharts from '../components/TopCharts';
 import ProductCarousel from '../components/ProductCarousel';
 import ExamGrid from '../components/ExamGrid';
 import FeaturedAuthors from '../components/FeaturedAuthors';
+import AuthorOfDay from '../components/AuthorOfDay';
 import { EmptyState, LoadingState } from '../components/States';
 
 type HomePayload = {
@@ -14,6 +15,7 @@ type HomePayload = {
   topCharts?: unknown[];
   authors?: unknown[];
   featuredAuthors?: unknown[];
+  authorOfDay?: unknown;
   exams?: unknown[];
 };
 
@@ -70,6 +72,7 @@ export default function HomePage() {
   const sections = data?.sections || data?.homepageSections || [];
   const topCharts = data?.topCharts || [];
   const authors = data?.authors || data?.featuredAuthors || [];
+  const authorOfDay = data?.authorOfDay;
   const exams = data?.exams || [];
 
   return (
@@ -91,6 +94,7 @@ export default function HomePage() {
       {!sections.length ? (
         <EmptyState title="No featured sections" message="Books will appear here once the catalog is seeded." />
       ) : null}
+      <AuthorOfDay author={authorOfDay} />
       <ExamGrid exams={exams} />
       <FeaturedAuthors authors={authors} />
     </div>

@@ -48,12 +48,20 @@ export default function CheckoutPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [pinHint, setPinHint] = useState('');
+  const [pinFee, setPinFee] = useState<number | null>(null);
+  const [pinOk, setPinOk] = useState(true);
 
   useEffect(() => {
     api.get('/payments/config').then(({ data }) => {
       setPayMode(data.mode || 'simulated');
       setRzpKey(data.keyId || '');
     });
+    try {
+      const saved = localStorage.getItem('sbh_pincode');
+      if (saved) setForm((f) => ({ ...f, pincode: saved }));
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   useEffect(() => {
@@ -76,8 +84,17 @@ export default function CheckoutPage() {
     try {
       const { data } = await api.get(`/pincode/${pin}`);
       setPinHint(data.message || '');
+      setPinOk(data.serviceable !== false);
+      setPinFee(typeof data.shipping === 'number' ? data.shipping : null);
+      try {
+        localStorage.setItem('sbh_pincode', pin);
+      } catch {
+        /* ignore */
+      }
     } catch {
       setPinHint('');
+      setPinOk(true);
+      setPinFee(null);
     }
   }
 
@@ -138,7 +155,9 @@ export default function CheckoutPage() {
     setBusy(true);
     setError('');
     try {
-      const shippingFee = Math.max(0, subtotal - couponOff) >= 499 ? 0 : 40;
+      if (!pinOk) throw new Error('We cannot deliver to this pincode');
+      const shippingFee =
+        Math.max(0, subtotal - couponOff) >= 499 ? 0 : pinFee != null ? pinFee : 40;
       const due = Math.max(0, subtotal - couponOff + shippingFee - giftOff);
       if (form.paymentMethod !== 'cod' && due > 0 && payMode === 'razorpay') {
         const { data: intent } = await api.post('/payments/create-order', { amount: due });
@@ -195,7 +214,8 @@ export default function CheckoutPage() {
     );
   }
 
-  const shipping = Math.max(0, subtotal - couponOff) >= 499 ? 0 : 40;
+  const shipping =
+    Math.max(0, subtotal - couponOff) >= 499 ? 0 : pinFee != null ? pinFee : 40;
   const total = Math.max(0, subtotal - couponOff + shipping - giftOff);
   const payOptions = [
     { id: 'cod', label: 'Cash on Delivery' },

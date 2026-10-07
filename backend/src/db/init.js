@@ -126,6 +126,38 @@ const MIGRATIONS = [
     data BYTEA NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS awb VARCHAR(80)`,
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS courier VARCHAR(40)`,
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_url TEXT`,
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS carrier_shipment_id VARCHAR(120)`,
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipped_at TIMESTAMPTZ`,
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(40)`,
+  `ALTER TABLE books ADD COLUMN IF NOT EXISTS is_preorder BOOLEAN NOT NULL DEFAULT FALSE`,
+  `ALTER TABLE books ADD COLUMN IF NOT EXISTS available_from DATE`,
+  `ALTER TABLE reviews ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE`,
+  `ALTER TABLE reviews ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT FALSE`,
+  `ALTER TABLE reviews ADD COLUMN IF NOT EXISTS order_id UUID REFERENCES orders(id) ON DELETE SET NULL`,
+  `CREATE TABLE IF NOT EXISTS shipping_partners (
+    code VARCHAR(40) PRIMARY KEY,
+    name VARCHAR(80) NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+    credentials JSONB NOT NULL DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS shipping_settings (
+    id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    auto_create BOOLEAN NOT NULL DEFAULT FALSE,
+    default_partner VARCHAR(40) NOT NULL DEFAULT 'manual',
+    pickup_pincode VARCHAR(10) DEFAULT '636001',
+    pickup_address TEXT,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS site_settings (
+    key VARCHAR(80) PRIMARY KEY,
+    value JSONB NOT NULL DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
 ];
 
 export async function initSchema() {

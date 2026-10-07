@@ -9,6 +9,19 @@ router.get('/:pin', async (req, res) => {
     if (pin.length !== 6) {
       return res.status(400).json({ success: false, error: 'Enter a valid 6-digit pincode' });
     }
+    // Block clearly invalid / test ranges if PINCODE_STRICT=1
+    if (process.env.PINCODE_STRICT === '1' && /^(000000|111111|999999)$/.test(pin)) {
+      return res.json({
+        success: true,
+        data: {
+          serviceable: false,
+          pincode: pin,
+          message: 'Sorry, we do not deliver to this pincode yet.',
+          shipping: 0,
+          etaDays: null,
+        },
+      });
+    }
     const { rows } = await query(`SELECT * FROM pincodes WHERE pincode = $1`, [pin]);
     if (rows[0]) {
       const p = rows[0];

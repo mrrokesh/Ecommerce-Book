@@ -65,6 +65,17 @@ export default function TrackPage() {
           <p>
             {order.shippingName} · {order.shippingAddress}
           </p>
+          {order.awb || order.courier || order.trackingUrl ? (
+            <p className="muted">
+              {order.courier ? <>Courier: {order.courier} · </> : null}
+              {order.awb ? <>AWB: {order.awb} · </> : null}
+              {order.trackingUrl ? (
+                <a href={order.trackingUrl} target="_blank" rel="noreferrer">
+                  Live tracking
+                </a>
+              ) : null}
+            </p>
+          ) : null}
           <ul>
             {(order.items || []).map((it) => (
               <li key={it.id}>

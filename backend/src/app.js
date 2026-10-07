@@ -22,7 +22,10 @@ import pagesRoutes from './routes/pages.js';
 import adminRoutes from './routes/admin.js';
 import paymentsRoutes from './routes/payments.js';
 import couponsRoutes from './routes/coupons.js';
+import shippingRoutes from './routes/shipping.js';
+import seoRoutes from './routes/seo.js';
 import { query } from './db/pool.js';
+import { ensureShippingTables } from './shipping/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -102,6 +105,10 @@ app.use('/api/pages', pagesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/coupons', couponsRoutes);
+app.use('/api/shipping', shippingRoutes);
+app.use('/api', seoRoutes);
+
+ensureShippingTables().catch((err) => console.warn('shipping tables:', err.message));
 
 const distDir = path.join(__dirname, '../../frontend/dist');
 if (fs.existsSync(distDir)) {

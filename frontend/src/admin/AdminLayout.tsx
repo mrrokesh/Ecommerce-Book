@@ -12,6 +12,8 @@ const TITLES = {
   '/admin/marketing': 'Banners & coupons',
   '/admin/pages': 'CMS pages',
   '/admin/emails': 'Email outbox',
+  '/admin/shipping': 'Shipping partners',
+  '/admin/reviews': 'Reviews',
 };
 
 export default function AdminLayout() {
@@ -47,6 +49,9 @@ export default function AdminLayout() {
           <div className="erp-group">Sales</div>
           <NavLink to="/admin/orders">Orders</NavLink>
           <NavLink to="/admin/customers">Customers</NavLink>
+          <NavLink to="/admin/reviews">Reviews</NavLink>
+          <div className="erp-group">Fulfilment</div>
+          <NavLink to="/admin/shipping">Shipping partners</NavLink>
           <div className="erp-group">Content</div>
           <NavLink to="/admin/marketing">Banners & coupons</NavLink>
           <NavLink to="/admin/pages">CMS pages</NavLink>

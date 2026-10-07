@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import type { CategoryNode } from '../types';
 import { loadCategories } from '../api/cache';
+import api from '../api/client';
 
 const NAV = [
   { label: 'BOOKS', to: '/shop/books', slug: 'books' },
@@ -11,6 +12,8 @@ const NAV = [
   { label: 'STATIONERY', to: '/shop/stationery', badge: 'NEW', slug: 'stationery' },
   { label: 'TOYS', to: '/shop/toys', slug: 'toys' },
   { label: 'COMPETITIVE EXAMS', to: '/shop/competitive-exams', slug: 'competitive-exams' },
+  { label: 'PRE-ORDER', to: '/shop/pre-order', slug: 'pre-order' },
+  { label: 'NEW ARRIVALS', to: '/shop/new-arrivals', slug: 'new-arrivals' },
   { label: 'E GIFT CARD', to: '/shop/e-gift-card', slug: 'e-gift-card' },
 ];
 
@@ -18,6 +21,14 @@ export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const { itemCount } = useCart();
   const [tree, setTree] = useState<CategoryNode[]>([]);
+  const [pin, setPin] = useState(() => {
+    try {
+      return localStorage.getItem('sbh_pincode') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [pinMsg, setPinMsg] = useState('');
 
   useEffect(() => {
     loadCategories()
@@ -28,6 +39,26 @@ export default function Header() {
   function childrenFor(slug: string) {
     const node = tree.find((c) => c.slug === slug);
     return node?.children || [];
+  }
+
+  async function checkPin(e: FormEvent) {
+    e.preventDefault();
+    const clean = pin.replace(/\D/g, '');
+    if (clean.length !== 6) {
+      setPinMsg('Enter 6-digit pincode');
+      return;
+    }
+    try {
+      const { data } = await api.get(`/pincode/${clean}`);
+      setPinMsg(data.message || (data.serviceable ? 'Deliverable' : 'Not serviceable'));
+      try {
+        localStorage.setItem('sbh_pincode', clean);
+      } catch {
+        /* ignore */
+      }
+    } catch (err: any) {
+      setPinMsg(err.message || 'Check failed');
+    }
   }
 
   return (
@@ -51,11 +82,18 @@ export default function Header() {
                   {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
                 </NavLink>
                 {kids.length ? (
-                  <div className="mega-menu">
+                  <div className="mega-menu mega-menu-cols">
                     {kids.map((c) => (
-                      <Link key={c.slug} to={`/shop/${c.slug}`}>
-                        {c.name}
-                      </Link>
+                      <div key={c.slug} className="mega-col">
+                        <Link to={`/shop/${c.slug}`} className="mega-parent">
+                          {c.name}
+                        </Link>
+                        {(c.children || []).slice(0, 8).map((g: CategoryNode) => (
+                          <Link key={g.slug} to={`/shop/${g.slug}`}>
+                            {g.name}
+                          </Link>
+                        ))}
+                      </div>
                     ))}
                   </div>
                 ) : null}
@@ -94,8 +132,21 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="promo-strip">
+      <div className="promo-strip promo-strip-pin">
         <Link to="/shop/books">Express Delivery · Coupon WELCOME10 · Shop Now!</Link>
+        <form className="header-pin" onSubmit={checkPin}>
+          <label htmlFor="header-pin">Pincode</label>
+          <input
+            id="header-pin"
+            inputMode="numeric"
+            maxLength={6}
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="636001"
+          />
+          <button type="submit">Check</button>
+          {pinMsg ? <span className="pin-msg">{pinMsg}</span> : null}
+        </form>
       </div>
     </header>
   );

@@ -41,6 +41,9 @@ export default function Footer() {
           <Link to="/track">Track your Order</Link>
           <Link to="/stores">Retail Stores</Link>
           <Link to="/exams">Competitive Exams</Link>
+          <Link to="/publishers">Publishers</Link>
+          <Link to="/shop/pre-order">Pre-Order</Link>
+          <Link to="/shop/new-arrivals">New Arrivals</Link>
         </div>
         <div>
           <h4>Support</h4>

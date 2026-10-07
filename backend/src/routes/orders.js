@@ -3,8 +3,9 @@ import { Router } from 'express';
 import { query, getPool } from '../db/pool.js';
 import { optionalAuth, requireAuth } from '../middleware/auth.js';
 import { findActiveCoupon, couponDiscount } from './coupons.js';
-import { razorpayEnabled, verifyRazorpaySignature } from './payments.js';
+import { razorpayEnabled, verifyRazorpaySignature, refundRazorpayPayment } from './payments.js';
 import { sendMail } from '../mailer.js';
+import { notifyOrderEvent } from '../notify/index.js';
 
 const router = Router();
 
@@ -35,6 +36,12 @@ function mapOrder(o, items = [], events = [], giftCodes = []) {
     shippingName: o.shipping_name,
     shippingPhone: o.shipping_phone,
     shippingAddress: o.shipping_address,
+    guestEmail: o.guest_email || null,
+    awb: o.awb || null,
+    courier: o.courier || null,
+    trackingUrl: o.tracking_url || null,
+    shippedAt: o.shipped_at || null,
+    invoiceNumber: o.invoice_number || null,
     createdAt: o.created_at,
     items,
     events,
@@ -399,6 +406,9 @@ router.post('/', async (req, res) => {
     }
 
     await client.query(`DELETE FROM cart_items WHERE cart_id = $1`, [cart.id]);
+    const invNo = `INV-${onum.replace('SBH-', '')}`;
+    await client.query(`UPDATE orders SET invoice_number = $2 WHERE id = $1`, [order.id, invNo]);
+    order.invoice_number = invNo;
     await client.query('COMMIT');
 
     const notifyEmail = req.user?.email || guestEmail;
@@ -409,9 +419,14 @@ router.post('/', async (req, res) => {
       sendMail({
         to: notifyEmail,
         subject: `Salem Book House order ${onum}`,
-        text: `Thank you. Order ${onum} total ₹${total}. Track with this order number and phone ${shippingPhone}.${giftLine}`,
+        text: `Thank you. Order ${onum} total ₹${total}. Invoice ${invNo}. Track with this order number and phone ${shippingPhone}.${giftLine}`,
       }).catch(() => {});
     }
+
+    // Fire-and-forget auto shipment when a live courier is configured.
+    import('../shipping/service.js')
+      .then(({ maybeAutoShip }) => maybeAutoShip(order.id))
+      .catch(() => {});
 
     return res.status(201).json({
       success: true,
@@ -533,6 +548,21 @@ router.patch('/:id/cancel', requireAuth, async (req, res) => {
       reason ? `Cancelled by customer: ${reason}` : 'Cancelled by customer before dispatch. Stock restored.',
     ]);
     await client.query('COMMIT');
+    if (paymentStatus === 'refunded' && order.razorpay_payment_id) {
+      refundRazorpayPayment(order.razorpay_payment_id, order.total)
+        .then((r) =>
+          query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,'cancelled',$2)`, [
+            order.id,
+            r.skipped ? 'Refund marked (Razorpay not configured).' : `Razorpay refund ${r.refundId}`,
+          ])
+        )
+        .catch((err) => console.warn('refund:', err.message));
+    }
+    notifyOrderEvent({
+      order: { ...rows[0], orderNumber: rows[0].order_number, guestEmail: rows[0].guest_email, shippingPhone: rows[0].shipping_phone },
+      event: 'Cancelled',
+      note: reason || 'Order cancelled',
+    }).catch(() => {});
     const itemsRes = await query(`SELECT * FROM order_items WHERE order_id = $1`, [order.id]);
     const eventsRes = await query(
       `SELECT status, note, created_at FROM order_events WHERE order_id = $1 ORDER BY created_at`,
@@ -583,18 +613,48 @@ router.patch('/:id/return', requireAuth, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Tell us why you want to return this order' });
     }
     await client.query('BEGIN');
+    // Request first; admin/auto-approve restocks + refunds.
+    const { rows } = await client.query(
+      `UPDATE orders SET status = 'return_requested', updated_at = NOW() WHERE id = $1 RETURNING *`,
+      [order.id]
+    );
+    await client.query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,'return_requested',$2)`, [
+      order.id,
+      `Return requested: ${reason}`,
+    ]);
+    // Auto-approve for client handoff: restock + refund immediately.
     await restockOrder(client, order.id);
     const paymentStatus = nextPaymentStatus(order, 'return');
-    const { rows } = await client.query(
+    const final = await client.query(
       `UPDATE orders SET status = 'returned', payment_status = $1, stock_restored = TRUE, updated_at = NOW()
        WHERE id = $2 RETURNING *`,
       [paymentStatus, order.id]
     );
     await client.query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,'returned',$2)`, [
       order.id,
-      `Return accepted: ${reason}. Pickup will be arranged. Stock restored.`,
+      'Return approved. Stock restored. Refund processing.',
     ]);
     await client.query('COMMIT');
+    if (paymentStatus === 'refunded' && order.razorpay_payment_id) {
+      refundRazorpayPayment(order.razorpay_payment_id, order.total)
+        .then((r) =>
+          query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,'returned',$2)`, [
+            order.id,
+            r.skipped ? 'Refund marked (configure Razorpay for live refunds).' : `Razorpay refund ${r.refundId}`,
+          ])
+        )
+        .catch((err) => console.warn('refund:', err.message));
+    }
+    notifyOrderEvent({
+      order: {
+        ...final.rows[0],
+        orderNumber: final.rows[0].order_number,
+        guestEmail: final.rows[0].guest_email,
+        shippingPhone: final.rows[0].shipping_phone,
+      },
+      event: 'Return approved',
+      note: reason,
+    }).catch(() => {});
     const itemsRes = await query(`SELECT * FROM order_items WHERE order_id = $1`, [order.id]);
     const eventsRes = await query(
       `SELECT status, note, created_at FROM order_events WHERE order_id = $1 ORDER BY created_at`,
@@ -604,7 +664,7 @@ router.patch('/:id/return', requireAuth, async (req, res) => {
       success: true,
       data: {
         order: mapOrder(
-          rows[0],
+          final.rows[0],
           mapItems(itemsRes.rows),
           eventsRes.rows.map((e) => ({ status: e.status, note: e.note, createdAt: e.created_at }))
         ),
@@ -620,6 +680,27 @@ router.patch('/:id/return', requireAuth, async (req, res) => {
     return res.status(500).json({ success: false, error: 'Could not start return' });
   } finally {
     client.release();
+  }
+});
+
+router.get('/:id/invoice', optionalAuth, async (req, res) => {
+  try {
+    const { rows } = await query(`SELECT * FROM orders WHERE id = $1`, [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Order not found' });
+    const o = rows[0];
+    const ownerOk = req.user && (req.user.role === 'admin' || req.user.id === o.user_id);
+    if (!ownerOk) {
+      return res.status(403).json({ success: false, error: 'Sign in to download this invoice' });
+    }
+    const items = await query(`SELECT * FROM order_items WHERE order_id = $1`, [o.id]);
+    const { renderInvoiceHtml } = await import('../invoice/pdf.js');
+    const html = renderInvoiceHtml(o, items.rows);
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.set('Content-Disposition', `inline; filename="${o.invoice_number || o.order_number}.html"`);
+    return res.send(html);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: 'Invoice failed' });
   }
 });
 
