@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
-import { bookImage, formatPrice } from '../utils/format';
+import CoverImage from '../components/CoverImage';
+import { formatPrice } from '../utils/format';
 
 export default function AdminProducts() {
   const [rows, setRows] = useState([]);
@@ -160,7 +161,7 @@ export default function AdminProducts() {
           {rows.map((b) => (
             <tr key={b.id}>
               <td>
-                <img className="erp-thumb" src={bookImage(b)} alt="" />
+                <CoverImage className="erp-thumb" book={b} alt="" />
               </td>
               <td>{b.sku || b.isbn13 || `SBH-${b.id}`}</td>
               <td>

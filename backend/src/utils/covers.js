@@ -19,11 +19,18 @@ export function coverDataUri(title, slug) {
 export function isbnCoverUrl(isbn) {
   const digits = String(isbn || '').replace(/\D/g, '');
   if (digits.length !== 10 && digits.length !== 13) return '';
-  return `https://covers.openlibrary.org/b/isbn/${digits}-L.jpg`;
+  // Resolved + validated on our API (skips OL/Google blank skeletons).
+  return `/api/covers/isbn/${digits}`;
 }
 
 export function sanitizeImageUrl(url, slug, title, isbn) {
-  if (url && !isBlockedImage(url) && !String(url).includes('/api/covers/')) {
+  if (
+    url &&
+    !isBlockedImage(url) &&
+    !String(url).includes('/api/covers/') &&
+    !/covers\.openlibrary\.org/i.test(url) &&
+    !/books\.google\.com\/books\/content/i.test(url)
+  ) {
     return url;
   }
   return isbnCoverUrl(isbn) || '';

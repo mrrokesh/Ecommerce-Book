@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
-import { bookImage, formatPrice } from '../utils/format';
+import CoverImage from '../components/CoverImage';
+import { formatPrice } from '../utils/format';
 
 const STATUSES = [
   'placed',
@@ -128,7 +129,7 @@ function OrderDetail({ id, onChanged, onClose }) {
           {order.items.map((it) => (
             <tr key={it.id}>
               <td>
-                <img className="erp-thumb" src={bookImage(it)} alt="" />
+                <CoverImage className="erp-thumb" book={it} alt="" />
               </td>
               <td>
                 {it.title}

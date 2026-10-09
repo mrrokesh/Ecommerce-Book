@@ -66,10 +66,19 @@ app.get('/uploads/media/:id', async (req, res) => {
 });
 app.use('/uploads', express.static(uploadsDir));
 
+app.get('/api/covers/isbn/:isbn', async (req, res) => {
+  const { resolveIsbnCover } = await import('./utils/coverFetch.js');
+  const result = await resolveIsbnCover(req.params.isbn);
+  if (!result) return res.status(404).end();
+  res.set('Content-Type', result.mime);
+  res.set('Cache-Control', 'public, max-age=604800');
+  return res.send(result.buffer);
+});
+
 app.get('/api/covers/:file', async (req, res) => {
   const { renderCoverSvg } = await import('./utils/covers.js');
   const slug = String(req.params.file || '').replace(/\.svg$/i, '');
-  if (!slug) return res.status(404).end();
+  if (!slug || slug === 'isbn') return res.status(404).end();
   const title = slug.replace(/-/g, ' ');
   res.set('Content-Type', 'image/svg+xml; charset=utf-8');
   res.set('Cache-Control', 'public, max-age=604800, immutable');

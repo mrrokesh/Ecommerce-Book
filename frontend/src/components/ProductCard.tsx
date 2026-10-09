@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import type { Book } from '../types';
-import { bookAuthor, bookImage, discountLabel, formatPrice, onCoverError } from '../utils/format';
+import { bookAuthor, discountLabel, formatPrice } from '../utils/format';
+import CoverImage from './CoverImage';
 import StarRating from './StarRating';
 
 export default function ProductCard({
@@ -26,7 +27,6 @@ export default function ProductCard({
     book.discountPercent ??
     (mrp > sale && mrp > 0 ? Math.round(((mrp - sale) / mrp) * 100) : 0);
   const off = discountLabel(discount);
-  const img = bookImage(book);
   const rating = Number(book.averageRating ?? book.average_rating ?? 0);
   const reviewCount = Number(book.reviewCount ?? book.review_count ?? 0);
   const bestseller = book.isBestseller || book.is_bestseller;
@@ -46,12 +46,7 @@ export default function ProductCard({
       <Link to={`/books/${slug}`} className="product-card-link">
         <div className="product-cover">
           {bestseller ? <span className="badge-bestseller">Best Seller</span> : null}
-          <img
-            src={img}
-            alt={title}
-            loading="lazy"
-            onError={(e) => onCoverError(e, book)}
-          />
+          <CoverImage book={book} alt={title} loading="lazy" />
         </div>
         <h3 className="product-title">{title}</h3>
         <p className="product-author">by {author}{book.publisher ? `, ${book.publisher}` : ''}</p>

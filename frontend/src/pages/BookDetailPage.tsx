@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { bookAuthor, bookImage, discountLabel, formatPrice, onCoverError } from '../utils/format';
+import CoverImage from '../components/CoverImage';
+import { bookAuthor, discountLabel, formatPrice } from '../utils/format';
 import { EmptyState, LoadingState } from '../components/States';
 import StarRating from '../components/StarRating';
 import ReviewsSection from '../components/ReviewsSection';
@@ -42,8 +43,11 @@ export default function BookDetailPage() {
         setRatingSummary(data.ratingSummary || null);
         setReviews(data.reviews || []);
         setRecommendations(data.recommendations || { similar: [], fromAuthor: [] });
-        const imgs = (data.book || data).images || [];
-        setActiveImage(imgs[0] || (data.book || data).imageUrl || '');
+        const b = data.book || data;
+        const imgs = (b.images || []).filter(
+          (u) => u && !/sapnaonline|covers\.openlibrary\.org|\/api\/covers\//i.test(String(u)),
+        );
+        setActiveImage(imgs[0] || '');
       })
       .catch((err) => {
         if (!alive) return;
@@ -140,19 +144,21 @@ export default function BookDetailPage() {
           <div className="book-detail-media">
             <div className="book-detail-cover">
               {book.isBestseller ? <span className="badge-bestseller">Best Seller</span> : null}
-              <img
-                src={activeImage || bookImage(book)}
-                alt={book.title}
-                onError={(e) => onCoverError(e, book)}
-              />
+              {activeImage ? (
+                <img key={activeImage} src={activeImage} alt={book.title} />
+              ) : (
+                <CoverImage book={book} alt={book.title} loading="eager" />
+              )}
             </div>
-            {(book.images || []).length > 1 ? (
+            {(book.images || []).filter((u) => u && !/sapnaonline|covers\.openlibrary\.org|\/api\/covers\//i.test(String(u))).length > 1 ? (
               <div className="gallery-thumbs">
-                {book.images.map((src) => (
-                  <button type="button" key={src} className={src === activeImage ? 'active' : ''} onClick={() => setActiveImage(src)}>
-                    <img src={src} alt="" />
-                  </button>
-                ))}
+                {book.images
+                  .filter((u) => u && !/sapnaonline|covers\.openlibrary\.org|\/api\/covers\//i.test(String(u)))
+                  .map((src) => (
+                    <button type="button" key={src} className={src === activeImage ? 'active' : ''} onClick={() => setActiveImage(src)}>
+                      <img src={src} alt="" />
+                    </button>
+                  ))}
               </div>
             ) : null}
           </div>

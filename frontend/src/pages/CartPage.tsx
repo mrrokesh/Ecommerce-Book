@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { bookAuthor, bookImage, formatPrice } from '../utils/format';
+import CoverImage from '../components/CoverImage';
+import { bookAuthor, formatPrice } from '../utils/format';
 import { EmptyState, LoadingState } from '../components/States';
 
 export default function CartPage() {
@@ -33,7 +34,7 @@ export default function CartPage() {
             return (
               <div key={id} className="cart-row">
                 <Link to={`/books/${book.slug}`} className="cart-thumb">
-                  <img src={bookImage(book)} alt={book.title} />
+                  <CoverImage book={book} alt={book.title} />
                 </Link>
                 <div className="cart-info">
                   <Link to={`/books/${book.slug}`}>
