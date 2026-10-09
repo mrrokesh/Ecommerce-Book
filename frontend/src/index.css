@@ -2325,3 +2325,36 @@ textarea:focus {
     transition: none;
   }
 }
+
+/* Uniform cover size: every cover fills the same 2:3 box regardless of source dimensions. */
+.product-cover {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.product-cover img,
+.product-cover .cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.product-card-link {
+  min-width: 0;
+}
+
+.product-title {
+  min-height: 2.6em;
+}
+
+.carousel-item {
+  flex: 0 0 176px;
+  min-width: 0;
+}
