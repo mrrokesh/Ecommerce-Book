@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import fs from 'fs';
 import path from 'path';
@@ -35,22 +37,39 @@ const origins = String(process.env.CLIENT_URL || 'http://localhost:5173')
   .map((s) => s.trim())
   .filter(Boolean);
 
+app.set('trust proxy', 1);
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' }, contentSecurityPolicy: false }));
+
+function originAllowed(origin) {
+  if (!origin || origins.includes(origin)) return true;
+  try {
+    const host = new URL(origin).hostname;
+    // Vercel preview deployments of this project only.
+    if (/^ecommerce-book-one(-[a-z0-9-]+)?\.vercel\.app$/i.test(host)) return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
 app.use(
   cors({
-    origin: (origin, cb) => {
-      if (!origin || origins.includes(origin) || origins.includes('*')) return cb(null, true);
-      try {
-        const host = new URL(origin).hostname;
-        if (host.endsWith('.vercel.app')) return cb(null, true);
-      } catch {
-        /* ignore */
-      }
-      return cb(null, origins[0] || true);
-    },
+    origin: (origin, cb) => cb(null, originAllowed(origin)),
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'x-session-id'],
   })
 );
+// CSRF guard: state-changing requests from a foreign browser origin are refused.
+app.use((req, res, next) => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  const origin = req.get('origin');
+  if (origin && !originAllowed(origin) && !req.path.startsWith('/api/shipping/webhooks/')) {
+    return res.status(403).json({ success: false, error: 'Origin not allowed' });
+  }
+  return next();
+});
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false });
+app.use(['/api/auth/login', '/api/auth/register', '/api/auth/forgot', '/api/auth/reset'], authLimiter);
 app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
 

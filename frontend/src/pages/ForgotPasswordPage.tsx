@@ -5,7 +5,6 @@ import api from '../api/client';
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [msg, setMsg] = useState('');
-  const [path, setPath] = useState('');
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e) {
@@ -14,7 +13,6 @@ export default function ForgotPasswordPage() {
     try {
       const { data } = await api.post('/auth/forgot', { email });
       setMsg(data.message);
-      setPath(data.resetPath || '');
     } catch (err) {
       setMsg(err.message);
     } finally {
@@ -31,11 +29,6 @@ export default function ForgotPasswordPage() {
           <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
         {msg ? <p className="form-msg">{msg}</p> : null}
-        {path ? (
-          <p>
-            Demo reset link: <Link to={path}>{path}</Link>
-          </p>
-        ) : null}
         <button className="btn btn-navy block" disabled={busy}>
           Send reset link
         </button>

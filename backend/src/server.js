@@ -10,6 +10,14 @@ import { query } from './db/pool.js';
 import { initSchema } from './db/init.js';
 import { seedDatabase } from './db/seed.js';
 
+if (process.env.NODE_ENV === 'production') {
+  const s = String(process.env.JWT_SECRET || '');
+  if (s.length < 24 || /change-me|dev-secret/i.test(s)) {
+    console.error('Refusing to start: set a strong JWT_SECRET (24+ chars) in production.');
+    process.exit(1);
+  }
+}
+
 const PORT = Number(process.env.PORT) || 5000;
 
 async function setupDatabase() {

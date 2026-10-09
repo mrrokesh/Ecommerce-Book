@@ -114,13 +114,22 @@ async function insertProduct({
 }
 
 export async function seedExtras() {
-  const adminHash = await bcrypt.hash('Admin@123', 10);
-  await query(
-    `INSERT INTO users (name, email, password_hash, role, phone)
-     VALUES ($1,$2,$3,'admin',$4)
-     ON CONFLICT (email) DO UPDATE SET role = 'admin', password_hash = EXCLUDED.password_hash`,
-    ['Store Admin', 'admin@salembookhouse.com', adminHash, '04271234567']
-  );
+  // Never overwrite an existing admin password. In production the account is
+  // only created when ADMIN_PASSWORD is provided.
+  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@salembookhouse.com').toLowerCase();
+  const adminPassword =
+    process.env.ADMIN_PASSWORD || (process.env.NODE_ENV === 'production' ? '' : 'Admin@123');
+  if (adminPassword) {
+    const adminHash = await bcrypt.hash(adminPassword, 10);
+    await query(
+      `INSERT INTO users (name, email, password_hash, role, phone)
+       VALUES ($1,$2,$3,'admin',$4)
+       ON CONFLICT (email) DO UPDATE SET role = 'admin'`,
+      ['Store Admin', adminEmail, adminHash, '04271234567']
+    );
+  } else {
+    console.warn('ADMIN_PASSWORD not set: skipping admin account creation.');
+  }
 
   await ensureCategory('Books', 'books', null, null, 1);
   await ensureCategory('Fiction', 'fiction', 'books', null, 2);

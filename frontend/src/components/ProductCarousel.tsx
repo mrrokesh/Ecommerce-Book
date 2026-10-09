@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from './ProductCard';
+import { CarouselSkeleton } from './States';
 
 export default function ProductCarousel({
   title,
@@ -38,7 +39,7 @@ export default function ProductCarousel({
         </div>
 
         {loading ? (
-          <p className="state-msg">Loading books…</p>
+          <CarouselSkeleton />
         ) : !books.length ? (
           <p className="state-msg empty">{emptyText}</p>
         ) : (

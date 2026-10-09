@@ -32,6 +32,9 @@ router.post('/register', async (req, res) => {
     if (String(password).length < 6) {
       return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ success: false, error: 'Enter a valid email address' });
+    }
 
     const existing = await query(`SELECT id FROM users WHERE lower(email) = lower($1)`, [email.trim()]);
     if (existing.rows[0]) {
@@ -115,7 +118,7 @@ router.post('/forgot', async (req, res) => {
     const payload = {
       message: mailConfigured()
         ? 'If that email is registered, a reset link has been sent.'
-        : 'If that email is registered, a reset link is ready. SMTP is not configured, so the demo link is returned.',
+        : 'If that email is registered, a reset link has been sent.',
     };
     if (rows[0]) {
       const token = crypto.randomBytes(24).toString('hex');
@@ -131,8 +134,7 @@ router.post('/forgot', async (req, res) => {
         text: `Reset your password: ${origin}${resetPath}`,
       });
       if (!mailConfigured()) {
-        payload.resetToken = token;
-        payload.resetPath = resetPath;
+        console.warn('Password reset requested but SMTP is not configured; no email was sent.');
       }
     }
     return res.json({ success: true, data: payload });

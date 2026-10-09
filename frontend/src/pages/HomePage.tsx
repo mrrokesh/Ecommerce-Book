@@ -6,7 +6,7 @@ import ProductCarousel from '../components/ProductCarousel';
 import ExamGrid from '../components/ExamGrid';
 import FeaturedAuthors from '../components/FeaturedAuthors';
 import AuthorOfDay from '../components/AuthorOfDay';
-import { EmptyState, LoadingState } from '../components/States';
+import { EmptyState, HomeSkeleton } from '../components/States';
 
 type HomePayload = {
   banners?: unknown[];
@@ -18,6 +18,25 @@ type HomePayload = {
   authorOfDay?: unknown;
   exams?: unknown[];
 };
+
+const HOME_CACHE_KEY = 'sbh:home:v1';
+
+function readHomeCache(): HomePayload | null {
+  try {
+    const raw = localStorage.getItem(HOME_CACHE_KEY);
+    return raw ? (JSON.parse(raw) as HomePayload) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeHomeCache(payload: HomePayload) {
+  try {
+    localStorage.setItem(HOME_CACHE_KEY, JSON.stringify(payload));
+  } catch {
+    /* storage full or blocked */
+  }
+}
 
 async function loadHome(attempts = 3) {
   let last: Error | null = null;
@@ -36,16 +55,17 @@ async function loadHome(attempts = 3) {
 }
 
 export default function HomePage() {
-  const [data, setData] = useState<HomePayload | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Stale-while-revalidate: show the last homepage instantly, refresh in the background.
+  const [data, setData] = useState<HomePayload | null>(() => readHomeCache());
+  const [loading, setLoading] = useState(() => !readHomeCache());
   const [error, setError] = useState('');
 
   useEffect(() => {
     let alive = true;
-    setLoading(true);
     loadHome()
       .then((payload) => {
         if (alive) setData(payload);
+        writeHomeCache(payload);
       })
       .catch((err: Error) => {
         if (alive) setError(err.message || 'Failed to load homepage');
@@ -58,7 +78,7 @@ export default function HomePage() {
     };
   }, []);
 
-  if (loading) return <LoadingState label="Loading Salem Book House…" />;
+  if (loading) return <HomeSkeleton />;
   if (error && !data) {
     return (
       <EmptyState

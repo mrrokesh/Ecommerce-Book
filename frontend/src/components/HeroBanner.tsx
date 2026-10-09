@@ -26,7 +26,7 @@ export default function HeroBanner({ banners = [], loading = false }) {
   }, [slides.length]);
 
   if (loading) {
-    return <div className="hero-banner hero-loading">Loading offers…</div>;
+    return <div className="hero-banner skeleton hero-skeleton" aria-busy="true" />;
   }
 
   const slide = slides[index % slides.length];

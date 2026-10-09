@@ -1,13 +1,20 @@
 import crypto from 'crypto';
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { query, getPool } from '../db/pool.js';
 import { optionalAuth, requireAuth } from '../middleware/auth.js';
 import { findActiveCoupon, couponDiscount } from './coupons.js';
-import { razorpayEnabled, verifyRazorpaySignature, refundRazorpayPayment } from './payments.js';
+import {
+  razorpayEnabled,
+  verifyRazorpaySignature,
+  verifyRazorpayPaymentAmount,
+  refundRazorpayPayment,
+} from './payments.js';
 import { sendMail } from '../mailer.js';
 import { notifyOrderEvent } from '../notify/index.js';
 
 const router = Router();
+const trackLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false });
 
 function customerActions(o) {
   const status = String(o.status || '');
@@ -75,7 +82,7 @@ async function itemsForOrders(orderIds) {
   return map;
 }
 
-router.get('/track', optionalAuth, async (req, res) => {
+router.get('/track', trackLimiter, optionalAuth, async (req, res) => {
   try {
     const orderNumber = String(req.query.orderNumber || req.query.order || '').trim();
     const phone = String(req.query.phone || '').trim();
@@ -118,7 +125,7 @@ router.use(optionalAuth);
 function orderNumber() {
   const d = new Date();
   const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
-  const rand = Math.floor(1000 + Math.random() * 9000);
+  const rand = crypto.randomInt(100000, 1000000);
   return `SBH-${stamp}-${rand}`;
 }
 
@@ -182,6 +189,14 @@ router.post('/', async (req, res) => {
     if (!allowedPay.includes(paymentMethod)) {
       await client.query('ROLLBACK');
       return res.status(400).json({ success: false, error: 'Unsupported payment method' });
+    }
+
+    if (paymentMethod !== 'cod' && !razorpayEnabled() && process.env.NODE_ENV === 'production') {
+      await client.query('ROLLBACK');
+      return res.status(503).json({
+        success: false,
+        error: 'Online payments are temporarily unavailable. Please choose Cash on Delivery.',
+      });
     }
 
     if (paymentMethod !== 'cod' && razorpayEnabled()) {
@@ -310,6 +325,28 @@ router.post('/', async (req, res) => {
         [remaining, remaining <= 0 ? 'used' : 'active', gRes.rows[0].id]
       );
       discount += giftApply;
+    }
+    if (paymentMethod !== 'cod' && razorpayEnabled() && total > 0) {
+      const dup = await client.query(`SELECT 1 FROM orders WHERE razorpay_payment_id = $1`, [
+        body.razorpayPaymentId,
+      ]);
+      let amountOk = false;
+      try {
+        amountOk = await verifyRazorpayPaymentAmount({
+          orderId: body.razorpayOrderId,
+          paymentId: body.razorpayPaymentId,
+          expectedRupees: total,
+        });
+      } catch (err) {
+        console.warn('razorpay verify:', err?.message || err);
+      }
+      if (dup.rowCount || !amountOk) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          error: 'We could not verify this payment against your order total.',
+        });
+      }
     }
     const onum = orderNumber();
     const online = paymentMethod !== 'cod';

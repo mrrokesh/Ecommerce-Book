@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Router } from 'express';
 import {
   listShippingConfig,
@@ -52,9 +53,14 @@ router.post('/admin/orders/:id/ship', requireAdmin, async (req, res) => {
 router.post('/webhooks/:carrier', async (req, res) => {
   try {
     const secret = process.env.SHIPPING_WEBHOOK_SECRET;
-    if (secret) {
-      const got = req.get('x-webhook-secret') || req.query.secret;
-      if (got !== secret) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    if (!secret) {
+      return res.status(503).json({ success: false, error: 'Webhook secret is not configured' });
+    }
+    const got = String(req.get('x-webhook-secret') || req.query.secret || '');
+    const gotBuf = Buffer.from(got);
+    const secretBuf = Buffer.from(secret);
+    if (gotBuf.length !== secretBuf.length || !crypto.timingSafeEqual(gotBuf, secretBuf)) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
     const carrier = req.params.carrier;
     const b = req.body || {};

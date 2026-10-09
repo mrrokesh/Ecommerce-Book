@@ -12,7 +12,24 @@ export function razorpayEnabled() {
 export function verifyRazorpaySignature({ orderId, paymentId, signature }) {
   const secret = process.env.RAZORPAY_KEY_SECRET;
   const expected = crypto.createHmac('sha256', secret).update(`${orderId}|${paymentId}`).digest('hex');
-  return expected === signature;
+  const a = Buffer.from(expected);
+  const b = Buffer.from(String(signature || ''));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+/** Confirm with Razorpay that the payment belongs to the order and covers the amount. */
+export async function verifyRazorpayPaymentAmount({ orderId, paymentId, expectedRupees }) {
+  const rzp = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+  const payment = await rzp.payments.fetch(paymentId);
+  const expected = Math.round(Number(expectedRupees) * 100);
+  return (
+    payment.order_id === orderId &&
+    ['captured', 'authorized'].includes(payment.status) &&
+    Number(payment.amount) === expected
+  );
 }
 
 /** Refund a captured Razorpay payment. Returns null when Razorpay is not configured. */

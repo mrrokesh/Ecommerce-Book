@@ -25,13 +25,15 @@ export async function seedDatabase() {
   console.log(`Brand: ${data.brand || 'Salem Book House'} — ${data.tagline || ''}`);
 
   // Demo user
-  const passwordHash = await bcrypt.hash('Demo@123', 10);
-  await query(
-    `INSERT INTO users (name, email, password_hash, role)
-     VALUES ($1, $2, $3, 'customer')
-     ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, name = EXCLUDED.name`,
-    ['Demo User', 'demo@salembookhouse.com', passwordHash]
-  );
+  if (process.env.NODE_ENV !== 'production') {
+    const passwordHash = await bcrypt.hash('Demo@123', 10);
+    await query(
+      `INSERT INTO users (name, email, password_hash, role)
+       VALUES ($1, $2, $3, 'customer')
+       ON CONFLICT (email) DO NOTHING`,
+      ['Demo User', 'demo@salembookhouse.com', passwordHash]
+    );
+  }
 
   // Categories (two-pass for parent links)
   const categoryIdBySlug = new Map();
