@@ -20,6 +20,7 @@ export default function AdminProducts() {
     configured: false,
   });
   const [syncing, setSyncing] = useState(false);
+  const [fillingCovers, setFillingCovers] = useState(false);
 
   async function load(nextPage = page) {
     setBusy(true);
@@ -57,6 +58,23 @@ export default function AdminProducts() {
       setError(err.message);
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function refreshCovers() {
+    setFillingCovers(true);
+    setError('');
+    setNotice('Refreshing covers… this can take a few minutes.');
+    try {
+      const { data } = await api.post('/admin/covers/backfill');
+      setNotice(
+        `Covers updated: ${data.real || 0} real, ${data.svg || 0} branded, ${data.skipped || 0} kept, ${data.errors || 0} errors.`,
+      );
+      load(page);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setFillingCovers(false);
     }
   }
 
@@ -132,6 +150,15 @@ export default function AdminProducts() {
           }
         >
           {syncing ? 'Syncing ERP…' : erp.configured ? 'Sync from ERP' : 'ERP key missing'}
+        </button>
+        <button
+          className="erp-btn ghost"
+          type="button"
+          disabled={fillingCovers}
+          onClick={refreshCovers}
+          title="Download real ISBN covers (Open Library / Google) and cache locally"
+        >
+          {fillingCovers ? 'Refreshing covers…' : 'Refresh covers'}
         </button>
         <Link className="erp-btn primary" to="/admin/products/new">
           Add product

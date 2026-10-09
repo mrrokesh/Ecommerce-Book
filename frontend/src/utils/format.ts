@@ -66,18 +66,14 @@ export function coverCandidates(book?: Book | null): string[] {
     out.push(u);
   };
 
-  // Trust real uploaded / CDN / ERP images only (not OL/Google hotlinks or generated SVGs).
-  if (
-    raw &&
-    !isBlockedImage(raw) &&
-    !isUnreliableCoverHost(raw) &&
-    !String(raw).startsWith('data:image/svg') &&
-    !/^\/api\/covers\//i.test(String(raw))
-  ) {
+  // Prefer DB/API/local covers and real CDN/ERP uploads.
+  if (raw && !isBlockedImage(raw) && !isUnreliableCoverHost(raw) && !String(raw).startsWith('data:image/svg')) {
     push(String(raw));
   }
 
+  // Live resolve if DB not backfilled yet
   push(isbnCoverUrl(isbn));
+  if (slug) push(`/api/covers/${encodeURIComponent(String(slug).replace(/\.svg$/i, ''))}.svg`);
   push(generatedCover(title, slug));
   push('/placeholder-book.svg');
   return out;

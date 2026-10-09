@@ -880,4 +880,15 @@ router.post('/erp/sync', async (_req, res) => {
   }
 });
 
+router.post('/covers/backfill', async (_req, res) => {
+  try {
+    const { backfillCovers } = await import('../scripts/backfillCovers.js');
+    const stats = await backfillCovers();
+    return res.json({ success: true, data: stats });
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ success: false, error: err.message || 'Cover backfill failed' });
+  }
+});
+
 export default router;
