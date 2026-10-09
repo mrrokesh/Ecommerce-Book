@@ -7,6 +7,8 @@ import { mapBook } from '../utils/bookMapper.js';
 import { isErpConfigured } from '../erp/mcp.js';
 import { syncErpProducts, lastErpSync } from '../erp/syncProducts.js';
 import { restockOrder, nextPaymentStatus } from './orders.js';
+import { refundRazorpayPayment } from './payments.js';
+import { notifyOrderEvent } from '../notify/index.js';
 
 const router = Router();
 router.use(requireAdmin);
@@ -562,6 +564,24 @@ router.patch('/orders/:id', async (req, res) => {
       ]);
     }
     await client.query('COMMIT');
+    if (paymentStatus === 'refunded' && order.payment_status !== 'refunded' && order.razorpay_payment_id) {
+      refundRazorpayPayment(order.razorpay_payment_id, order.total)
+        .then((r) =>
+          query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,$2,$3)`, [
+            order.id,
+            nextStatus,
+            r.skipped ? 'Refund marked (Razorpay not configured).' : `Razorpay refund ${r.refundId}`,
+          ])
+        )
+        .catch((err) => console.warn('refund:', err.message));
+    }
+    if (nextStatus !== order.status && ['returned', 'delivered'].includes(nextStatus) && order.status === 'return_requested') {
+      notifyOrderEvent({
+        order: { ...order, orderNumber: order.order_number, guestEmail: order.guest_email, shippingPhone: order.shipping_phone },
+        event: nextStatus === 'returned' ? 'Return approved' : 'Return declined',
+        note: req.body?.note || '',
+      }).catch(() => {});
+    }
     return res.json({ success: true, data: { order: await loadAdminOrder(order.id) } });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
@@ -672,8 +692,19 @@ router.put('/pages/:slug', async (req, res) => {
   return res.json({ success: true, data: { slug: req.params.slug } });
 });
 
+function limitOrNull(v) {
+  const n = Math.floor(Number(v));
+  return v === '' || v == null || !Number.isFinite(n) || n < 1 ? null : n;
+}
+
 router.get('/coupons', async (_req, res) => {
-  const { rows } = await query(`SELECT * FROM coupons ORDER BY code`);
+  const { rows } = await query(
+    `SELECT c.*, (
+       SELECT COUNT(*)::int FROM orders o
+       WHERE UPPER(o.coupon_code) = UPPER(c.code) AND o.status NOT IN ('cancelled','returned')
+     ) AS used
+     FROM coupons c ORDER BY c.code`
+  );
   return res.json({
     success: true,
     data: {
@@ -686,13 +717,16 @@ router.get('/coupons', async (_req, res) => {
         minOrder: Number(c.min_order),
         active: c.active,
         expiresAt: c.expires_at,
+        usageLimit: c.usage_limit,
+        perCustomerLimit: c.per_customer_limit,
+        used: c.used,
       })),
     },
   });
 });
 
 router.post('/coupons', async (req, res) => {
-  const { code, description, percentOff, amountOff, minOrder, expiresAt } = req.body || {};
+  const { code, description, percentOff, amountOff, minOrder, expiresAt, usageLimit, perCustomerLimit } = req.body || {};
   if (!code?.trim()) return res.status(400).json({ success: false, error: 'Code is required' });
   const pct = Number(percentOff) || 0;
   const amt = Number(amountOff) || 0;
@@ -700,22 +734,33 @@ router.post('/coupons', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Give a % off between 1 and 100, or a flat amount off' });
   }
   await query(
-    `INSERT INTO coupons (code, description, percent_off, amount_off, min_order, expires_at)
-     VALUES ($1,$2,$3,$4,$5,$6)
+    `INSERT INTO coupons (code, description, percent_off, amount_off, min_order, expires_at, usage_limit, per_customer_limit)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
      ON CONFLICT (code) DO UPDATE SET
        description = EXCLUDED.description,
        percent_off = EXCLUDED.percent_off,
        amount_off = EXCLUDED.amount_off,
        min_order = EXCLUDED.min_order,
        expires_at = EXCLUDED.expires_at,
+       usage_limit = EXCLUDED.usage_limit,
+       per_customer_limit = EXCLUDED.per_customer_limit,
        active = TRUE`,
-    [code.trim().toUpperCase(), description || null, pct, pct ? 0 : amt, Number(minOrder) || 0, expiresAt || null]
+    [
+      code.trim().toUpperCase(),
+      description || null,
+      pct,
+      pct ? 0 : amt,
+      Number(minOrder) || 0,
+      expiresAt || null,
+      limitOrNull(usageLimit),
+      limitOrNull(perCustomerLimit),
+    ]
   );
   return res.status(201).json({ success: true, data: { code: code.trim().toUpperCase() } });
 });
 
 router.patch('/coupons/:id', async (req, res) => {
-  const { active, percentOff, amountOff, minOrder, description, expiresAt, code } = req.body || {};
+  const { active, percentOff, amountOff, minOrder, description, expiresAt, code, usageLimit, perCustomerLimit } = req.body || {};
   const { rows } = await query(`SELECT * FROM coupons WHERE id = $1`, [req.params.id]);
   if (!rows[0]) return res.status(404).json({ success: false, error: 'Coupon not found' });
   const cur = rows[0];
@@ -729,7 +774,9 @@ router.patch('/coupons/:id', async (req, res) => {
        amount_off = $4,
        min_order = COALESCE($5, min_order),
        expires_at = COALESCE($6, expires_at),
-       active = COALESCE($7, active)
+       active = COALESCE($7, active),
+       usage_limit = CASE WHEN $9::boolean THEN $10::int ELSE usage_limit END,
+       per_customer_limit = CASE WHEN $11::boolean THEN $12::int ELSE per_customer_limit END
      WHERE id = $8`,
     [
       code ? String(code).trim().toUpperCase() : null,
@@ -740,6 +787,10 @@ router.patch('/coupons/:id', async (req, res) => {
       expiresAt !== undefined ? expiresAt : null,
       typeof active === 'boolean' ? active : null,
       req.params.id,
+      usageLimit !== undefined,
+      limitOrNull(usageLimit),
+      perCustomerLimit !== undefined,
+      limitOrNull(perCustomerLimit),
     ]
   );
   return res.json({ success: true, data: { id: Number(req.params.id) } });

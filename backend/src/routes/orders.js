@@ -3,7 +3,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { query, getPool } from '../db/pool.js';
 import { optionalAuth, requireAuth } from '../middleware/auth.js';
-import { findActiveCoupon, couponDiscount } from './coupons.js';
+import { findActiveCoupon, couponDiscount, couponLimitError } from './coupons.js';
 import {
   razorpayEnabled,
   verifyRazorpaySignature,
@@ -292,6 +292,15 @@ router.post('/', async (req, res) => {
     let couponCode = null;
     if (body.couponCode) {
       const coupon = await findActiveCoupon(body.couponCode);
+      const limitErr = await couponLimitError(
+        coupon,
+        { userId: req.user?.id || null, email: req.user?.email || guestEmail },
+        client
+      );
+      if (limitErr) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, error: limitErr });
+      }
       discount = couponDiscount(coupon, subtotal);
       if (coupon && discount > 0) couponCode = coupon.code;
     }
@@ -650,7 +659,7 @@ router.patch('/:id/return', requireAuth, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Tell us why you want to return this order' });
     }
     await client.query('BEGIN');
-    // Request first; admin/auto-approve restocks + refunds.
+    // The shop owner reviews the request; approving it (status "returned") restocks and refunds.
     const { rows } = await client.query(
       `UPDATE orders SET status = 'return_requested', updated_at = NOW() WHERE id = $1 RETURNING *`,
       [order.id]
@@ -659,37 +668,15 @@ router.patch('/:id/return', requireAuth, async (req, res) => {
       order.id,
       `Return requested: ${reason}`,
     ]);
-    // Auto-approve for client handoff: restock + refund immediately.
-    await restockOrder(client, order.id);
-    const paymentStatus = nextPaymentStatus(order, 'return');
-    const final = await client.query(
-      `UPDATE orders SET status = 'returned', payment_status = $1, stock_restored = TRUE, updated_at = NOW()
-       WHERE id = $2 RETURNING *`,
-      [paymentStatus, order.id]
-    );
-    await client.query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,'returned',$2)`, [
-      order.id,
-      'Return approved. Stock restored. Refund processing.',
-    ]);
     await client.query('COMMIT');
-    if (paymentStatus === 'refunded' && order.razorpay_payment_id) {
-      refundRazorpayPayment(order.razorpay_payment_id, order.total)
-        .then((r) =>
-          query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,'returned',$2)`, [
-            order.id,
-            r.skipped ? 'Refund marked (configure Razorpay for live refunds).' : `Razorpay refund ${r.refundId}`,
-          ])
-        )
-        .catch((err) => console.warn('refund:', err.message));
-    }
     notifyOrderEvent({
       order: {
-        ...final.rows[0],
-        orderNumber: final.rows[0].order_number,
-        guestEmail: final.rows[0].guest_email,
-        shippingPhone: final.rows[0].shipping_phone,
+        ...rows[0],
+        orderNumber: rows[0].order_number,
+        guestEmail: rows[0].guest_email,
+        shippingPhone: rows[0].shipping_phone,
       },
-      event: 'Return approved',
+      event: 'Return requested',
       note: reason,
     }).catch(() => {});
     const itemsRes = await query(`SELECT * FROM order_items WHERE order_id = $1`, [order.id]);
@@ -701,7 +688,7 @@ router.patch('/:id/return', requireAuth, async (req, res) => {
       success: true,
       data: {
         order: mapOrder(
-          final.rows[0],
+          rows[0],
           mapItems(itemsRes.rows),
           eventsRes.rows.map((e) => ({ status: e.status, note: e.note, createdAt: e.created_at }))
         ),

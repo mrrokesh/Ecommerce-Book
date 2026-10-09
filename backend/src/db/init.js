@@ -117,6 +117,8 @@ const MIGRATIONS = [
   `ALTER TABLE books ADD COLUMN IF NOT EXISTS erp_id VARCHAR(80)`,
   `ALTER TABLE books ALTER COLUMN isbn13 TYPE VARCHAR(32)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_books_erp_id ON books (erp_id) WHERE erp_id IS NOT NULL`,
+  `ALTER TABLE coupons ADD COLUMN IF NOT EXISTS usage_limit INT`,
+  `ALTER TABLE coupons ADD COLUMN IF NOT EXISTS per_customer_limit INT`,
   `ALTER TABLE orders ADD COLUMN IF NOT EXISTS stock_restored BOOLEAN NOT NULL DEFAULT FALSE`,
   `UPDATE orders SET stock_restored = TRUE WHERE status IN ('cancelled','returned') AND stock_restored = FALSE`,
   `CREATE TABLE IF NOT EXISTS media (

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db/pool.js';
+import { optionalAuth } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -26,11 +27,41 @@ export async function findActiveCoupon(code) {
   return rows[0] || null;
 }
 
-router.post('/preview', async (req, res) => {
+/**
+ * Returns an error message when the coupon's total or per-customer limit is used up,
+ * otherwise null. Cancelled/returned orders don't count. Pass a transaction client to
+ * lock the coupon row so concurrent checkouts can't both take the last use.
+ */
+export async function couponLimitError(coupon, { userId = null, email = '' } = {}, client = null) {
+  if (!coupon) return null;
+  const run = (text, params) => (client ? client.query(text, params) : query(text, params));
+  if (client) await client.query(`SELECT 1 FROM coupons WHERE id = $1 FOR UPDATE`, [coupon.id]);
+  const live = `UPPER(coupon_code) = UPPER($1) AND status NOT IN ('cancelled','returned')`;
+  if (coupon.usage_limit != null) {
+    const { rows } = await run(`SELECT COUNT(*)::int AS c FROM orders WHERE ${live}`, [coupon.code]);
+    if (rows[0].c >= Number(coupon.usage_limit)) return 'This coupon has been fully redeemed';
+  }
+  if (coupon.per_customer_limit != null && (userId || email)) {
+    const { rows } = await run(
+      `SELECT COUNT(*)::int AS c FROM orders
+       WHERE ${live} AND (($2::uuid IS NOT NULL AND user_id = $2::uuid) OR ($3 <> '' AND lower(guest_email) = $3))`,
+      [coupon.code, userId, String(email || '').toLowerCase()]
+    );
+    if (rows[0].c >= Number(coupon.per_customer_limit)) return 'You have already used this coupon';
+  }
+  return null;
+}
+
+router.post('/preview', optionalAuth, async (req, res) => {
   try {
     const subtotal = Number(req.body?.subtotal) || 0;
     const coupon = await findActiveCoupon(req.body?.code);
     if (!coupon) return res.status(404).json({ success: false, error: 'Invalid or expired coupon' });
+    const limitErr = await couponLimitError(coupon, {
+      userId: req.user?.id || null,
+      email: req.user?.email || req.body?.email || '',
+    });
+    if (limitErr) return res.status(400).json({ success: false, error: limitErr });
     const discount = couponDiscount(coupon, subtotal);
     if (discount <= 0) {
       return res.status(400).json({

@@ -65,6 +65,9 @@ export default function OrdersPage() {
       const updated = data.order;
       setOrders((list) => list.map((o) => (o.id === updated.id ? { ...o, ...updated } : o)));
       closeAction();
+      if (actionType === 'return') {
+        window.alert('Return requested. We will review it and confirm by email.');
+      }
     } catch (err) {
       setActionError(err.message || 'Could not update order');
     } finally {
@@ -152,7 +155,7 @@ export default function OrdersPage() {
                   <p>
                     {actionType === 'cancel'
                       ? 'Cancel before dispatch. Items go back to stock. Paid orders are marked refunded (simulated).'
-                      : 'Return within 7 days of delivery. Unused items only. Pickup will be arranged.'}
+                      : 'Return within 7 days of delivery. Unused items only. We review each request before refunding.'}
                   </p>
                   <label>
                     {actionType === 'return' ? 'Reason (required)' : 'Reason (optional)'}

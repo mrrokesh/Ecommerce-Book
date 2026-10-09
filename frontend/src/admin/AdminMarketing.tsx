@@ -3,7 +3,7 @@ import api from '../api/client';
 import { formatPrice } from '../utils/format';
 
 const emptyBanner = { title: '', subtitle: '', link: '/shop', imageUrl: '' };
-const emptyCoupon = { code: '', description: '', percentOff: '10', amountOff: '', minOrder: '199', expiresAt: '' };
+const emptyCoupon = { code: '', description: '', percentOff: '10', amountOff: '', minOrder: '199', expiresAt: '', usageLimit: '', perCustomerLimit: '1' };
 
 export default function AdminMarketing() {
   const [banners, setBanners] = useState([]);
@@ -221,6 +221,14 @@ export default function AdminMarketing() {
             Expires
             <input type="date" value={coupon.expiresAt} onChange={(e) => setCoupon({ ...coupon, expiresAt: e.target.value })} />
           </label>
+          <label>
+            Total uses (blank = unlimited)
+            <input type="number" min="1" value={coupon.usageLimit} onChange={(e) => setCoupon({ ...coupon, usageLimit: e.target.value })} />
+          </label>
+          <label>
+            Uses per customer (blank = unlimited)
+            <input type="number" min="1" value={coupon.perCustomerLimit} onChange={(e) => setCoupon({ ...coupon, perCustomerLimit: e.target.value })} />
+          </label>
           <div className="erp-actions">
             <button className="erp-btn primary" type="submit" disabled={busy}>
               {busy ? 'Saving…' : editCouponId ? 'Update coupon' : 'Save coupon'}
@@ -246,6 +254,7 @@ export default function AdminMarketing() {
               <th>Discount</th>
               <th>Min</th>
               <th>Expires</th>
+              <th>Used</th>
               <th>Status</th>
               <th />
             </tr>
@@ -260,6 +269,7 @@ export default function AdminMarketing() {
                 <td>{c.percentOff ? `${c.percentOff}%` : formatPrice(c.amountOff)}</td>
                 <td>{formatPrice(c.minOrder)}</td>
                 <td>{c.expiresAt ? new Date(c.expiresAt).toLocaleDateString('en-IN') : '—'}</td>
+                <td>{c.used || 0}{c.usageLimit ? ` / ${c.usageLimit}` : ''}</td>
                 <td>
                   <span className={`erp-pill ${c.active ? 'ok' : 'off'}`}>{c.active ? 'Active' : 'Off'}</span>
                 </td>
@@ -277,6 +287,8 @@ export default function AdminMarketing() {
                           amountOff: !c.percentOff && c.amountOff ? String(c.amountOff) : '',
                           minOrder: String(c.minOrder || 0),
                           expiresAt: c.expiresAt ? String(c.expiresAt).slice(0, 10) : '',
+                          usageLimit: c.usageLimit ? String(c.usageLimit) : '',
+                          perCustomerLimit: c.perCustomerLimit ? String(c.perCustomerLimit) : '',
                         });
                       }}
                     >
