@@ -2,22 +2,14 @@ import axios from 'axios';
 
 const SESSION_KEY = 'sbh_session_id';
 const LEGACY_TOKEN_KEY = 'sbh_token';
-const RENDER_API = 'https://ecommerce-book-rbl2.onrender.com/api';
-
+/**
+ * Always call the API on the same origin: the Vite proxy in development, the Vercel rewrite
+ * (frontend/vercel.json) in production on any domain, and Express itself when served from Render.
+ * This keeps login cookies first-party and needs no CORS entry for custom domains.
+ * VITE_API_URL is intentionally ignored so a stale host setting can never break a domain.
+ */
 function resolveApiBase() {
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    if (host.endsWith('.vercel.app') || host === 'localhost' || host === '127.0.0.1') {
-      return '/api';
-    }
-  }
-  let raw = String(import.meta.env.VITE_API_URL || '').trim();
-  if (!raw) {
-    return import.meta.env.PROD ? RENDER_API : '/api';
-  }
-  raw = raw.replace(/\/$/, '');
-  if (raw.endsWith('/api')) return raw;
-  return `${raw}/api`;
+  return '/api';
 }
 
 /** Clear any pre-cookie JWT left in localStorage (XSS surface). */
