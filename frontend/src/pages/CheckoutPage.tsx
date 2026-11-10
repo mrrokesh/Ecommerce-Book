@@ -217,11 +217,17 @@ export default function CheckoutPage() {
   const shipping =
     Math.max(0, subtotal - couponOff) >= 499 ? 0 : pinFee != null ? pinFee : 40;
   const total = Math.max(0, subtotal - couponOff + shipping - giftOff);
+  // Simulated card/UPI forms are for local development only; never collect card data in production.
+  const onlineAvailable = payMode === 'razorpay' || !import.meta.env.PROD;
   const payOptions = [
     { id: 'cod', label: 'Cash on Delivery' },
-    { id: 'upi', label: payMode === 'razorpay' ? 'UPI (Razorpay)' : 'UPI (simulated)' },
-    { id: 'card', label: payMode === 'razorpay' ? 'Cards (Razorpay)' : 'Debit / Credit card (simulated)' },
-    { id: 'netbanking', label: payMode === 'razorpay' ? 'Net banking (Razorpay)' : 'Net banking (simulated)' },
+    ...(onlineAvailable
+      ? [
+          { id: 'upi', label: payMode === 'razorpay' ? 'UPI' : 'UPI (test mode)' },
+          { id: 'card', label: payMode === 'razorpay' ? 'Debit / Credit card' : 'Debit / Credit card (test mode)' },
+          { id: 'netbanking', label: payMode === 'razorpay' ? 'Net banking' : 'Net banking (test mode)' },
+        ]
+      : []),
   ];
 
   return (
@@ -305,8 +311,10 @@ export default function CheckoutPage() {
           <h2>Payment</h2>
           <p className="muted">
             {payMode === 'razorpay'
-              ? 'Online methods open Razorpay Checkout.'
-              : 'Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET on the API for live UPI/cards. Until then online pay is simulated.'}
+              ? 'Online methods open secure Razorpay Checkout.'
+              : onlineAvailable
+                ? 'Test mode: online payments are simulated (set RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET on the API to go live).'
+                : 'Online payment is temporarily unavailable. Please choose Cash on Delivery.'}
           </p>
           {payOptions.map((p) => (
             <label key={p.id} className="radio-line">

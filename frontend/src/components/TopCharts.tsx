@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 const ICONS = {
-  kannada: 'ಕ',
+  tamil: 'த',
   'young-adult': 'YA',
   fiction: 'F',
   'non-fiction': 'NF',

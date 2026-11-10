@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import api, { setAuthToken, clearAuthToken, getAuthToken } from '../api/client';
+import api, { clearAuthToken } from '../api/client';
 import type { User } from '../types';
 
 type AuthValue = {
@@ -27,16 +27,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (!getAuthToken()) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
+    // Auth is httpOnly cookie based — always probe /me with credentials.
+    clearAuthToken();
     try {
       const { data } = await api.get('/auth/me');
       setUser((data.user || data || null) as User | null);
     } catch {
-      clearAuthToken();
       setUser(null);
     } finally {
       setLoading(false);
@@ -48,15 +44,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const login = useCallback(async (email: string, password: string) => {
+    clearAuthToken();
     const { data } = await api.post('/auth/login', { email, password });
-    if (data.token) setAuthToken(data.token);
     setUser((data.user || data) as User);
     return data;
   }, []);
 
   const register = useCallback(async (payload: Record<string, unknown>) => {
+    clearAuthToken();
     const { data } = await api.post('/auth/register', payload);
-    if (data.token) setAuthToken(data.token);
     setUser((data.user || data) as User);
     return data;
   }, []);

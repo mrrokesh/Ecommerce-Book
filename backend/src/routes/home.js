@@ -26,7 +26,7 @@ function loadSeedMeta() {
   } catch {
     metaCache = {
       topCharts: [
-        { name: 'Kannada', slug: 'kannada' },
+        { name: 'Tamil', slug: 'tamil' },
         { name: 'Young Adult', slug: 'young-adult' },
         { name: 'Fiction', slug: 'fiction' },
         { name: 'Non Fiction', slug: 'non-fiction' },

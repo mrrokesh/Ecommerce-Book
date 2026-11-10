@@ -14,7 +14,20 @@ import { sendMail } from '../mailer.js';
 import { notifyOrderEvent } from '../notify/index.js';
 
 const router = Router();
-const trackLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false });
+const trackLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many tracking attempts. Please wait and try again.' },
+});
+const checkoutLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many checkout attempts. Please wait and try again.' },
+});
 
 function customerActions(o) {
   const status = String(o.status || '');
@@ -85,20 +98,37 @@ async function itemsForOrders(orderIds) {
 router.get('/track', trackLimiter, optionalAuth, async (req, res) => {
   try {
     const orderNumber = String(req.query.orderNumber || req.query.order || '').trim();
-    const phone = String(req.query.phone || '').trim();
+    const phoneDigits = String(req.query.phone || '').replace(/\D/g, '');
     if (!orderNumber) {
       return res.status(400).json({ success: false, error: 'Order number is required' });
     }
+
     const { rows } = await query(`SELECT * FROM orders WHERE order_number = $1`, [orderNumber]);
-    if (!rows[0]) return res.status(404).json({ success: false, error: 'Order not found' });
     const o = rows[0];
-    const owner = req.user && req.user.id === o.user_id;
-    if (!owner && phone && o.shipping_phone.replace(/\D/g, '') !== phone.replace(/\D/g, '')) {
+    const owner = Boolean(req.user && o && req.user.id === o.user_id);
+
+    // Guests must prove phone; always require 10+ digits to slow enumeration.
+    if (!owner) {
+      if (phoneDigits.length < 10) {
+        return res.status(400).json({
+          success: false,
+          error: 'Phone number used at checkout is required to track this order',
+        });
+      }
+      const stored = String(o?.shipping_phone || '').replace(/\D/g, '');
+      const phoneOk =
+        stored &&
+        (stored === phoneDigits ||
+          stored.endsWith(phoneDigits.slice(-10)) ||
+          phoneDigits.endsWith(stored.slice(-10)));
+      // Uniform 404 — do not reveal whether the order number exists.
+      if (!o || !phoneOk) {
+        return res.status(404).json({ success: false, error: 'Order not found' });
+      }
+    } else if (!o) {
       return res.status(404).json({ success: false, error: 'Order not found' });
     }
-    if (!owner && !phone) {
-      return res.status(400).json({ success: false, error: 'Phone number is required to track this order' });
-    }
+
     const itemsRes = await query(`SELECT * FROM order_items WHERE order_id = $1`, [o.id]);
     const eventsRes = await query(
       `SELECT status, note, created_at FROM order_events WHERE order_id = $1 ORDER BY created_at`,
@@ -129,7 +159,7 @@ function orderNumber() {
   return `SBH-${stamp}-${rand}`;
 }
 
-router.post('/', async (req, res) => {
+router.post('/', checkoutLimiter, async (req, res) => {
   const client = await (await getPool()).connect();
   try {
     await client.query('BEGIN');

@@ -53,9 +53,9 @@ async function main() {
   await ensureCategory('Gifts', 'gifts', null, null, 7);
   await ensureCategory('Accessories', 'accessories', null, null, 8);
   await ensureCategory('E Gift Card', 'e-gift-card', null, null, 9);
-  await ensureCategory('Kannada', 'kannada', null, null, 10);
 
   // —— Books ——
+  await ensureCategory('Tamil', 'tamil', 'books', null, 10);
   await ensureCategory('Novels', 'novels', 'books', null, 11);
   await ensureCategory('General books', 'general-books', 'books', null, 12);
   await ensureCategory('Children Books', 'children-books', 'books', null, 13);
@@ -111,7 +111,30 @@ async function main() {
     `INSERT INTO cms_pages (slug, title, body) VALUES ('about', 'About Salem Book House', $1)
      ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, body = EXCLUDED.body`,
     [
-      "Salem Book House is Salem's favourite book mall — books for competitive exams, school and college, novels, stationery, gifts and more.\n\nVisit us in Salem or shop online with support on WhatsApp and phone.",
+      `Salem Book House is Salem's favourite book mall — a trusted neighbourhood destination for readers, students and families across Tamil Nadu.
+
+Owner
+Parasuraman Muthusamy
+
+What we offer
+We stock Tamil and English books, school & board guides (NCERT, CBSE, State Board), competitive exam materials (TNPSC, NEET, JEE, UPSC, Banking), college textbooks, novels, stationery, toys, gifts, accessories and e-gift cards.
+
+Why shop with us
+Genuine editions, careful packing and reliable delivery. Browse online or visit our Salem store for personal help finding the right book.
+
+Visit & support
+Phone: 9487724584
+Phone: 7904957436
+Landline: 0427-2411315
+Email: support@salembookhouse.com
+WhatsApp: 9487724584
+Instagram: @salembookhouse — https://www.instagram.com/salembookhouse
+Location: https://maps.app.goo.gl/ugcd7ja9bGT2WGdR8?g_st=ic
+
+Hours
+Mon – Sat: 9:30 AM – 9:00 PM
+Sun: 10:00 AM – 8:00 PM
+* Subject to change`,
     ]
   );
 

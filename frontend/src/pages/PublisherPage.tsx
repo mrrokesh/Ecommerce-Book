@@ -35,15 +35,26 @@ export default function PublisherPage() {
     return (
       <div className="container cms-page">
         <h1>Publishers</h1>
-        <ul className="plain-list">
-          {list.map((p) => (
-            <li key={p.slug}>
-              <Link to={`/publishers/${p.slug}`}>
-                {p.name} ({p.bookCount})
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <p className="muted">Browse titles by publisher from our Salem Book House catalogue.</p>
+        {!list.length ? (
+          <EmptyState
+            title="Publishers coming soon"
+            message="Meanwhile explore Books, School & Board, or Competitive Exams from the shop."
+          />
+        ) : (
+          <ul className="plain-list">
+            {list.map((p) => (
+              <li key={p.slug}>
+                <Link to={`/publishers/${p.slug}`}>
+                  {p.name} ({p.bookCount})
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p style={{ marginTop: '1rem' }}>
+          <Link to="/shop">Browse all products →</Link>
+        </p>
       </div>
     );
   }

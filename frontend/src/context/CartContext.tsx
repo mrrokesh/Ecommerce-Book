@@ -10,6 +10,7 @@ import {
 import api from '../api/client';
 import type { Cart, CartItem } from '../types';
 import { useAuth } from './AuthContext';
+import { showToast } from '../components/Toast';
 
 type CartValue = {
   cart: Cart;
@@ -64,6 +65,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback(async (bookId: number, quantity = 1) => {
     const { data } = await api.post('/cart/items', { bookId, quantity });
     setCart(normalizeCart(data));
+    showToast('Added to cart');
     return data;
   }, []);
 

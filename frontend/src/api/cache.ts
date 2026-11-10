@@ -3,7 +3,8 @@ import api from './client';
 
 let categoriesPromise: Promise<CategoriesPayload> | null = null;
 
-export function loadCategories(): Promise<CategoriesPayload> {
+export function loadCategories(force = false): Promise<CategoriesPayload> {
+  if (force) categoriesPromise = null;
   if (!categoriesPromise) {
     categoriesPromise = api
       .get('/categories')

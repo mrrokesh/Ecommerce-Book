@@ -50,7 +50,7 @@ export default function RegisterPage() {
             type="password"
             name="password"
             required
-            minLength={6}
+            minLength={8}
             value={form.password}
             onChange={onChange}
           />

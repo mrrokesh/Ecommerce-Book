@@ -6,44 +6,130 @@ const router = Router();
 const DEFAULTS = {
   about: {
     title: 'About Salem Book House',
-    body: `Salem Book House is Salem's neighbourhood book mall. We stock fiction, non-fiction, Kannada titles, competitive exam books, stationery, toys and e-gift cards.
+    body: `Salem Book House is Salem's favourite book mall — a trusted neighbourhood destination for readers, students and families across Tamil Nadu.
 
-Our Fairlands flagship and two additional Salem stores serve readers who want genuine editions, careful packing and reliable delivery across Tamil Nadu.
+Owner
+Parasuraman Muthusamy
 
-The catalogue on this site is stored in PostgreSQL.`,
+What we offer
+We stock Tamil and English books, school & board guides (NCERT, CBSE, State Board), competitive exam materials (TNPSC, NEET, JEE, UPSC, Banking), college textbooks, novels, stationery, toys, gifts, accessories and e-gift cards.
+
+Why shop with us
+Genuine editions, careful packing and reliable delivery. Browse online or visit our Salem store for personal help finding the right book.
+
+Visit & support
+Phone: 9487724584
+Phone: 7904957436
+Landline: 0427-2411315
+Email: support@salembookhouse.com
+WhatsApp: 9487724584
+Instagram: @salembookhouse — https://www.instagram.com/salembookhouse
+Location: https://maps.app.goo.gl/ugcd7ja9bGT2WGdR8?g_st=ic
+
+Hours
+Mon – Sat: 9:30 AM – 9:00 PM
+Sun: 10:00 AM – 8:00 PM
+* Subject to change`,
   },
   contact: {
     title: 'Contact Us',
-    body: `Customer care: +91 427 123 4567
-Email: care@salembookhouse.com
-Hours: 9:30 AM to 6:30 PM, Monday–Saturday
+    body: `Support
+Phone: 9487724584
+Phone: 7904957436
+Landline: 0427-2411315
 
-Visit us at 12, Omalur Main Road, Fairlands, Salem 636016.`,
+Email: support@salembookhouse.com
+
+Hours
+Mon – Sat: 9:30 AM – 9:00 PM
+Sun: 10:00 AM – 8:00 PM
+* Subject to change
+
+WhatsApp: 9487724584
+Instagram: @salembookhouse — https://www.instagram.com/salembookhouse
+
+Location: https://maps.app.goo.gl/ugcd7ja9bGT2WGdR8?g_st=ic
+
+Owner
+Parasuraman Muthusamy`,
   },
   terms: {
     title: 'Terms & Conditions',
-    body: `By using Salem Book House you agree to purchase products as listed and pay the shown price (inclusive of applicable taxes).
+    body: `Welcome to Salem Book House. By browsing or placing an order on this website, you agree to these terms.
 
-Orders may be cancelled before dispatch. Returns of unused items are accepted within 7 days if the product is damaged or not as described.
+Orders & pricing
+Product prices include applicable taxes unless stated otherwise. We may refuse or cancel an order if stock, pricing or payment issues arise. You will be notified if that happens.
 
-Online payments use Razorpay when keys are configured; otherwise checkout is simulated.`,
+Shipping & delivery
+We deliver across Tamil Nadu and other serviceable pincodes. Delivery times depend on your location and courier partner. Express delivery may be available for selected Salem-region pincodes.
+
+Cancellations & returns
+You may request cancellation before dispatch. Unused products that arrive damaged or not as described may be returned within 7 days of delivery with proof of purchase. Perishable or opened stationery may not be returnable.
+
+Payments
+We accept UPI, cards, net banking and Cash on Delivery where available. Online payments are processed through our payment partner when configured.
+
+E-gift cards
+E-gift card codes are non-transferable after redemption and cannot be exchanged for cash.
+
+Store visits
+Store hours and stock may differ from the online catalogue. Contact us before visiting for large or special orders.
+
+Contact
+For help: support@salembookhouse.com or 9487724584 / 7904957436 / 0427-2411315.`,
   },
   privacy: {
     title: 'Privacy Policy',
-    body: `We store your name, email, phone and delivery addresses to fulfil orders. Passwords are hashed. We do not sell personal data.
+    body: `Salem Book House respects your privacy.
 
-Guest checkout stores only the email and shipping details needed for that order.`,
+What we collect
+Name, email, phone, delivery address and order details needed to fulfil purchases. Account passwords are stored hashed. Guest checkout stores only what is required for that order.
+
+How we use data
+To process orders, arrange delivery, send order updates and improve our store experience. We may contact you about your order via phone, WhatsApp, SMS or email.
+
+Sharing
+We share data only with delivery/payment partners as needed to complete your order. We do not sell personal data.
+
+Security
+We use industry-standard practices including SSL encryption for the site. No method of transmission is 100% secure.
+
+Your choices
+You may request updates or deletion of account data by contacting support@salembookhouse.com, subject to legal retention needs for invoices and orders.
+
+Contact
+Owner: Parasuraman Muthusamy
+Email: support@salembookhouse.com
+Phone: 9487724584`,
   },
   faq: {
     title: 'FAQs',
     body: `Q: Do you deliver outside Salem?
-A: Yes. Express pincodes (636, 637, 638) get faster shipping.
+A: Yes. We deliver across Tamil Nadu and other serviceable pincodes. Express options may apply for 636 / 637 / 638 series pincodes.
+
+Q: How do I check delivery for my pincode?
+A: Use the Deliver to / pincode checker in the header, or enter your pincode at checkout.
+
+Q: What payment methods do you accept?
+A: UPI, Visa, Mastercard, RuPay, net banking and Cash on Delivery where available.
 
 Q: How do coupons work?
-A: Try WELCOME10 (10% off over ₹199) or SALEM50 (₹50 off over ₹499).
+A: Try WELCOME10 (10% off over ₹199) or SALEM50 (₹50 off over ₹499) at checkout when active.
 
 Q: How do e-gift cards work?
-A: After purchase you receive a code. Enter it at checkout to redeem.`,
+A: After purchase you receive a code. Enter it at checkout to redeem the balance.
+
+Q: Can I track my order?
+A: Yes — use Track Order in the footer or visit /track with your order details.
+
+Q: What are store hours?
+A: Mon–Sat 9:30 AM – 9:00 PM; Sun 10:00 AM – 8:00 PM (* subject to change).
+
+Q: Who owns Salem Book House?
+A: Parasuraman Muthusamy.
+
+Q: How do I contact support?
+A: Call 9487724584 / 7904957436 / 0427-2411315, email support@salembookhouse.com, or WhatsApp 9487724584.`,
   },
 };
 
@@ -51,7 +137,12 @@ export async function seedCmsPages() {
   for (const [slug, page] of Object.entries(DEFAULTS)) {
     await query(
       `INSERT INTO cms_pages (slug, title, body) VALUES ($1,$2,$3)
-       ON CONFLICT (slug) DO NOTHING`,
+       ON CONFLICT (slug) DO UPDATE SET
+         title = EXCLUDED.title,
+         body = CASE
+           WHEN cms_pages.body IS NULL OR btrim(cms_pages.body) = '' THEN EXCLUDED.body
+           ELSE cms_pages.body
+         END`,
       [slug, page.title, page.body]
     );
   }

@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import SearchBar from './SearchBar';
 import Footer from './Footer';
+import ToastHost from './Toast';
 
 export default function Layout() {
   return (
@@ -12,6 +13,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <Footer />
+      <ToastHost />
     </div>
   );
 }

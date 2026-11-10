@@ -30,7 +30,7 @@ export default function ResetPasswordPage() {
         <h1>Reset password</h1>
         <label>
           New password
-          <input type="password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input type="password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
         {msg ? <p className={ok ? 'form-msg' : 'form-error'}>{msg}</p> : null}
         <button className="btn btn-navy block" disabled={busy || !token}>

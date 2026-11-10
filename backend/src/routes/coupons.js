@@ -1,8 +1,17 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { query } from '../db/pool.js';
 import { optionalAuth } from '../middleware/auth.js';
 
 const router = Router();
+
+const couponLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many coupon checks. Please wait and try again.' },
+});
 
 export function couponDiscount(coupon, subtotal) {
   if (!coupon) return 0;
@@ -52,7 +61,7 @@ export async function couponLimitError(coupon, { userId = null, email = '' } = {
   return null;
 }
 
-router.post('/preview', optionalAuth, async (req, res) => {
+router.post('/preview', couponLimiter, optionalAuth, async (req, res) => {
   try {
     const subtotal = Number(req.body?.subtotal) || 0;
     const coupon = await findActiveCoupon(req.body?.code);
@@ -83,7 +92,7 @@ router.post('/preview', optionalAuth, async (req, res) => {
   }
 });
 
-router.post('/gift-preview', async (req, res) => {
+router.post('/gift-preview', couponLimiter, async (req, res) => {
   try {
     const code = String(req.body?.code || '').trim().toUpperCase();
     const due = Number(req.body?.amount) || 0;

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const SESSION_KEY = 'sbh_session_id';
-const TOKEN_KEY = 'sbh_token';
+const LEGACY_TOKEN_KEY = 'sbh_token';
 const RENDER_API = 'https://ecommerce-book-rbl2.onrender.com/api';
 
 function resolveApiBase() {
@@ -20,30 +20,13 @@ function resolveApiBase() {
   return `${raw}/api`;
 }
 
-let memoryToken = '';
-
-export function getAuthToken() {
-  if (memoryToken) return memoryToken;
+/** Clear any pre-cookie JWT left in localStorage (XSS surface). */
+export function clearAuthToken() {
   try {
-    memoryToken = localStorage.getItem(TOKEN_KEY) || '';
-  } catch {
-    memoryToken = '';
-  }
-  return memoryToken;
-}
-
-export function setAuthToken(token) {
-  memoryToken = token || '';
-  try {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
   } catch {
     /* ignore */
   }
-}
-
-export function clearAuthToken() {
-  setAuthToken('');
 }
 
 function getOrCreateSessionId() {
@@ -66,10 +49,6 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   config.headers.set('x-session-id', getOrCreateSessionId());
-  const token = getAuthToken();
-  if (token) {
-    config.headers.set('Authorization', `Bearer ${token}`);
-  }
   if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
     config.headers.delete('Content-Type');
   }

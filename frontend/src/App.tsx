@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Layout from './components/Layout';
+import ScrollToTop from './components/ScrollToTop';
 import HomePage from './pages/HomePage';
 import ShopPage from './pages/ShopPage';
 import BookDetailPage from './pages/BookDetailPage';
@@ -21,6 +22,8 @@ import ExamsPage from './pages/ExamsPage';
 import TrackPage from './pages/TrackPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import NotFoundPage from './pages/NotFoundPage';
+import ErrorBoundary from './components/ErrorBoundary';
 import AdminLayout from './admin/AdminLayout';
 import AdminDashboard from './admin/AdminDashboard';
 import AdminProducts from './admin/AdminProducts';
@@ -35,7 +38,9 @@ import AdminReviews from './admin/AdminReviews';
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <CartProvider>
           <Routes>
@@ -78,10 +83,12 @@ export default function App() {
               <Route path="track" element={<TrackPage />} />
               <Route path="forgot-password" element={<ForgotPasswordPage />} />
               <Route path="reset-password" element={<ResetPasswordPage />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }

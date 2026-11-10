@@ -1,9 +1,17 @@
 import crypto from 'crypto';
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import Razorpay from 'razorpay';
 import { optionalAuth } from '../middleware/auth.js';
 
 const router = Router();
+const payLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many payment requests. Please wait and try again.' },
+});
 
 export function razorpayEnabled() {
   return Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
@@ -58,7 +66,7 @@ router.get('/config', (_req, res) => {
   });
 });
 
-router.post('/create-order', optionalAuth, async (req, res) => {
+router.post('/create-order', payLimiter, optionalAuth, async (req, res) => {
   try {
     const amount = Math.round(Number(req.body?.amount) * 100);
     if (!Number.isFinite(amount) || amount < 100) {

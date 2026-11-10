@@ -17,7 +17,7 @@ router.use(requireAdmin);
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 4 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => cb(null, /^image\//.test(file.mimetype || '')),
+  fileFilter: (_req, file, cb) => cb(null, /^image\/(jpeg|png|webp|gif|avif)$/.test(file.mimetype || '')),
 });
 
 const ORDER_STATUSES = [

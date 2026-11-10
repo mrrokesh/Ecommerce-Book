@@ -29,14 +29,19 @@ router.post('/register', async (req, res) => {
     if (!name?.trim() || !email?.trim() || !password) {
       return res.status(400).json({ success: false, error: 'Name, email and password are required' });
     }
-    if (String(password).length < 6) {
-      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+    if (String(password).length < 8) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return res.status(400).json({ success: false, error: 'Enter a valid email address' });
     }
+    const emailNorm = email.trim().toLowerCase();
+    const reservedAdmin = (process.env.ADMIN_EMAIL || 'admin@salembookhouse.com').toLowerCase();
+    if (emailNorm === reservedAdmin) {
+      return res.status(400).json({ success: false, error: 'This email cannot be used for registration' });
+    }
 
-    const existing = await query(`SELECT id FROM users WHERE lower(email) = lower($1)`, [email.trim()]);
+    const existing = await query(`SELECT id FROM users WHERE lower(email) = lower($1)`, [emailNorm]);
     if (existing.rows[0]) {
       return res.status(409).json({ success: false, error: 'Email already registered' });
     }
@@ -46,14 +51,14 @@ router.post('/register', async (req, res) => {
       `INSERT INTO users (name, email, password_hash, phone)
        VALUES ($1, $2, $3, $4)
        RETURNING id, name, email, phone, role, created_at`,
-      [name.trim(), email.trim().toLowerCase(), passwordHash, phone || null]
+      [name.trim(), emailNorm, passwordHash, phone || null]
     );
 
     const token = signToken(rows[0].id);
     setAuthCookie(res, token);
     return res.status(201).json({
       success: true,
-      data: { user: publicUser(rows[0]), token },
+      data: { user: publicUser(rows[0]) },
     });
   } catch (err) {
     console.error(err);
@@ -83,7 +88,7 @@ router.post('/login', async (req, res) => {
     const { password_hash: _, ...safe } = user;
     return res.json({
       success: true,
-      data: { user: publicUser(safe), token },
+      data: { user: publicUser(safe) },
     });
   } catch (err) {
     console.error(err);
@@ -147,8 +152,8 @@ router.post('/forgot', async (req, res) => {
 router.post('/reset', async (req, res) => {
   try {
     const { token, password } = req.body || {};
-    if (!token || !password || String(password).length < 6) {
-      return res.status(400).json({ success: false, error: 'Valid token and password (6+ characters) are required' });
+    if (!token || !password || String(password).length < 8) {
+      return res.status(400).json({ success: false, error: 'Valid token and password (8+ characters) are required' });
     }
     const { rows } = await query(
       `SELECT * FROM password_resets WHERE token = $1 AND used = FALSE AND expires_at > NOW()`,

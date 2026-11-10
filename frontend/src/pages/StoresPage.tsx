@@ -45,6 +45,20 @@ export default function StoresPage() {
       </form>
       {loading ? (
         <LoadingState />
+      ) : !stores.length ? (
+        <div className="store-card">
+          <h3>Salem Book House</h3>
+          <p>Salem, Tamil Nadu 636001</p>
+          <p>
+            <a href="tel:9487724584">9487724584</a> · <a href="tel:7904957436">7904957436</a> ·{' '}
+            <a href="tel:04272411315">0427-2411315</a>
+          </p>
+          <p className="muted">Mon–Sat 9:30 AM – 9:00 PM · Sun 10:00 AM – 8:00 PM</p>
+          <p>
+            Owner: Parasuraman Muthusamy ·{' '}
+            <a href="mailto:support@salembookhouse.com">support@salembookhouse.com</a>
+          </p>
+        </div>
       ) : (
         <ul className="store-list">
           {stores.map((s) => (

@@ -38,7 +38,44 @@ const origins = String(process.env.CLIENT_URL || 'http://localhost:5173')
   .filter(Boolean);
 
 app.set('trust proxy', 1);
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' }, contentSecurityPolicy: false }));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          'https://checkout.razorpay.com',
+          'https://api.razorpay.com',
+        ],
+        scriptSrcElem: [
+          "'self'",
+          'https://checkout.razorpay.com',
+          'https://api.razorpay.com',
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+        connectSrc: [
+          "'self'",
+          'https://api.razorpay.com',
+          'https://lumberjack.razorpay.com',
+          'https://checkout.razorpay.com',
+          'https://ecommerce-book-rbl2.onrender.com',
+        ],
+        frameSrc: ["'self'", 'https://api.razorpay.com', 'https://checkout.razorpay.com'],
+        formAction: ["'self'", 'https://api.razorpay.com'],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        frameAncestors: ["'self'"],
+        upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+      },
+    },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  })
+);
 
 function originAllowed(origin) {
   if (!origin || origins.includes(origin)) return true;

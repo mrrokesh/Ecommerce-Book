@@ -1,31 +1,67 @@
 # Salem Book House
 
-Full-stack bookstore inspired by Sapna Online — **Vite + React** frontend, **Node.js + Express** backend, **PostgreSQL**.
+Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeScript** storefront, **Node.js + Express** API, **PostgreSQL**.
+
+## Features
+
+- Catalogue with nested categories (Books → Tamil, Fiction, …), multi-select category and language filters, search, author and publisher pages
+- Cart (guest and signed-in), wishlist, saved addresses, coupons and gift cards, pincode delivery check
+- Guest and signed-in checkout: Cash on Delivery, or UPI / cards / net banking through Razorpay
+- Order tracking by order number and phone, cancellations, returns, GST invoice
+- Reviews, store locator, exam-prep section, CMS pages (About, Contact, FAQ, Terms, Privacy)
+- Admin panel: products, orders, customers, reviews, coupons and banners, CMS pages, email outbox, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), ERP product sync
+- Responsive layout (phones from 320px up), toast feedback, 404 and error screens
 
 ## Quick start
 
 ```bash
-cd backend && npm install && npm run dev
+cd backend && npm install && cp .env.example .env && npm run dev
 cd frontend && npm install && npm run dev
 ```
 
-Store: http://localhost:5173/ · API: http://localhost:5000/
+Store: http://localhost:5173 · API: http://localhost:5000
 
-Set `DATABASE_URL` in `backend/.env` for Rokesh Cloud (or any) Postgres. Leave it empty for embedded Postgres.
+Leave `DATABASE_URL` empty in `backend/.env` to use the embedded local Postgres (seeded automatically on first run). Set it to use a hosted Postgres.
 
-Demo: `demo@salembookhouse.com` / `Demo@123`  
-Admin: `admin@salembookhouse.com` / `Admin@123`  
-Coupons: `WELCOME10`, `SALEM50`
+To run the storefront against an API on another port: `API_PROXY=http://localhost:5100 npm run dev` in `frontend`.
 
-## Payments and email
+### Local admin account
 
-- **Razorpay:** set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`. Without keys, UPI/card stay simulated.
-- **SMTP:** set `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`. Without SMTP, order/reset mail is stored in Admin → Email outbox.
+In development the seed creates an admin user (`ADMIN_EMAIL`, default `admin@salembookhouse.com`). Set `ADMIN_PASSWORD` in `backend/.env` to choose its password; check `backend/src/db/extraSeed.js` for the development default. **Never use the development default in production.**
 
-## Production (Docker)
+## Configuration
+
+All settings live in `backend/.env` (see `backend/.env.example`, which lists every option). The important ones:
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Postgres connection string |
+| `JWT_SECRET` | Session signing key. **Required in production**, 24+ characters |
+| `ADMIN_PASSWORD` | Admin password. **Required in production** |
+| `CLIENT_URL` | Allowed storefront origin(s), comma-separated |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Live online payments. Without them, the production build offers Cash on Delivery only |
+| `SMTP_*` | Outgoing email. Without SMTP, mail goes to Admin → Email outbox (password-reset emails will not be delivered) |
+| `SHIPPING_WEBHOOK_SECRET` | Shared secret for carrier tracking webhooks |
+| `ERP_API_URL` / `ERP_API_KEY` | Optional product and stock sync |
+
+## Production
 
 ```bash
 docker compose up --build
 ```
 
-Serves the API and the built storefront on port 5000 using `DATABASE_URL` from `backend/.env`.
+serves the API and the built storefront on port 5000. The repository also deploys as a Vercel frontend (`frontend/vercel.json`) plus a Render API (`render.yaml`).
+
+The API refuses to start in production without a strong `JWT_SECRET` and an `ADMIN_PASSWORD`.
+
+## Security notes
+
+- Auth uses an httpOnly cookie; state-changing requests from foreign origins are rejected; login, register and reset are rate-limited.
+- Order totals are always computed on the server; Razorpay payments are verified by signature and amount.
+- Helmet CSP/HSTS headers on the API and security headers in `frontend/vercel.json`.
+- Admin uploads accept raster images only.
+- Report vulnerabilities privately to the store owner rather than opening a public issue.
+
+## Scripts
+
+One-off data scripts live in `backend/src/scripts` (cover backfill, category cleanup, Kannada → Tamil migration, …). Read the header comment before running any of them; `replaceKannadaWithTamil.js` is a dry run unless you pass `--apply`.

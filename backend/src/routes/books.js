@@ -6,6 +6,9 @@ import { getReviewSummary, getReviewSummaries } from './reviews.js';
 
 const router = Router();
 
+// Max comma-separated values accepted per filter (category / language).
+const MAX_FILTER_VALUES = 20;
+
 async function categoriesForBooks(bookIds) {
   if (!bookIds.length) return new Map();
   const { rows } = await query(
@@ -75,21 +78,48 @@ router.get('/', async (req, res) => {
     }
 
     if (category) {
-      where.push(
-        `EXISTS (
-          SELECT 1 FROM book_categories bc
-          JOIN categories c ON c.id = bc.category_id
-          WHERE bc.book_id = b.id AND c.slug = $${i}
-        )`
-      );
-      params.push(category);
-      i++;
+      const slugs = String(category)
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, MAX_FILTER_VALUES);
+      if (slugs.length >= 1) {
+        // A category also matches books filed under any of its sub-categories.
+        where.push(
+          `EXISTS (
+            SELECT 1 FROM book_categories bc
+            WHERE bc.book_id = b.id AND bc.category_id IN (
+              WITH RECURSIVE tree AS (
+                SELECT id FROM categories WHERE slug = ANY($${i}::text[])
+                UNION
+                SELECT c.id FROM categories c JOIN tree t ON c.parent_id = t.id
+              )
+              SELECT id FROM tree
+            )
+          )`
+        );
+        params.push(slugs);
+        i++;
+      }
     }
 
     if (language) {
-      where.push(`b.language ILIKE $${i}`);
-      params.push(language);
-      i++;
+      const langs = String(language)
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, MAX_FILTER_VALUES);
+      if (langs.length === 1) {
+        where.push(`b.language ILIKE $${i}`);
+        params.push(langs[0]);
+        i++;
+      } else if (langs.length > 1) {
+        where.push(
+          `(${langs.map((_, idx) => `b.language ILIKE $${i + idx}`).join(' OR ')})`
+        );
+        for (const lang of langs) params.push(lang);
+        i += langs.length;
+      }
     }
 
     const minPrice = req.query.minPrice;

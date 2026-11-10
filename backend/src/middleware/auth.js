@@ -1,11 +1,17 @@
 import jwt from 'jsonwebtoken';
 import { query } from '../db/pool.js';
 
+export const AUTH_COOKIE = 'sbh_auth';
+
 function extractToken(req) {
   const header = String(req.headers.authorization || req.headers.Authorization || '');
   if (header.toLowerCase().startsWith('bearer ')) {
     return header.slice(7).trim();
   }
+  if (req.cookies?.[AUTH_COOKIE]) {
+    return req.cookies[AUTH_COOKIE];
+  }
+  // Legacy cookie name during migration
   if (req.cookies?.token) {
     return req.cookies.token;
   }
@@ -70,14 +76,20 @@ function cookieOpts() {
     httpOnly: true,
     sameSite: crossSite ? 'none' : 'lax',
     secure: crossSite,
+    path: '/',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 }
 
 export function setAuthCookie(res, token) {
-  res.cookie('token', token, cookieOpts());
+  const opts = cookieOpts();
+  res.cookie(AUTH_COOKIE, token, opts);
+  // Clear legacy cookie if present
+  res.clearCookie('token', { ...opts, maxAge: 0 });
 }
 
 export function clearAuthCookie(res) {
-  res.clearCookie('token', cookieOpts());
+  const opts = cookieOpts();
+  res.clearCookie(AUTH_COOKIE, opts);
+  res.clearCookie('token', opts);
 }

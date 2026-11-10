@@ -16,6 +16,15 @@ if (process.env.NODE_ENV === 'production') {
     console.error('Refusing to start: set a strong JWT_SECRET (24+ chars) in production.');
     process.exit(1);
   }
+  if (!String(process.env.ADMIN_PASSWORD || '').trim()) {
+    console.error('Refusing to start: set ADMIN_PASSWORD in production.');
+    process.exit(1);
+  }
+  if (!String(process.env.CLIENT_URL || '').trim() || /localhost/i.test(process.env.CLIENT_URL)) {
+    console.warn(
+      'Warning: CLIENT_URL should list your live frontend origin(s), comma-separated, with no localhost-only value.'
+    );
+  }
 }
 
 const PORT = Number(process.env.PORT) || 5000;
