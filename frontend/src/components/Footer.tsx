@@ -157,6 +157,12 @@ export default function Footer() {
             <Link to="/privacy">Privacy</Link>
             <Link to="/contact">Contact</Link>
           </span>
+          <span className="footer-credit">
+            Developed by{' '}
+            <a href="https://www.mrrokesh.com/" target="_blank" rel="noopener noreferrer">
+              MR_ROKESH
+            </a>
+          </span>
         </div>
       </div>
     </footer>

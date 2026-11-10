@@ -1267,6 +1267,21 @@ p {
   opacity: 0.85;
 }
 
+.footer-credit {
+  opacity: 0.9;
+}
+
+.footer-credit a {
+  display: inline !important;
+  margin: 0 !important;
+  color: #60a5fa !important;
+  font-weight: 600;
+}
+
+.footer-credit a:hover {
+  text-decoration: underline;
+}
+
 .site-footer h4 {
   color: #fff;
   font-size: 0.95rem;
