@@ -83,11 +83,30 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization', 'x-session-id'],
   })
 );
+/**
+ * True when the browser's Origin is the very site that served the request (the public host the
+ * user typed, forwarded by Vercel or the proxy). A foreign page cannot forge this: browsers set
+ * Origin themselves, and a cross-site request carries the attacker's origin, never ours.
+ * This lets any custom domain pointed at the app work without listing it in CLIENT_URL.
+ */
+function sameSiteOrigin(origin, req) {
+  try {
+    return new URL(origin).hostname === req.hostname;
+  } catch {
+    return false;
+  }
+}
+
 // CSRF guard: state-changing requests from a foreign browser origin are refused.
 app.use((req, res, next) => {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
   const origin = req.get('origin');
-  if (origin && !originAllowed(origin) && !req.path.startsWith('/api/shipping/webhooks/')) {
+  if (
+    origin &&
+    !originAllowed(origin) &&
+    !sameSiteOrigin(origin, req) &&
+    !req.path.startsWith('/api/shipping/webhooks/')
+  ) {
     return res.status(403).json({ success: false, error: 'Origin not allowed' });
   }
   return next();
