@@ -6,22 +6,14 @@ import type { CategoryNode } from '../types';
 import { loadCategories } from '../api/cache';
 import api from '../api/client';
 
-const NAV = [
-  { label: 'BOOKS', to: '/shop/books', slug: 'books' },
-  { label: 'SCHOOL', to: '/shop/school-board', slug: 'school-board' },
-  { label: 'EXAMS', to: '/shop/competitive-exams', slug: 'competitive-exams' },
-  { label: 'COLLEGE', to: '/shop/college', slug: 'college' },
-  { label: 'STATIONERY', to: '/shop/stationery', badge: 'NEW', slug: 'stationery' },
-  { label: 'TOYS', to: '/shop/toys', slug: 'toys' },
-  { label: 'GIFTS', to: '/shop/gifts', slug: 'gifts' },
-];
+/** Top-level categories beyond this many (by admin sort order) go under MORE. */
+const MAIN_NAV_COUNT = 7;
 
-const MORE_LINKS = [
-  { label: 'Accessories', to: '/shop/accessories' },
-  { label: 'New Arrivals', to: '/shop/new-arrivals' },
-  { label: 'Pre-Order', to: '/shop/pre-order' },
-  { label: 'E Gift Card', to: '/shop/e-gift-card' },
-];
+/** Short tab labels for long category names; anything else shows its own name. */
+const NAV_LABELS: Record<string, string> = {
+  'school-board': 'School',
+  'competitive-exams': 'Exams',
+};
 
 /** Myntra-style column groups (title + child slugs). Unknown slugs are skipped. */
 const MEGA_GROUPS: Record<string, { title: string; slugs: string[] }[]> = {
@@ -47,20 +39,12 @@ const MEGA_GROUPS: Record<string, { title: string; slugs: string[] }[]> = {
   ],
 };
 
-function buildMegaColumns(slug: string, kids: CategoryNode[]) {
+function buildMegaColumns(slug: string, title: string, kids: CategoryNode[]) {
   if (!kids.length) return [];
 
   // Few links → one tight column (no giant empty panel)
   if (kids.length <= 6) {
-    return [
-      {
-        title: slug
-          .split('-')
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(' '),
-        links: kids,
-      },
-    ];
+    return [{ title, links: kids }];
   }
 
   const bySlug = new Map(kids.map((k) => [k.slug, k]));
@@ -131,16 +115,8 @@ export default function Header() {
     };
   }, []);
 
-  function childrenFor(slug: string) {
-    const node = tree.find((c) => c.slug === slug);
-    const kids = [...(node?.children || [])];
-    kids.sort((a, b) => {
-      if (a.slug === 'tamil') return -1;
-      if (b.slug === 'tamil') return 1;
-      return String(a.name || '').localeCompare(String(b.name || ''));
-    });
-    return kids;
-  }
+  const mainNav = tree.slice(0, MAIN_NAV_COUNT);
+  const moreNav = tree.slice(MAIN_NAV_COUNT);
 
   async function checkPin(e: FormEvent) {
     e.preventDefault();
@@ -175,14 +151,15 @@ export default function Header() {
           </Link>
 
           <nav className="main-nav" aria-label="Primary">
-            {NAV.map((item) => {
-              const kids = childrenFor(item.slug);
-              const columns = buildMegaColumns(item.slug, kids);
+            {mainNav.map((cat) => {
+              const kids = cat.children || [];
+              const item = { slug: cat.slug, to: `/shop/${cat.slug}` };
+              const columns = buildMegaColumns(cat.slug, cat.name || cat.slug, kids);
               return (
-                <div key={item.to} className={`nav-item ${kids.length ? 'has-mega' : ''}`}>
+                <div key={cat.slug} className={`nav-item ${kids.length ? 'has-mega' : ''}`}>
                   <Link to={item.to} className="nav-link">
-                    {item.label}
-                    {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
+                    {(NAV_LABELS[cat.slug] || cat.name || cat.slug).toUpperCase()}
+                    {cat.badge ? <span className="nav-badge">{cat.badge}</span> : null}
                   </Link>
                   {columns.length ? (
                     <div
@@ -208,23 +185,25 @@ export default function Header() {
                 </div>
               );
             })}
-            <div className="nav-item has-mega">
-              <span className="nav-link nav-more-label" tabIndex={0}>
-                MORE
-              </span>
-              <div className="mega-menu mega-panel mega-panel-more" role="menu">
-                <div className="mega-cols">
-                  <div className="mega-col">
-                    <span className="mega-heading">More to explore</span>
-                    {MORE_LINKS.map((l) => (
-                      <Link key={l.to} to={l.to} role="menuitem">
-                        {l.label}
-                      </Link>
-                    ))}
+            {moreNav.length ? (
+              <div className="nav-item has-mega">
+                <span className="nav-link nav-more-label" tabIndex={0}>
+                  MORE
+                </span>
+                <div className="mega-menu mega-panel mega-panel-more" role="menu">
+                  <div className="mega-cols">
+                    <div className="mega-col">
+                      <span className="mega-heading">More to explore</span>
+                      {moreNav.map((cat) => (
+                        <Link key={cat.slug} to={`/shop/${cat.slug}`} role="menuitem">
+                          {cat.name}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : null}
           </nav>
 
           <div className="header-actions">

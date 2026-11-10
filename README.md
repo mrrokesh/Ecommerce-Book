@@ -9,7 +9,7 @@ Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeS
 - Guest and signed-in checkout: Cash on Delivery, or UPI / cards / net banking through Razorpay
 - Order tracking by order number and phone, cancellations, returns, GST invoice
 - Reviews, store locator, exam-prep section, CMS pages (About, Contact, FAQ, Terms, Privacy)
-- Admin panel: products, orders, customers, reviews, coupons and banners, CMS pages, email outbox, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), ERP product sync
+- Admin panel: products, categories, orders, customers, reviews, coupons and banners, CMS pages, email outbox, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), ERP product sync
 - Responsive layout (phones from 320px up), toast feedback, 404 and error screens
 
 ## Quick start
@@ -44,6 +44,18 @@ All settings live in `backend/.env` (see `backend/.env.example`, which lists eve
 | `SHIPPING_WEBHOOK_SECRET` | Shared secret for carrier tracking webhooks |
 | `ERP_API_URL` / `ERP_API_KEY` | Optional product and stock sync |
 
+## Categories
+
+Categories are managed in **Admin → Catalogue → Categories** and the storefront reads them straight from the database, so admin changes appear on the next page load with no redeploy.
+
+- Two levels: top-level categories and subcategories (a parent must be top-level).
+- **Sort order** sets the order everywhere. The first 7 shown top-level categories appear in the header nav; the rest go under **MORE**.
+- **Badge** (for example `NEW`) shows next to the header tab.
+- **Hide** removes a category (and its subcategories) from the header, mega menus, Browse Categories, shop filters and footer. Its `/shop/<slug>` page still works.
+- **Delete** is refused while a category has products or subcategories; hide it instead.
+
+`backend/src/scripts/syncCategoryNav.js` sets the initial visibility and order (hides legacy/internal categories such as `kannada` and `best-sellers`). It is safe to re-run.
+
 ## Payments (Razorpay)
 
 Standard Web Checkout is wired end to end:
@@ -57,7 +69,7 @@ Standard Web Checkout is wired end to end:
 
 Set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in `backend/.env` (gitignored). Without keys, development builds simulate online payments; production builds offer Cash on Delivery only.
 
-**Testing with test keys:** use `rzp_test_…` keys, start both apps, add a book to the cart and choose UPI or card at checkout. Razorpay's published test card is `4100 2800 0000 1007` (CVV `123`, any future expiry); the test UPI id is `test@razorpay`. For go-live, put the **live** key pair in the host's environment (for example the Render dashboard) and never commit either key.
+**Testing with test keys:** use `rzp_test_…` keys, start both apps, add a book to the cart and choose UPI or card at checkout. Razorpay's published test card is `4100 2800 0000 1007` (CVV `123`, any future expiry); the test UPI id is `success@razorpay` (use `failure@razorpay` to test a failed payment). For go-live, put the **live** key pair in the host's environment (for example the Render dashboard) and never commit either key.
 
 ## Production
 
@@ -80,4 +92,4 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 
 ## Scripts
 
-One-off data scripts live in `backend/src/scripts` (cover backfill, category cleanup, Kannada → Tamil migration, …). Read the header comment before running any of them; `replaceKannadaWithTamil.js` is a dry run unless you pass `--apply`.
+One-off data scripts live in `backend/src/scripts` (cover backfill, category cleanup and nav sync, Kannada → Tamil migration, …). Read the header comment before running any of them; `replaceKannadaWithTamil.js` is a dry run unless you pass `--apply`.

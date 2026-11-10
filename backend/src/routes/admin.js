@@ -131,11 +131,148 @@ async function upsertAuthor(name) {
 
 router.get('/categories', async (_req, res) => {
   try {
-    const { rows } = await query(`SELECT id, name, slug, parent_id FROM categories ORDER BY sort_order, name`);
+    const { rows } = await query(
+      `SELECT c.id, c.name, c.slug, c.parent_id, c.badge, c.sort_order, c.is_visible,
+              (SELECT COUNT(*)::int FROM book_categories bc WHERE bc.category_id = c.id) AS product_count
+       FROM categories c
+       ORDER BY c.sort_order, c.name`
+    );
     return res.json({ success: true, data: { categories: rows } });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, error: 'Failed to list categories' });
+  }
+});
+
+function categorySlug(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 140);
+}
+
+/** Validates admin category input. Returns { error } or { values } for the columns provided. */
+async function readCategoryInput(body, currentId = null) {
+  const values = {};
+  if (body.name !== undefined) {
+    const name = String(body.name || '').trim();
+    if (!name || name.length > 120) return { error: 'Name is required (max 120 characters)' };
+    values.name = name;
+  }
+  if (body.slug !== undefined) {
+    const slug = categorySlug(body.slug);
+    if (!slug) return { error: 'Slug may only use letters, numbers and hyphens' };
+    values.slug = slug;
+  }
+  if (body.parentId !== undefined) {
+    const parentId = body.parentId === null || body.parentId === '' ? null : Number(body.parentId);
+    if (parentId !== null) {
+      if (!Number.isInteger(parentId) || parentId === currentId) return { error: 'Invalid parent category' };
+      const { rows } = await query(`SELECT parent_id FROM categories WHERE id = $1`, [parentId]);
+      if (!rows[0]) return { error: 'Parent category not found' };
+      // The storefront renders two levels (category → subcategory).
+      if (rows[0].parent_id !== null) return { error: 'Parent must be a top-level category' };
+      if (currentId) {
+        const kids = await query(`SELECT 1 FROM categories WHERE parent_id = $1 LIMIT 1`, [currentId]);
+        if (kids.rows[0]) return { error: 'A category with subcategories cannot be moved under another one' };
+      }
+    }
+    values.parent_id = parentId;
+  }
+  if (body.badge !== undefined) {
+    const badge = String(body.badge || '').trim().toUpperCase().slice(0, 20);
+    values.badge = badge || null;
+  }
+  if (body.sortOrder !== undefined) {
+    const sortOrder = Number(body.sortOrder);
+    if (!Number.isInteger(sortOrder)) return { error: 'Sort order must be a whole number' };
+    values.sort_order = sortOrder;
+  }
+  if (body.isVisible !== undefined) values.is_visible = Boolean(body.isVisible);
+  return { values };
+}
+
+function categoryWriteError(res, err) {
+  if (err?.code === '23505') {
+    return res.status(409).json({ success: false, error: 'Another category already uses that slug' });
+  }
+  console.error(err);
+  return res.status(500).json({ success: false, error: 'Could not save category' });
+}
+
+router.post('/categories', async (req, res) => {
+  try {
+    const body = { ...(req.body || {}) };
+    if (body.slug === undefined || body.slug === '') body.slug = body.name;
+    const { error, values } = await readCategoryInput(body);
+    if (error) return res.status(400).json({ success: false, error });
+    if (!values.name) return res.status(400).json({ success: false, error: 'Name is required' });
+    if (values.sort_order === undefined) {
+      const { rows } = await query(
+        `SELECT COALESCE(MAX(sort_order), 0) + 1 AS next FROM categories WHERE parent_id IS NOT DISTINCT FROM $1`,
+        [values.parent_id ?? null]
+      );
+      values.sort_order = rows[0].next;
+    }
+    const cols = Object.keys(values);
+    const { rows } = await query(
+      `INSERT INTO categories (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')})
+       RETURNING id, name, slug, parent_id, badge, sort_order, is_visible`,
+      cols.map((c) => values[c])
+    );
+    return res.status(201).json({ success: true, data: { category: { ...rows[0], product_count: 0 } } });
+  } catch (err) {
+    return categoryWriteError(res, err);
+  }
+});
+
+router.patch('/categories/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ success: false, error: 'Invalid category id' });
+    const { error, values } = await readCategoryInput(req.body || {}, id);
+    if (error) return res.status(400).json({ success: false, error });
+    const cols = Object.keys(values);
+    if (!cols.length) return res.status(400).json({ success: false, error: 'Nothing to update' });
+    const { rows } = await query(
+      `UPDATE categories SET ${cols.map((c, i) => `${c} = $${i + 1}`).join(', ')}
+       WHERE id = $${cols.length + 1}
+       RETURNING id, name, slug, parent_id, badge, sort_order, is_visible`,
+      [...cols.map((c) => values[c]), id]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Category not found' });
+    return res.json({ success: true, data: { category: rows[0] } });
+  } catch (err) {
+    return categoryWriteError(res, err);
+  }
+});
+
+router.delete('/categories/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ success: false, error: 'Invalid category id' });
+    const kids = await query(`SELECT COUNT(*)::int AS c FROM categories WHERE parent_id = $1`, [id]);
+    if (kids.rows[0].c) {
+      return res.status(409).json({
+        success: false,
+        error: 'Move or delete its subcategories first (or hide it instead)',
+      });
+    }
+    const used = await query(`SELECT COUNT(*)::int AS c FROM book_categories WHERE category_id = $1`, [id]);
+    if (used.rows[0].c) {
+      return res.status(409).json({
+        success: false,
+        error: `${used.rows[0].c} product(s) use this category — reassign them first or hide it instead`,
+      });
+    }
+    const { rowCount } = await query(`DELETE FROM categories WHERE id = $1`, [id]);
+    if (!rowCount) return res.status(404).json({ success: false, error: 'Category not found' });
+    return res.json({ success: true, data: { deleted: true } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: 'Could not delete category' });
   }
 });
 

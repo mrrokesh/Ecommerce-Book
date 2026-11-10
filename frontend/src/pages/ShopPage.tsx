@@ -14,28 +14,6 @@ const SORTS = [
   { value: 'discount', label: 'Discount' },
 ];
 
-const SHOP_ROOT_ORDER = [
-  'books',
-  'school-board',
-  'competitive-exams',
-  'college',
-  'stationery',
-  'toys',
-  'gifts',
-  'accessories',
-  'e-gift-card',
-];
-
-const HIDDEN = new Set([
-  'pre-order',
-  'new-arrivals',
-  'best-sellers',
-  'featured-author',
-  'young-adult',
-  'children',
-  'kannada',
-]);
-
 const LANG_OPTIONS = ['Tamil', 'English', 'Hindi'];
 
 function parseList(raw: string | null): string[] {
@@ -44,38 +22,6 @@ function parseList(raw: string | null): string[] {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-}
-
-function buildTree(payload: { tree?: CategoryNode[]; categories?: CategoryNode[] }): CategoryNode[] {
-  const fromTree = payload.tree?.length
-    ? payload.tree
-    : (() => {
-        const flat = payload.categories || [];
-        const byParent = new Map<number | string, CategoryNode[]>();
-        for (const c of flat) {
-          const key = c.parentId ?? c.parent_id ?? 0;
-          if (!byParent.has(key)) byParent.set(key, []);
-          byParent.get(key)!.push(c);
-        }
-        return (byParent.get(0) || []).map((r) => ({
-          ...r,
-          children: byParent.get(r.id as number) || [],
-        }));
-      })();
-
-  return fromTree
-    .filter((n) => n.slug && !HIDDEN.has(n.slug) && SHOP_ROOT_ORDER.includes(n.slug))
-    .map((r) => ({
-      ...r,
-      children: (r.children || [])
-        .filter((c) => c.slug && !HIDDEN.has(c.slug))
-        .sort((a, b) => {
-          if (a.slug === 'tamil') return -1;
-          if (b.slug === 'tamil') return 1;
-          return String(a.name || '').localeCompare(String(b.name || ''));
-        }),
-    }))
-    .sort((a, b) => SHOP_ROOT_ORDER.indexOf(a.slug) - SHOP_ROOT_ORDER.indexOf(b.slug));
 }
 
 export default function ShopPage() {
@@ -115,7 +61,7 @@ export default function ShopPage() {
 
   useEffect(() => {
     loadCategories()
-      .then((data) => setTree(buildTree(data)))
+      .then((data) => setTree(data.tree || []))
       .catch(() => setTree([]));
   }, []);
 

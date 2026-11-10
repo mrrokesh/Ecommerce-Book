@@ -1,79 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import api from '../api/client';
-
-const ROOT_ORDER = [
-  'books',
-  'school-board',
-  'competitive-exams',
-  'college',
-  'stationery',
-  'toys',
-  'gifts',
-  'accessories',
-  'e-gift-card',
-];
-
-const HIDDEN = new Set([
-  'pre-order',
-  'new-arrivals',
-  'best-sellers',
-  'featured-author',
-  'young-adult',
-  'children',
-  'kannada',
-]);
-
-type CatNode = {
-  id?: number | string;
-  name: string;
-  slug: string;
-  parent_id?: number | string | null;
-  parentId?: number | string | null;
-  children?: CatNode[];
-};
-
-function normalizeTree(payload: { tree?: CatNode[]; categories?: CatNode[] }): CatNode[] {
-  const fromTree = payload.tree?.length
-    ? payload.tree
-    : (() => {
-        const flat = payload.categories || [];
-        const byParent = new Map<number | string, CatNode[]>();
-        for (const c of flat) {
-          const key = c.parentId ?? c.parent_id ?? 0;
-          if (!byParent.has(key)) byParent.set(key, []);
-          byParent.get(key)!.push(c);
-        }
-        return (byParent.get(0) || []).map((r) => ({
-          ...r,
-          children: byParent.get(r.id as number) || [],
-        }));
-      })();
-
-  return fromTree
-    .filter((n) => n.slug && !HIDDEN.has(n.slug))
-    .map((r) => ({
-      ...r,
-      children: (r.children || [])
-        .filter((c) => c.slug && !HIDDEN.has(c.slug))
-        .sort((a, b) => {
-          if (a.slug === 'tamil') return -1;
-          if (b.slug === 'tamil') return 1;
-          return String(a.name || '').localeCompare(String(b.name || ''));
-        }),
-    }))
-    .sort((a, b) => {
-      const ia = ROOT_ORDER.indexOf(a.slug);
-      const ib = ROOT_ORDER.indexOf(b.slug);
-      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-    });
-}
+import { loadCategories } from '../api/cache';
+import type { CategoryNode } from '../types';
 
 export default function SearchBar() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [q, setQ] = useState(params.get('q') || '');
-  const [categories, setCategories] = useState<CatNode[]>([]);
+  const [categories, setCategories] = useState<CategoryNode[]>([]);
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -84,15 +18,9 @@ export default function SearchBar() {
 
   useEffect(() => {
     let alive = true;
-    api
-      .get('/categories')
-      .then(({ data }) => {
-        if (!alive) return;
-        setCategories(normalizeTree(data || {}));
-      })
-      .catch(() => {
-        if (alive) setCategories([]);
-      });
+    loadCategories().then((data) => {
+      if (alive) setCategories(data.tree || []);
+    });
     return () => {
       alive = false;
     };
@@ -121,15 +49,7 @@ export default function SearchBar() {
     navigate(`/search?q=${encodeURIComponent(query)}`);
   }
 
-  const list =
-    categories.length > 0
-      ? categories
-      : [
-          { name: 'Books', slug: 'books', children: [{ name: 'Tamil', slug: 'tamil' }] },
-          { name: 'Stationery', slug: 'stationery', children: [] },
-          { name: 'Toys', slug: 'toys', children: [] },
-          { name: 'Competitive Exams', slug: 'competitive-exams', children: [] },
-        ];
+  const list = categories;
 
   return (
     <div className="search-bar">

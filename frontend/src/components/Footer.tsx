@@ -1,26 +1,14 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { loadCategories } from '../api/cache';
+import type { CategoryNode } from '../types';
 
 const MAPS = 'https://maps.app.goo.gl/ugcd7ja9bGT2WGdR8?g_st=ic';
 const INSTAGRAM = 'https://www.instagram.com/salembookhouse';
 const WHATSAPP = 'https://wa.me/919487724584';
 
-const SHOP_LINKS = [
-  { label: 'Books', to: '/shop/books' },
-  { label: 'Tamil Books', to: '/shop/tamil' },
-  { label: 'School & Board', to: '/shop/school-board' },
-  { label: 'Competitive Exams', to: '/shop/competitive-exams' },
-  { label: 'College', to: '/shop/college' },
-  { label: 'Stationery', to: '/shop/stationery' },
-  { label: 'Toys', to: '/shop/toys' },
-  { label: 'Gifts', to: '/shop/gifts' },
-  { label: 'Accessories', to: '/shop/accessories' },
-];
-
 const EXPLORE_LINKS = [
   { label: 'All Products', to: '/shop' },
-  { label: 'New Arrivals', to: '/shop/new-arrivals' },
-  { label: 'Pre-Order', to: '/shop/pre-order' },
-  { label: 'E-Gift Cards', to: '/shop/e-gift-card' },
   { label: 'Competitive Exams Hub', to: '/exams' },
   { label: 'Retail Store', to: '/stores' },
   { label: 'Publishers', to: '/publishers' },
@@ -40,6 +28,18 @@ const HELP_LINKS = [
 ];
 
 export default function Footer() {
+  const [shopCats, setShopCats] = useState<CategoryNode[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    loadCategories().then((data) => {
+      if (alive) setShopCats(data.tree || []);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   return (
     <footer className="site-footer">
       <div className="container footer-grid">
@@ -72,9 +72,9 @@ export default function Footer() {
 
         <div>
           <h4>Shop</h4>
-          {SHOP_LINKS.map((l) => (
-            <Link key={l.to} to={l.to}>
-              {l.label}
+          {shopCats.map((c) => (
+            <Link key={c.slug} to={`/shop/${c.slug}`}>
+              {c.name}
             </Link>
           ))}
         </div>

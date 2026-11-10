@@ -6,9 +6,11 @@ const router = Router();
 router.get('/', async (_req, res) => {
   try {
     const { rows } = await query(
-      `SELECT id, name, slug, parent_id, badge, sort_order, image_url
-       FROM categories
-       ORDER BY sort_order, name`
+      `SELECT c.id, c.name, c.slug, c.parent_id, c.badge, c.sort_order, c.image_url
+       FROM categories c
+       LEFT JOIN categories p ON p.id = c.parent_id
+       WHERE c.is_visible AND (p.id IS NULL OR p.is_visible)
+       ORDER BY c.sort_order, c.name`
     );
     const categories = rows.map((c) => ({
       id: c.id,
