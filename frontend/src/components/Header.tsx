@@ -8,11 +8,13 @@ import api from '../api/client';
 
 const NAV = [
   { label: 'BOOKS', to: '/shop/books', slug: 'books' },
-  { label: 'KANNADA', to: '/shop/kannada', slug: 'kannada' },
+  { label: 'SCHOOL & BOARD', to: '/shop/school-board', slug: 'school-board' },
+  { label: 'COMPETITIVE EXAMS', to: '/shop/competitive-exams', slug: 'competitive-exams' },
+  { label: 'COLLEGE', to: '/shop/college', slug: 'college' },
   { label: 'STATIONERY', to: '/shop/stationery', badge: 'NEW', slug: 'stationery' },
   { label: 'TOYS', to: '/shop/toys', slug: 'toys' },
-  { label: 'COMPETITIVE EXAMS', to: '/shop/competitive-exams', slug: 'competitive-exams' },
-  { label: 'PRE-ORDER', to: '/shop/pre-order', slug: 'pre-order' },
+  { label: 'GIFTS', to: '/shop/gifts', slug: 'gifts' },
+  { label: 'ACCESSORIES', to: '/shop/accessories', slug: 'accessories' },
   { label: 'NEW ARRIVALS', to: '/shop/new-arrivals', slug: 'new-arrivals' },
   { label: 'E GIFT CARD', to: '/shop/e-gift-card', slug: 'e-gift-card' },
 ];

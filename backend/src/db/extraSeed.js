@@ -132,21 +132,51 @@ export async function seedExtras() {
   }
 
   await ensureCategory('Books', 'books', null, null, 1);
-  await ensureCategory('Fiction', 'fiction', 'books', null, 2);
-  await ensureCategory('Non Fiction', 'non-fiction', 'books', null, 3);
-  await ensureCategory('Young Adult', 'young-adult', 'books', null, 4);
-  await ensureCategory('Kannada', 'kannada', null, null, 5);
-  await ensureCategory('Stationery', 'stationery', null, 'NEW', 6);
-  await ensureCategory('Notebooks', 'notebooks', 'stationery', null, 61);
-  await ensureCategory('Pens', 'pens', 'stationery', null, 62);
-  await ensureCategory('Art Supplies', 'art-supplies', 'stationery', null, 63);
-  await ensureCategory('Toys', 'toys', null, null, 7);
-  await ensureCategory('Puzzles', 'puzzles', 'toys', null, 71);
-  await ensureCategory('Educational Toys', 'educational-toys', 'toys', null, 72);
-  await ensureCategory('Competitive Exams', 'competitive-exams', null, null, 8);
-  await ensureCategory('UPSC', 'upsc', 'competitive-exams', null, 81);
-  await ensureCategory('Banking', 'banking', 'competitive-exams', null, 82);
+  await ensureCategory('Competitive Exams', 'competitive-exams', null, null, 2);
+  await ensureCategory('School & Board', 'school-board', null, null, 3);
+  await ensureCategory('College', 'college', null, null, 4);
+  await ensureCategory('Stationery', 'stationery', null, 'NEW', 5);
+  await ensureCategory('Toys', 'toys', null, null, 6);
+  await ensureCategory('Gifts', 'gifts', null, null, 7);
+  await ensureCategory('Accessories', 'accessories', null, null, 8);
   await ensureCategory('E Gift Card', 'e-gift-card', null, null, 9);
+  await ensureCategory('Kannada', 'kannada', null, null, 10);
+
+  await ensureCategory('Novels', 'novels', 'books', null, 11);
+  await ensureCategory('General books', 'general-books', 'books', null, 12);
+  await ensureCategory('Children Books', 'children-books', 'books', null, 13);
+  await ensureCategory('Astrology', 'astrology', 'books', null, 14);
+  await ensureCategory('Epics', 'epics', 'books', null, 15);
+  await ensureCategory('Fiction', 'fiction', 'books', null, 16);
+  await ensureCategory('Non Fiction', 'non-fiction', 'books', null, 17);
+
+  await ensureCategory('TNPSC', 'tnpsc', 'competitive-exams', null, 21);
+  await ensureCategory('NEET', 'neet', 'competitive-exams', null, 22);
+  await ensureCategory('JEE', 'jee', 'competitive-exams', null, 23);
+  await ensureCategory('UPSC', 'upsc', 'competitive-exams', null, 24);
+  await ensureCategory('Banking', 'banking', 'competitive-exams', null, 25);
+
+  await ensureCategory('NCERT', 'ncert', 'school-board', null, 31);
+  await ensureCategory('CBSE Guides', 'cbse-guides', 'school-board', null, 32);
+  await ensureCategory('State board Guides', 'state-board-guides', 'school-board', null, 33);
+  await ensureCategory('SCERT', 'scert', 'school-board', null, 34);
+
+  await ensureCategory('College textbooks', 'college-textbooks', 'college', null, 41);
+  await ensureCategory('Medical', 'medical', 'college', null, 42);
+  await ensureCategory('Nursing', 'nursing', 'college', null, 43);
+
+  await ensureCategory('School bags', 'school-bags', 'stationery', null, 51);
+  await ensureCategory('Notebooks', 'notebooks', 'stationery', null, 52);
+  await ensureCategory('Pens', 'pens', 'stationery', null, 53);
+  await ensureCategory('Art Supplies', 'art-supplies', 'stationery', null, 54);
+
+  await ensureCategory('Soft toys', 'soft-toys', 'toys', null, 61);
+  await ensureCategory('Puzzles', 'puzzles', 'toys', null, 62);
+  await ensureCategory('Educational Toys', 'educational-toys', 'toys', null, 63);
+
+  await ensureCategory('Shoes', 'shoes', 'accessories', null, 71);
+  await ensureCategory('Socks', 'socks', 'accessories', null, 72);
+  await ensureCategory('Jute bags', 'jute-bags', 'accessories', null, 73);
 
   const extra = [
     {
@@ -302,45 +332,20 @@ export async function seedExtras() {
 
   const storeCount = await query(`SELECT COUNT(*)::int AS c FROM stores`);
   if (storeCount.rows[0].c === 0) {
-    const stores = [
+    await query(
+      `INSERT INTO stores (name, address, city, pincode, phone, hours, lat, lng)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
       [
-        'Salem Book House — Fairlands',
-        '12, Omalur Main Road, Fairlands',
+        'Salem Book House',
+        'Salem, Tamil Nadu · Also: 7904957436, 0427-2411315',
         'Salem',
-        '636016',
-        '+91 427 123 4567',
-        '9:30 AM – 8:30 PM',
+        '636001',
+        '9487724584',
+        'Mon–Sat 9:30–9:00 · Sun 10:00–8:00 (* changeable)',
         11.6643,
-        78.1460,
-      ],
-      [
-        'Salem Book House — New Bus Stand',
-        'Shop 4, Near New Bus Stand, Shevapet',
-        'Salem',
-        '636002',
-        '+91 427 234 5678',
-        '9:00 AM – 9:00 PM',
-        11.6530,
-        78.1570,
-      ],
-      [
-        'Salem Book House — Hasthampatti',
-        '44, Junction Main Road, Hasthampatti',
-        'Salem',
-        '636007',
-        '+91 427 345 6789',
-        '10:00 AM – 8:00 PM',
-        11.6701,
-        78.1468,
-      ],
-    ];
-    for (const s of stores) {
-      await query(
-        `INSERT INTO stores (name, address, city, pincode, phone, hours, lat, lng)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        s
-      );
-    }
+        78.146,
+      ]
+    );
   }
 
   const pinCount = await query(`SELECT COUNT(*)::int AS c FROM pincodes`);
@@ -414,15 +419,39 @@ export async function seedExtras() {
   );
 
   const cms = [
-    ['about', 'About Salem Book House', "Salem Book House is Salem's neighbourhood book mall."],
-    ['contact', 'Contact Us', 'Customer care: +91 427 123 4567\nEmail: care@salembookhouse.com'],
+    [
+      'about',
+      'About Salem Book House',
+      "Salem Book House is Salem's favourite book mall — books for competitive exams, school and college, novels, stationery, gifts and more.\n\nVisit us in Salem or shop online with support on WhatsApp and phone.",
+    ],
+    [
+      'contact',
+      'Contact Us',
+      `Support
+Phone: 9487724584
+Phone: 7904957436
+Landline: 0427-2411315
+
+Email: support@salembookhouse.com
+
+Hours
+Mon – Sat: 9:30 AM – 9:00 PM
+Sun: 10:00 AM – 8:00 PM
+* Subject to change
+
+WhatsApp: 9487724584
+Instagram: @salembookhouse — https://www.instagram.com/salembookhouse
+
+Location: https://maps.app.goo.gl/ugcd7ja9bGT2WGdR8?g_st=ic`,
+    ],
     ['terms', 'Terms & Conditions', 'Cancel before dispatch. Returns within 7 days of delivery for unused items.'],
     ['privacy', 'Privacy Policy', 'We store account and order details only to fulfil purchases. Passwords are hashed.'],
     ['faq', 'FAQs', 'Coupons: WELCOME10 and SALEM50. Gift cards redeem at checkout. Express delivery on 636/637/638 pincodes.'],
   ];
   for (const [slug, title, body] of cms) {
     await query(
-      `INSERT INTO cms_pages (slug, title, body) VALUES ($1,$2,$3) ON CONFLICT (slug) DO NOTHING`,
+      `INSERT INTO cms_pages (slug, title, body) VALUES ($1,$2,$3)
+       ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, body = EXCLUDED.body`,
       [slug, title, body]
     );
   }

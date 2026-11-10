@@ -10,6 +10,7 @@
     "db:init": "node src/db/init.js",
     "db:seed": "node src/db/seed.js",
     "covers:backfill": "node src/scripts/backfillCovers.js",
+    "db:ensure-categories": "node src/scripts/ensureCategoriesAndContact.js",
     "setup": "node src/db/init.js && node src/db/seed.js"
   },
   "dependencies": {

@@ -56,7 +56,6 @@ export default function LoginPage() {
         <p className="auth-switch">
           New here? <Link to="/register">Create an account</Link>
         </p>
-        <p className="muted">Demo: demo@salembookhouse.com / Demo@123 · Admin: admin@salembookhouse.com / Admin@123</p>
       </form>
     </div>
   );

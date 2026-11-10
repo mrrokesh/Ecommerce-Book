@@ -26,8 +26,13 @@ export default function StoresPage() {
 
   return (
     <div className="container cms-page">
-      <h1>Retail Stores</h1>
-      <p>Three Salem Book House locations. Check stock near your pincode.</p>
+      <h1>Retail Store</h1>
+      <p>
+        Visit Salem Book House in Salem.{' '}
+        <a href="https://maps.app.goo.gl/ugcd7ja9bGT2WGdR8?g_st=ic" target="_blank" rel="noreferrer">
+          Open in Google Maps
+        </a>
+      </p>
       <form
         className="pin-row"
         onSubmit={(e) => {
