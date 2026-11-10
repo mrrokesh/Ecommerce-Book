@@ -7,11 +7,11 @@ import {
   ensureShippingTables,
 } from '../shipping/index.js';
 import { shipOrder, applyTrackingWebhook } from '../shipping/service.js';
-import { requireAdmin, requireBackOffice } from '../middleware/auth.js';
+import { requireAdmin, requirePermission } from '../middleware/auth.js';
 
 const router = Router();
 
-router.get('/admin/config', requireAdmin, async (_req, res) => {
+router.get('/admin/config', requirePermission('shipping'), async (_req, res) => {
   try {
     const data = await listShippingConfig();
     return res.json({ success: true, data });
@@ -21,7 +21,7 @@ router.get('/admin/config', requireAdmin, async (_req, res) => {
   }
 });
 
-router.put('/admin/settings', requireAdmin, async (req, res) => {
+router.put('/admin/settings', requirePermission('shipping'), async (req, res) => {
   try {
     const data = await updateShippingSettings(req.body || {});
     return res.json({ success: true, data });
@@ -30,7 +30,7 @@ router.put('/admin/settings', requireAdmin, async (req, res) => {
   }
 });
 
-router.put('/admin/partners/:code', requireAdmin, async (req, res) => {
+router.put('/admin/partners/:code', requirePermission('shipping'), async (req, res) => {
   try {
     const data = await updatePartner(req.params.code, req.body || {});
     return res.json({ success: true, data });
@@ -39,7 +39,7 @@ router.put('/admin/partners/:code', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/admin/orders/:id/ship', requireBackOffice, async (req, res) => {
+router.post('/admin/orders/:id/ship', requirePermission('orders'), async (req, res) => {
   try {
     const out = await shipOrder(req.params.id, req.body || {});
     return res.json({ success: true, data: out });

@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
+import oauthRoutes from './routes/oauth.js';
 import booksRoutes from './routes/books.js';
 import categoriesRoutes from './routes/categories.js';
 import homeRoutes from './routes/home.js';
@@ -112,7 +113,17 @@ app.use((req, res, next) => {
   return next();
 });
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false });
-app.use(['/api/auth/login', '/api/auth/register', '/api/auth/forgot', '/api/auth/reset'], authLimiter);
+app.use(
+  [
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/forgot',
+    '/api/auth/reset',
+    '/api/auth/google',
+    '/api/auth/facebook',
+  ],
+  authLimiter
+);
 app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
 
@@ -159,6 +170,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', oauthRoutes);
 app.use('/api/books', booksRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/home', homeRoutes);

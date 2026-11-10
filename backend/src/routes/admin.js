@@ -3,7 +3,7 @@ import path from 'path';
 import multer from 'multer';
 import { query, getPool } from '../db/pool.js';
 import bcrypt from 'bcryptjs';
-import { requireBackOffice } from '../middleware/auth.js';
+import { requireBackOffice, ADMIN_MODULES } from '../middleware/auth.js';
 import { mapBook } from '../utils/bookMapper.js';
 import { isErpConfigured } from '../erp/mcp.js';
 import { syncErpProducts, lastErpSync } from '../erp/syncProducts.js';
@@ -13,11 +13,33 @@ import { notifyOrderEvent } from '../notify/index.js';
 
 const router = Router();
 router.use(requireBackOffice);
-// Staff accounts may only manage orders; everything else is admin-only.
+
+router.get('/me', (req, res) =>
+  res.json({ success: true, data: { role: req.user.role, permissions: req.permissions } })
+);
+
+// Which module each admin API path belongs to. Anything unlisted (staff, roles) is admin-only.
+const MODULE_ROUTES = [
+  [/^\/summary(\/|$)/, ['dashboard']],
+  [/^\/orders(\/|$)/, ['orders']],
+  [/^\/(books|erp|covers)(\/|$)/, ['products']],
+  // The product form reads the category list, so product editors may list categories.
+  [/^\/categories(\/|$)/, (req) => (req.method === 'GET' ? ['categories', 'products'] : ['categories'])],
+  [/^\/upload(\/|$)/, ['products', 'marketing']],
+  [/^\/customers(\/|$)/, ['customers']],
+  [/^\/(banners|coupons)(\/|$)/, ['marketing']],
+  [/^\/pages(\/|$)/, ['pages']],
+  [/^\/emails(\/|$)/, ['emails']],
+];
+
 router.use((req, res, next) => {
   if (req.user.role === 'admin') return next();
-  if (/^\/orders(\/|$)/.test(req.path)) return next();
-  return res.status(403).json({ success: false, error: 'Admin access required' });
+  const match = MODULE_ROUTES.find(([re]) => re.test(req.path));
+  if (match) {
+    const needed = typeof match[1] === 'function' ? match[1](req) : match[1];
+    if (needed.some((m) => req.permissions.includes(m))) return next();
+  }
+  return res.status(403).json({ success: false, error: 'You do not have access to this section' });
 });
 
 // Uploads live in Postgres, not on disk: Render's filesystem is wiped on every deploy.
@@ -991,15 +1013,40 @@ router.get('/customers', async (req, res) => {
 const STAFF_ROLES = ['admin', 'staff'];
 
 function publicStaff(u) {
-  return { id: u.id, name: u.name, email: u.email, role: u.role, createdAt: u.created_at };
+  return {
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    staffRoleId: u.staff_role_id ?? null,
+    staffRoleName: u.staff_role_name ?? null,
+    createdAt: u.created_at,
+  };
+}
+
+const STAFF_SELECT = `SELECT u.id, u.name, u.email, u.role, u.staff_role_id, r.name AS staff_role_name, u.created_at
+  FROM users u LEFT JOIN staff_roles r ON r.id = u.staff_role_id`;
+
+/** Resolves { role, staffRoleId } from a request body, or returns { error }. */
+async function readAccess(body) {
+  const role = STAFF_ROLES.includes(body?.role) ? body.role : 'staff';
+  if (role === 'admin') return { role, staffRoleId: null };
+  const staffRoleId = Number(body?.staffRoleId);
+  if (!Number.isInteger(staffRoleId)) return { error: 'Choose a role for this staff member' };
+  const { rows } = await query(`SELECT 1 FROM staff_roles WHERE id = $1`, [staffRoleId]);
+  if (!rows[0]) return { error: 'That role no longer exists' };
+  return { role, staffRoleId };
+}
+
+async function otherAdminsExist(userId) {
+  const { rows } = await query(`SELECT COUNT(*)::int AS c FROM users WHERE role = 'admin' AND id <> $1`, [userId]);
+  return rows[0].c > 0;
 }
 
 router.get('/staff', async (_req, res) => {
-  const { rows } = await query(
-    `SELECT id, name, email, role, created_at FROM users
-     WHERE role = ANY($1) ORDER BY role, created_at`,
-    [STAFF_ROLES]
-  );
+  const { rows } = await query(`${STAFF_SELECT} WHERE u.role = ANY($1) ORDER BY u.role, u.created_at`, [
+    STAFF_ROLES,
+  ]);
   return res.json({ success: true, data: { staff: rows.map(publicStaff) } });
 });
 
@@ -1008,7 +1055,8 @@ router.post('/staff', async (req, res) => {
     const name = String(req.body?.name || '').trim();
     const email = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '');
-    const role = STAFF_ROLES.includes(req.body?.role) ? req.body.role : 'staff';
+    const access = await readAccess(req.body);
+    if (access.error) return res.status(400).json({ success: false, error: access.error });
     if (!name || name.length > 120) return res.status(400).json({ success: false, error: 'Name is required' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ success: false, error: 'Enter a valid email address' });
@@ -1027,14 +1075,43 @@ router.post('/staff', async (req, res) => {
     }
     const hash = await bcrypt.hash(password, 10);
     const { rows } = await query(
-      `INSERT INTO users (name, email, password_hash, role) VALUES ($1,$2,$3,$4)
-       RETURNING id, name, email, role, created_at`,
-      [name, email, hash, role]
+      `INSERT INTO users (name, email, password_hash, role, staff_role_id) VALUES ($1,$2,$3,$4,$5)
+       RETURNING id`,
+      [name, email, hash, access.role, access.staffRoleId]
     );
-    return res.status(201).json({ success: true, data: { staff: publicStaff(rows[0]) } });
+    const created = await query(`${STAFF_SELECT} WHERE u.id = $1`, [rows[0].id]);
+    return res.status(201).json({ success: true, data: { staff: publicStaff(created.rows[0]) } });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, error: 'Could not add staff member' });
+  }
+});
+
+/** Changes a member's access: admin (full) or staff with a given role. */
+router.patch('/staff/:id', async (req, res) => {
+  try {
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({ success: false, error: 'You cannot change your own access' });
+    }
+    const { rows } = await query(`SELECT role FROM users WHERE id = $1`, [req.params.id]);
+    if (!rows[0] || !STAFF_ROLES.includes(rows[0].role)) {
+      return res.status(404).json({ success: false, error: 'Staff member not found' });
+    }
+    const access = await readAccess(req.body);
+    if (access.error) return res.status(400).json({ success: false, error: access.error });
+    if (rows[0].role === 'admin' && access.role !== 'admin' && !(await otherAdminsExist(req.params.id))) {
+      return res.status(400).json({ success: false, error: 'At least one admin must remain' });
+    }
+    await query(`UPDATE users SET role = $1, staff_role_id = $2 WHERE id = $3`, [
+      access.role,
+      access.staffRoleId,
+      req.params.id,
+    ]);
+    const updated = await query(`${STAFF_SELECT} WHERE u.id = $1`, [req.params.id]);
+    return res.json({ success: true, data: { staff: publicStaff(updated.rows[0]) } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: 'Could not update access' });
   }
 });
 
@@ -1067,17 +1144,112 @@ router.delete('/staff/:id', async (req, res) => {
     if (!rows[0] || !STAFF_ROLES.includes(rows[0].role)) {
       return res.status(404).json({ success: false, error: 'Staff member not found' });
     }
-    if (rows[0].role === 'admin') {
-      const admins = await query(`SELECT COUNT(*)::int AS c FROM users WHERE role = 'admin'`);
-      if (admins.rows[0].c <= 1) {
-        return res.status(400).json({ success: false, error: 'At least one admin must remain' });
-      }
+    if (rows[0].role === 'admin' && !(await otherAdminsExist(req.params.id))) {
+      return res.status(400).json({ success: false, error: 'At least one admin must remain' });
     }
-    await query(`UPDATE users SET role = 'customer' WHERE id = $1`, [req.params.id]);
+    await query(`UPDATE users SET role = 'customer', staff_role_id = NULL WHERE id = $1`, [req.params.id]);
     return res.json({ success: true, data: { removed: true } });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, error: 'Could not remove access' });
+  }
+});
+
+function readRoleInput(body, partial = false) {
+  const values = {};
+  if (!partial || body?.name !== undefined) {
+    const name = String(body?.name || '').trim();
+    if (!name || name.length > 80) return { error: 'Role name is required (max 80 characters)' };
+    values.name = name;
+  }
+  if (!partial || body?.permissions !== undefined) {
+    const list = Array.isArray(body?.permissions) ? body.permissions : [];
+    const permissions = ADMIN_MODULES.filter((m) => list.includes(m));
+    if (!permissions.length) return { error: 'Give the role access to at least one section' };
+    values.permissions = permissions;
+  }
+  return { values };
+}
+
+function roleWriteError(res, err) {
+  if (err?.code === '23505') {
+    return res.status(409).json({ success: false, error: 'A role with that name already exists' });
+  }
+  console.error(err);
+  return res.status(500).json({ success: false, error: 'Could not save role' });
+}
+
+router.get('/roles', async (_req, res) => {
+  const { rows } = await query(
+    `SELECT r.id, r.name, r.permissions,
+            (SELECT COUNT(*)::int FROM users u WHERE u.staff_role_id = r.id AND u.role = 'staff') AS member_count
+     FROM staff_roles r ORDER BY r.name`
+  );
+  return res.json({
+    success: true,
+    data: {
+      modules: ADMIN_MODULES,
+      roles: rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        permissions: r.permissions,
+        memberCount: r.member_count,
+      })),
+    },
+  });
+});
+
+router.post('/roles', async (req, res) => {
+  try {
+    const { error, values } = readRoleInput(req.body);
+    if (error) return res.status(400).json({ success: false, error });
+    const { rows } = await query(
+      `INSERT INTO staff_roles (name, permissions) VALUES ($1, $2) RETURNING id, name, permissions`,
+      [values.name, values.permissions]
+    );
+    return res.status(201).json({ success: true, data: { role: { ...rows[0], memberCount: 0 } } });
+  } catch (err) {
+    return roleWriteError(res, err);
+  }
+});
+
+router.patch('/roles/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ success: false, error: 'Invalid role id' });
+    const { error, values } = readRoleInput(req.body, true);
+    if (error) return res.status(400).json({ success: false, error });
+    const cols = Object.keys(values);
+    if (!cols.length) return res.status(400).json({ success: false, error: 'Nothing to update' });
+    const { rows } = await query(
+      `UPDATE staff_roles SET ${cols.map((c, i) => `${c} = $${i + 1}`).join(', ')}
+       WHERE id = $${cols.length + 1} RETURNING id, name, permissions`,
+      [...cols.map((c) => values[c]), id]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Role not found' });
+    return res.json({ success: true, data: { role: rows[0] } });
+  } catch (err) {
+    return roleWriteError(res, err);
+  }
+});
+
+router.delete('/roles/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ success: false, error: 'Invalid role id' });
+    const used = await query(`SELECT COUNT(*)::int AS c FROM users WHERE staff_role_id = $1 AND role = 'staff'`, [id]);
+    if (used.rows[0].c) {
+      return res.status(409).json({
+        success: false,
+        error: `${used.rows[0].c} staff member(s) have this role — give them another role first`,
+      });
+    }
+    const { rowCount } = await query(`DELETE FROM staff_roles WHERE id = $1`, [id]);
+    if (!rowCount) return res.status(404).json({ success: false, error: 'Role not found' });
+    return res.json({ success: true, data: { deleted: true } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: 'Could not delete role' });
   }
 });
 

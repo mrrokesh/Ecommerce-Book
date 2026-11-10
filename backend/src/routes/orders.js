@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { query, getPool } from '../db/pool.js';
-import { optionalAuth, requireAuth } from '../middleware/auth.js';
+import { optionalAuth, requireAuth, loadPermissions } from '../middleware/auth.js';
 import { findActiveCoupon, couponDiscount, couponLimitError } from './coupons.js';
 import {
   razorpayEnabled,
@@ -95,39 +95,21 @@ async function itemsForOrders(orderIds) {
   return map;
 }
 
-router.get('/track', trackLimiter, optionalAuth, async (req, res) => {
+// Tracking is for signed-in customers and only covers their own orders.
+router.get('/track', trackLimiter, requireAuth, async (req, res) => {
   try {
     const orderNumber = String(req.query.orderNumber || req.query.order || '').trim();
-    const phoneDigits = String(req.query.phone || '').replace(/\D/g, '');
     if (!orderNumber) {
       return res.status(400).json({ success: false, error: 'Order number is required' });
     }
 
-    const { rows } = await query(`SELECT * FROM orders WHERE order_number = $1`, [orderNumber]);
+    const { rows } = await query(`SELECT * FROM orders WHERE order_number = $1 AND user_id = $2`, [
+      orderNumber,
+      req.user.id,
+    ]);
     const o = rows[0];
-    const owner = Boolean(req.user && o && req.user.id === o.user_id);
-
-    // Guests must prove phone; always require 10+ digits to slow enumeration.
-    if (!owner) {
-      if (phoneDigits.length < 10) {
-        return res.status(400).json({
-          success: false,
-          error: 'Phone number used at checkout is required to track this order',
-        });
-      }
-      const stored = String(o?.shipping_phone || '').replace(/\D/g, '');
-      const phoneOk =
-        stored &&
-        (stored === phoneDigits ||
-          stored.endsWith(phoneDigits.slice(-10)) ||
-          phoneDigits.endsWith(stored.slice(-10)));
-      // Uniform 404 — do not reveal whether the order number exists.
-      if (!o || !phoneOk) {
-        return res.status(404).json({ success: false, error: 'Order not found' });
-      }
-    } else if (!o) {
-      return res.status(404).json({ success: false, error: 'Order not found' });
-    }
+    // Same 404 whether the order is missing or belongs to someone else.
+    if (!o) return res.status(404).json({ success: false, error: 'Order not found in your account' });
 
     const itemsRes = await query(`SELECT * FROM order_items WHERE order_id = $1`, [o.id]);
     const eventsRes = await query(
@@ -793,15 +775,15 @@ router.patch('/:id/return', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/:id/invoice', optionalAuth, async (req, res) => {
+router.get('/:id/invoice', requireAuth, async (req, res) => {
   try {
     const { rows } = await query(`SELECT * FROM orders WHERE id = $1`, [req.params.id]);
     if (!rows[0]) return res.status(404).json({ success: false, error: 'Order not found' });
     const o = rows[0];
     const ownerOk =
-      req.user && (['admin', 'staff'].includes(req.user.role) || req.user.id === o.user_id);
+      req.user.id === o.user_id || (await loadPermissions(req.user)).includes('orders');
     if (!ownerOk) {
-      return res.status(403).json({ success: false, error: 'Sign in to download this invoice' });
+      return res.status(404).json({ success: false, error: 'Order not found' });
     }
     const items = await query(`SELECT * FROM order_items WHERE order_id = $1`, [o.id]);
     const { renderInvoiceHtml } = await import('../invoice/pdf.js');

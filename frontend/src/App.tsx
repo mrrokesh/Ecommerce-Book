@@ -20,6 +20,7 @@ import PublisherPage from './pages/PublisherPage';
 import StoresPage from './pages/StoresPage';
 import ExamsPage from './pages/ExamsPage';
 import TrackPage from './pages/TrackPage';
+import OrderPlacedPage from './pages/OrderPlacedPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -87,6 +88,7 @@ export default function App() {
               <Route path="stores" element={<StoresPage />} />
               <Route path="exams" element={<ExamsPage />} />
               <Route path="track" element={<TrackPage />} />
+              <Route path="order-placed" element={<OrderPlacedPage />} />
               <Route path="forgot-password" element={<ForgotPasswordPage />} />
               <Route path="reset-password" element={<ResetPasswordPage />} />
               <Route path="*" element={<NotFoundPage />} />

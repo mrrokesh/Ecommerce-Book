@@ -16,13 +16,9 @@ export default function AdminLogin() {
     ? location.state.from
     : '/admin';
 
-  function landingFor(role?: string) {
-    if (role === 'admin') return requested;
-    return requested.startsWith('/admin/orders') ? requested : '/admin/orders';
-  }
-
+  // The portal layout redirects staff to their first allowed section if needed.
   if (!loading && (user?.role === 'admin' || user?.role === 'staff')) {
-    return <Navigate to={landingFor(user.role)} replace />;
+    return <Navigate to={requested} replace />;
   }
 
   async function onSubmit(e: FormEvent) {
@@ -37,7 +33,7 @@ export default function AdminLogin() {
         setError('This account does not have admin access.');
         return;
       }
-      navigate(landingFor(signedIn.role), { replace: true });
+      navigate(requested, { replace: true });
     } catch (err: any) {
       setError(err.message || 'Invalid email or password');
     } finally {

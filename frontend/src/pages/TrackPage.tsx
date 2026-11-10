@@ -1,42 +1,42 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import api from '../api/client';
+import { useAuth } from '../context/AuthContext';
+import { LoadingState } from '../components/States';
 import { formatPrice } from '../utils/format';
 
 export default function TrackPage() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const location = useLocation();
   const [orderNumber, setOrderNumber] = useState(location.state?.orderNumber || '');
-  const [phone, setPhone] = useState(location.state?.phone || '');
   const [order, setOrder] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (location.state?.orderNumber && location.state?.phone) {
-      setBusy(true);
-      api
-        .get('/orders/track', {
-          params: { orderNumber: location.state.orderNumber, phone: location.state.phone },
-        })
-        .then(({ data }) => setOrder(data.order))
-        .catch((err) => setError(err.message))
-        .finally(() => setBusy(false));
-    }
-  }, [location.state]);
-
-  async function onSubmit(e) {
-    e.preventDefault();
+  async function lookup(number: string) {
     setBusy(true);
     setError('');
     setOrder(null);
     try {
-      const { data } = await api.get('/orders/track', { params: { orderNumber, phone } });
+      const { data } = await api.get('/orders/track', { params: { orderNumber: number } });
       setOrder(data.order);
     } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);
     }
+  }
+
+  useEffect(() => {
+    if (isAuthenticated && location.state?.orderNumber) lookup(location.state.orderNumber);
+  }, [isAuthenticated, location.state]);
+
+  if (authLoading) return <LoadingState />;
+  if (!isAuthenticated) return <Navigate to="/login" state={{ from: '/track' }} replace />;
+
+  function onSubmit(e) {
+    e.preventDefault();
+    lookup(orderNumber.trim());
   }
 
   return (
@@ -46,10 +46,6 @@ export default function TrackPage() {
         <label>
           Order number
           <input required value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} placeholder="SBH-…" />
-        </label>
-        <label>
-          Phone on the order
-          <input required value={phone} onChange={(e) => setPhone(e.target.value)} />
         </label>
         {error ? <p className="form-error">{error}</p> : null}
         <button className="btn btn-navy" type="submit" disabled={busy}>
@@ -94,6 +90,13 @@ export default function TrackPage() {
           <p className="order-total">
             Total <strong>{formatPrice(order.total)}</strong> ({order.paymentMethod} · {order.paymentStatus})
           </p>
+          {order.invoiceNumber ? (
+            <p>
+              <a href={`/api/orders/${order.id}/invoice`} target="_blank" rel="noreferrer">
+                Download invoice {order.invoiceNumber}
+              </a>
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

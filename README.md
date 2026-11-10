@@ -7,7 +7,8 @@ Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeS
 - Catalogue with nested categories (Books → Tamil, Fiction, …), multi-select category and language filters, search, author and publisher pages
 - Cart (guest and signed-in), wishlist, saved addresses, coupons and gift cards, pincode delivery check
 - Guest and signed-in checkout: Cash on Delivery, or UPI / cards / net banking through Razorpay
-- Order tracking by order number and phone, cancellations, returns, GST invoice
+- Sign in / sign up with email, Google or Facebook
+- Order tracking and GST invoice download for signed-in customers (own orders only), cancellations, returns
 - Reviews, store locator, exam-prep section, CMS pages (About, Contact, FAQ, Terms, Privacy)
 - Admin panel at `/admin` (separate sign-in, no storefront chrome): products, categories, orders, customers, reviews, coupons and banners, CMS pages, email outbox, staff accounts, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), ERP product sync
 - Responsive layout (phones from 320px up), toast feedback, 404 and error screens
@@ -40,6 +41,9 @@ All settings live in `backend/.env` (see `backend/.env.example`, which lists eve
 | `ADMIN_PASSWORD` | Admin password. **Required in production** |
 | `CLIENT_URL` | Allowed storefront origin(s), comma-separated |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Live online payments. Without them, the production build offers Cash on Delivery only |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | "Continue with Google". The button hides when unset |
+| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | "Continue with Facebook". The button hides when unset |
+| `OAUTH_REDIRECT_BASE` | Public site origin for social sign-in callbacks (e.g. `https://www.salembookhouse.com`); defaults to the first `CLIENT_URL` |
 | `SMTP_*` | Outgoing email. Without SMTP, mail goes to Admin → Email outbox (password-reset emails will not be delivered) |
 | `SHIPPING_WEBHOOK_SECRET` | Shared secret for carrier tracking webhooks |
 | `ERP_API_URL` / `ERP_API_KEY` | Optional product and stock sync |
@@ -48,17 +52,27 @@ All settings live in `backend/.env` (see `backend/.env.example`, which lists eve
 
 The admin portal lives at `/admin` with its own sign-in page (`/admin/login`). The storefront does not link to it, and the storefront `/login` is for customers only.
 
-There are two portal roles, managed in **Admin → Store → Staff**:
+Access is managed in **Admin → Store → Staff & roles**:
 
-| Role | Access |
-| --- | --- |
-| **Admin** | Everything |
-| **Staff** | Orders only: view and search orders, update status and notes, create shipments, print invoices |
+- **Admins** have full access, including staff and role management.
+- **Staff** get a **role**. A role is a name plus the sections it can open: Dashboard, Orders, Products, Categories, Customers, Reviews, Shipping partners, Banners & coupons, CMS pages, Email outbox. Staff only see those sections in the menu.
+- A starter role, **Order manager** (Orders only), is created on first run. Edit it or create your own (for example "Catalogue editor" with Products and Categories).
+- Changing a role's sections applies to everyone with that role on their next request. A role cannot be deleted while staff have it.
+- Admins add staff with a name, email, password (shared with them directly; no email is sent) and role, change a member's role, reset passwords, and remove access.
+- **Remove access** turns the account back into a normal customer; order history is kept. You cannot change or remove your own access, or remove the last admin.
+- Permissions are enforced by the API (`requireBackOffice` / `requirePermission` and the module map in `backend/src/routes/admin.js`), not just hidden in the menu.
+- The Orders section includes setting an order to cancelled or refunded, which issues the Razorpay refund.
+- Admin and staff accounts cannot use Google or Facebook sign-in; they sign in with their password.
 
-- Admins add staff with a name, email and password (shared with them directly; no email is sent), reset passwords, and remove access.
-- **Remove access** turns the account back into a normal customer; order history is kept. You cannot remove your own access or the last admin.
-- Staff limits are enforced by the API (`requireBackOffice` plus an orders-only gate in `backend/src/routes/admin.js`), not just hidden in the menu.
-- Setting an order to cancelled or refunded issues the Razorpay refund, so staff can trigger refunds.
+## Social sign-in
+
+"Continue with Google" and "Continue with Facebook" appear on Login and Sign up once the keys are set. One click signs in an existing customer or creates an account. An existing customer account is linked only when the provider confirms the email.
+
+1. **Google:** Google Cloud Console → APIs & Services → OAuth consent screen, then Credentials → OAuth client ID (Web application). Authorized redirect URI: `https://www.salembookhouse.com/api/auth/google/callback`.
+2. **Facebook:** developers.facebook.com → create an app with Facebook Login. Valid OAuth Redirect URI: `https://www.salembookhouse.com/api/auth/facebook/callback`. Set the Privacy Policy URL to `/privacy` and switch the app to Live.
+3. Set the keys and `OAUTH_REDIRECT_BASE` on the API host and redeploy. For local testing add the `http://localhost:5173/api/auth/<provider>/callback` URIs too.
+
+Customers who joined with Google or Facebook can set a password later with "Forgot password".
 
 ## Categories
 

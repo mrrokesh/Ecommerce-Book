@@ -144,8 +144,8 @@ export default function CheckoutPage() {
         state: { justPlaced: orderNumber, giftCodes: data.order?.giftCodes || [] },
       });
     } else {
-      navigate('/track', {
-        state: { orderNumber, phone: form.phone, giftCodes: data.order?.giftCodes || [] },
+      navigate('/order-placed', {
+        state: { orderNumber, giftCodes: data.order?.giftCodes || [] },
       });
     }
   }

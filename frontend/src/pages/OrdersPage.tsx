@@ -133,12 +133,14 @@ export default function OrdersPage() {
                 ) : null}
               </p>
               <div className="order-actions">
-                <Link
-                  to={`/track`}
-                  state={{ orderNumber: order.orderNumber || order.order_number, phone: order.shippingPhone }}
-                >
+                <Link to="/track" state={{ orderNumber: order.orderNumber || order.order_number }}>
                   Track
                 </Link>
+                {order.invoiceNumber ? (
+                  <a href={`/api/orders/${order.id}/invoice`} target="_blank" rel="noreferrer">
+                    Download invoice
+                  </a>
+                ) : null}
                 {order.canCancel ? (
                   <button type="button" className="text-btn" onClick={() => openAction(order, 'cancel')}>
                     Cancel order

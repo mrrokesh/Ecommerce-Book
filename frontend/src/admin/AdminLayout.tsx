@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, Navigate, Link, useLocation } from 'react-router-dom';
+import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { LoadingState } from '../components/States';
+import { firstAllowedPath, moduleForPath, NAV_SECTIONS } from './modules';
 import './admin.css';
 
 const TITLES = {
@@ -15,25 +18,44 @@ const TITLES = {
   '/admin/emails': 'Email outbox',
   '/admin/shipping': 'Shipping partners',
   '/admin/reviews': 'Reviews',
-  '/admin/staff': 'Staff',
+  '/admin/staff': 'Staff & roles',
 };
 
 export default function AdminLayout() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const loc = useLocation();
+  const [permissions, setPermissions] = useState<string[] | null>(null);
+  const role = user?.role;
+  const inPortal = isAuthenticated && (role === 'admin' || role === 'staff');
+
+  useEffect(() => {
+    if (!inPortal) return;
+    let alive = true;
+    api
+      .get('/admin/me')
+      .then(({ data }) => alive && setPermissions(data.permissions || []))
+      .catch(() => alive && setPermissions([]));
+    return () => {
+      alive = false;
+    };
+  }, [inPortal, user?.id]);
+
   const title = loc.pathname.startsWith('/admin/products/') && loc.pathname !== '/admin/products/new'
     ? 'Edit product'
     : TITLES[loc.pathname] || 'Admin';
 
   if (loading) return <LoadingState />;
-  const role = user?.role;
-  if (!isAuthenticated || (role !== 'admin' && role !== 'staff')) {
-    return <Navigate to="/admin/login" state={{ from: loc.pathname }} replace />;
-  }
-  const isStaff = role === 'staff';
-  // Staff only manage orders; any other admin page sends them back to Orders.
-  if (isStaff && !loc.pathname.startsWith('/admin/orders')) {
-    return <Navigate to="/admin/orders" replace />;
+  if (!inPortal) return <Navigate to="/admin/login" state={{ from: loc.pathname }} replace />;
+  if (!permissions) return <LoadingState />;
+
+  const isAdmin = role === 'admin';
+  const allowed = (module: string) => isAdmin || permissions.includes(module);
+  const current = moduleForPath(loc.pathname);
+  const pageAllowed = current === 'staff' ? isAdmin : allowed(current);
+
+  if (!pageAllowed) {
+    const fallback = firstAllowedPath(allowed);
+    if (fallback && fallback !== loc.pathname) return <Navigate to={fallback} replace />;
   }
 
   return (
@@ -42,40 +64,31 @@ export default function AdminLayout() {
         <div className="erp-brand">
           <div>
             <strong>Salem Book House</strong>
-            <span>{isStaff ? 'Staff portal' : 'Store admin'}</span>
+            <span>{isAdmin ? 'Store admin' : 'Staff portal'}</span>
           </div>
         </div>
         <nav className="erp-nav">
-          {isStaff ? (
+          {NAV_SECTIONS.map((section) => {
+            const links = section.links.filter((l) => allowed(l.module));
+            if (!links.length) return null;
+            return (
+              <div key={section.title} style={{ display: 'contents' }}>
+                <div className="erp-group">{section.title}</div>
+                {links.map((l) => (
+                  <NavLink key={l.to} to={l.to} end={l.to === '/admin'}>
+                    {l.label}
+                  </NavLink>
+                ))}
+              </div>
+            );
+          })}
+          {isAdmin ? (
             <>
-              <div className="erp-group">Sales</div>
-              <NavLink to="/admin/orders">Orders</NavLink>
-            </>
-          ) : (
-            <>
-              <div className="erp-group">Overview</div>
-              <NavLink to="/admin" end>
-                Dashboard
-              </NavLink>
-              <div className="erp-group">Catalogue</div>
-              <NavLink to="/admin/products">Product list</NavLink>
-              <NavLink to="/admin/products/new">Add product</NavLink>
-              <NavLink to="/admin/categories">Categories</NavLink>
-              <div className="erp-group">Sales</div>
-              <NavLink to="/admin/orders">Orders</NavLink>
-              <NavLink to="/admin/customers">Customers</NavLink>
-              <NavLink to="/admin/reviews">Reviews</NavLink>
-              <div className="erp-group">Fulfilment</div>
-              <NavLink to="/admin/shipping">Shipping partners</NavLink>
-              <div className="erp-group">Content</div>
-              <NavLink to="/admin/marketing">Banners & coupons</NavLink>
-              <NavLink to="/admin/pages">CMS pages</NavLink>
-              <NavLink to="/admin/emails">Email outbox</NavLink>
               <div className="erp-group">Store</div>
-              <NavLink to="/admin/staff">Staff</NavLink>
+              <NavLink to="/admin/staff">Staff & roles</NavLink>
               <Link to="/">View storefront</Link>
             </>
-          )}
+          ) : null}
           <button type="button" onClick={logout}>
             Sign out
           </button>
@@ -84,13 +97,22 @@ export default function AdminLayout() {
       <div className="erp-main">
         <header className="erp-top">
           <div>
-            <p className="erp-crumb">{isStaff ? 'Staff' : 'Admin'} / {title}</p>
+            <p className="erp-crumb">{isAdmin ? 'Admin' : 'Staff'} / {title}</p>
             <h1>{title}</h1>
           </div>
           <span className="muted">{user.email}</span>
         </header>
         <div className="erp-body">
-          <Outlet />
+          {pageAllowed ? (
+            <Outlet />
+          ) : (
+            <div className="erp-card" style={{ padding: '1.25rem' }}>
+              <h3 style={{ marginTop: 0 }}>No sections assigned</h3>
+              <p className="muted" style={{ margin: 0 }}>
+                Your role does not include any admin sections yet. Ask the store admin to update your access.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

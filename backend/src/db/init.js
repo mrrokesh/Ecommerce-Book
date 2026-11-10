@@ -161,6 +161,22 @@ const MIGRATIONS = [
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `ALTER TABLE categories ADD COLUMN IF NOT EXISTS is_visible BOOLEAN NOT NULL DEFAULT TRUE`,
+  `CREATE TABLE IF NOT EXISTS staff_roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(80) UNIQUE NOT NULL,
+    permissions TEXT[] NOT NULL DEFAULT '{}',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS staff_role_id INT REFERENCES staff_roles(id) ON DELETE SET NULL`,
+  // First run only: a starter role matching the original orders-only staff access.
+  `INSERT INTO staff_roles (name, permissions)
+   SELECT 'Order manager', ARRAY['orders'] WHERE NOT EXISTS (SELECT 1 FROM staff_roles)`,
+  `UPDATE users SET staff_role_id = (SELECT MIN(id) FROM staff_roles)
+   WHERE role = 'staff' AND staff_role_id IS NULL`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS facebook_id TEXT`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS uq_users_google_id ON users (google_id) WHERE google_id IS NOT NULL`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS uq_users_facebook_id ON users (facebook_id) WHERE facebook_id IS NOT NULL`,
 ];
 
 export async function initSchema() {

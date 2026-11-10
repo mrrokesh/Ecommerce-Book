@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import SocialSignIn from '../components/SocialSignIn';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -32,6 +33,7 @@ export default function RegisterPage() {
       <form className="auth-card" onSubmit={onSubmit}>
         <h1>Create Account</h1>
         <p className="muted">Join Salem Book House</p>
+        <SocialSignIn />
         <label>
           Full Name
           <input name="name" required value={form.name} onChange={onChange} />

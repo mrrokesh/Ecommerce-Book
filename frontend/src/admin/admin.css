@@ -366,6 +366,43 @@
   margin: 0 0 0.75rem;
 }
 
+.erp-perm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.5rem;
+}
+
+.erp-form label.erp-perm {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.erp-form label.erp-perm.on {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.erp-perm input {
+  margin-top: 0.2rem;
+}
+
+.erp-perm span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.erp-perm small {
+  color: #6b7280;
+  font-weight: 400;
+}
+
 /* Admin sign-in — standalone, no storefront chrome */
 .erp-login {
   min-height: 100vh;

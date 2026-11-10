@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db/pool.js';
-import { requireAuth, optionalAuth, requireAdmin } from '../middleware/auth.js';
+import { requireAuth, optionalAuth, requirePermission } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -142,7 +142,7 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/admin', requireAdmin, async (req, res) => {
+router.get('/admin', requirePermission('reviews'), async (req, res) => {
   try {
     const { rows } = await query(
       `SELECT r.*, b.title AS book_title FROM reviews r
@@ -161,7 +161,7 @@ router.get('/admin', requireAdmin, async (req, res) => {
   }
 });
 
-router.patch('/admin/:id', requireAdmin, async (req, res) => {
+router.patch('/admin/:id', requirePermission('reviews'), async (req, res) => {
   try {
     const hidden = Boolean(req.body?.isHidden);
     const { rows } = await query(
