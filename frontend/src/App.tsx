@@ -29,6 +29,8 @@ import AdminDashboard from './admin/AdminDashboard';
 import AdminProducts from './admin/AdminProducts';
 import AdminProductForm from './admin/AdminProductForm';
 import AdminCategories from './admin/AdminCategories';
+import AdminLogin from './admin/AdminLogin';
+import AdminStaff from './admin/AdminStaff';
 import AdminOrders from './admin/AdminOrders';
 import AdminMarketing from './admin/AdminMarketing';
 import AdminCms from './admin/AdminCms';
@@ -45,12 +47,14 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <Routes>
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />
               <Route path="products/new" element={<AdminProductForm />} />
               <Route path="products/:id" element={<AdminProductForm />} />
               <Route path="categories" element={<AdminCategories />} />
+              <Route path="staff" element={<AdminStaff />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="reviews" element={<AdminReviews />} />

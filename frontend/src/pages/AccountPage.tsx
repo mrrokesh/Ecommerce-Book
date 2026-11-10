@@ -81,11 +81,6 @@ export default function AccountPage() {
           <Link to="/wishlist" className="btn btn-outline">
             Wishlist
           </Link>
-          {user.role === 'admin' ? (
-            <Link to="/admin/products" className="btn btn-gold">
-              Admin
-            </Link>
-          ) : null}
           <button type="button" className="btn btn-outline" onClick={logout}>
             Logout
           </button>

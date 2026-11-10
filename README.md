@@ -9,7 +9,7 @@ Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeS
 - Guest and signed-in checkout: Cash on Delivery, or UPI / cards / net banking through Razorpay
 - Order tracking by order number and phone, cancellations, returns, GST invoice
 - Reviews, store locator, exam-prep section, CMS pages (About, Contact, FAQ, Terms, Privacy)
-- Admin panel: products, categories, orders, customers, reviews, coupons and banners, CMS pages, email outbox, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), ERP product sync
+- Admin panel at `/admin` (separate sign-in, no storefront chrome): products, categories, orders, customers, reviews, coupons and banners, CMS pages, email outbox, staff accounts, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), ERP product sync
 - Responsive layout (phones from 320px up), toast feedback, 404 and error screens
 
 ## Quick start
@@ -43,6 +43,22 @@ All settings live in `backend/.env` (see `backend/.env.example`, which lists eve
 | `SMTP_*` | Outgoing email. Without SMTP, mail goes to Admin → Email outbox (password-reset emails will not be delivered) |
 | `SHIPPING_WEBHOOK_SECRET` | Shared secret for carrier tracking webhooks |
 | `ERP_API_URL` / `ERP_API_KEY` | Optional product and stock sync |
+
+## Admin portal and staff
+
+The admin portal lives at `/admin` with its own sign-in page (`/admin/login`). The storefront does not link to it, and the storefront `/login` is for customers only.
+
+There are two portal roles, managed in **Admin → Store → Staff**:
+
+| Role | Access |
+| --- | --- |
+| **Admin** | Everything |
+| **Staff** | Orders only: view and search orders, update status and notes, create shipments, print invoices |
+
+- Admins add staff with a name, email and password (shared with them directly; no email is sent), reset passwords, and remove access.
+- **Remove access** turns the account back into a normal customer; order history is kept. You cannot remove your own access or the last admin.
+- Staff limits are enforced by the API (`requireBackOffice` plus an orders-only gate in `backend/src/routes/admin.js`), not just hidden in the menu.
+- Setting an order to cancelled or refunded issues the Razorpay refund, so staff can trigger refunds.
 
 ## Categories
 

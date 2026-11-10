@@ -7,7 +7,7 @@ import {
   ensureShippingTables,
 } from '../shipping/index.js';
 import { shipOrder, applyTrackingWebhook } from '../shipping/service.js';
-import { requireAdmin } from '../middleware/auth.js';
+import { requireAdmin, requireBackOffice } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -39,7 +39,7 @@ router.put('/admin/partners/:code', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/admin/orders/:id/ship', requireAdmin, async (req, res) => {
+router.post('/admin/orders/:id/ship', requireBackOffice, async (req, res) => {
   try {
     const out = await shipOrder(req.params.id, req.body || {});
     return res.json({ success: true, data: out });

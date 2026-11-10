@@ -798,7 +798,8 @@ router.get('/:id/invoice', optionalAuth, async (req, res) => {
     const { rows } = await query(`SELECT * FROM orders WHERE id = $1`, [req.params.id]);
     if (!rows[0]) return res.status(404).json({ success: false, error: 'Order not found' });
     const o = rows[0];
-    const ownerOk = req.user && (req.user.role === 'admin' || req.user.id === o.user_id);
+    const ownerOk =
+      req.user && (['admin', 'staff'].includes(req.user.role) || req.user.id === o.user_id);
     if (!ownerOk) {
       return res.status(403).json({ success: false, error: 'Sign in to download this invoice' });
     }

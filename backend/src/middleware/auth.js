@@ -48,6 +48,18 @@ export async function requireAdmin(req, res, next) {
   });
 }
 
+/** Admin portal roles: 'admin' has full access, 'staff' may only manage orders. */
+export const BACK_OFFICE_ROLES = ['admin', 'staff'];
+
+export async function requireBackOffice(req, res, next) {
+  await requireAuth(req, res, () => {
+    if (!BACK_OFFICE_ROLES.includes(req.user?.role)) {
+      return res.status(403).json({ success: false, error: 'Admin access required' });
+    }
+    next();
+  });
+}
+
 export async function optionalAuth(req, _res, next) {
   try {
     const token = extractToken(req);

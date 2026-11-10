@@ -222,11 +222,6 @@ export default function Header() {
                     <Link to="/account/orders" role="menuitem">
                       Orders
                     </Link>
-                    {user?.role === 'admin' ? (
-                      <Link to="/admin/products" role="menuitem">
-                        Admin
-                      </Link>
-                    ) : null}
                     <button type="button" role="menuitem" onClick={logout}>
                       Logout
                     </button>

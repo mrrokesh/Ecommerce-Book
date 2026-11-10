@@ -2,7 +2,8 @@ import { Router } from 'express';
 import path from 'path';
 import multer from 'multer';
 import { query, getPool } from '../db/pool.js';
-import { requireAdmin } from '../middleware/auth.js';
+import bcrypt from 'bcryptjs';
+import { requireBackOffice } from '../middleware/auth.js';
 import { mapBook } from '../utils/bookMapper.js';
 import { isErpConfigured } from '../erp/mcp.js';
 import { syncErpProducts, lastErpSync } from '../erp/syncProducts.js';
@@ -11,7 +12,13 @@ import { refundRazorpayPayment } from './payments.js';
 import { notifyOrderEvent } from '../notify/index.js';
 
 const router = Router();
-router.use(requireAdmin);
+router.use(requireBackOffice);
+// Staff accounts may only manage orders; everything else is admin-only.
+router.use((req, res, next) => {
+  if (req.user.role === 'admin') return next();
+  if (/^\/orders(\/|$)/.test(req.path)) return next();
+  return res.status(403).json({ success: false, error: 'Admin access required' });
+});
 
 // Uploads live in Postgres, not on disk: Render's filesystem is wiped on every deploy.
 const upload = multer({
@@ -979,6 +986,99 @@ router.get('/customers', async (req, res) => {
       })),
     },
   });
+});
+
+const STAFF_ROLES = ['admin', 'staff'];
+
+function publicStaff(u) {
+  return { id: u.id, name: u.name, email: u.email, role: u.role, createdAt: u.created_at };
+}
+
+router.get('/staff', async (_req, res) => {
+  const { rows } = await query(
+    `SELECT id, name, email, role, created_at FROM users
+     WHERE role = ANY($1) ORDER BY role, created_at`,
+    [STAFF_ROLES]
+  );
+  return res.json({ success: true, data: { staff: rows.map(publicStaff) } });
+});
+
+router.post('/staff', async (req, res) => {
+  try {
+    const name = String(req.body?.name || '').trim();
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+    const role = STAFF_ROLES.includes(req.body?.role) ? req.body.role : 'staff';
+    if (!name || name.length > 120) return res.status(400).json({ success: false, error: 'Name is required' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: 'Enter a valid email address' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+    }
+    const existing = await query(`SELECT role FROM users WHERE lower(email) = $1`, [email]);
+    if (existing.rows[0]) {
+      return res.status(409).json({
+        success: false,
+        error: STAFF_ROLES.includes(existing.rows[0].role)
+          ? 'This email already has portal access'
+          : 'This email already has a customer account — use a different email for staff',
+      });
+    }
+    const hash = await bcrypt.hash(password, 10);
+    const { rows } = await query(
+      `INSERT INTO users (name, email, password_hash, role) VALUES ($1,$2,$3,$4)
+       RETURNING id, name, email, role, created_at`,
+      [name, email, hash, role]
+    );
+    return res.status(201).json({ success: true, data: { staff: publicStaff(rows[0]) } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: 'Could not add staff member' });
+  }
+});
+
+router.patch('/staff/:id/password', async (req, res) => {
+  try {
+    const password = String(req.body?.password || '');
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+    }
+    const hash = await bcrypt.hash(password, 10);
+    const { rowCount } = await query(
+      `UPDATE users SET password_hash = $1 WHERE id = $2 AND role = ANY($3)`,
+      [hash, req.params.id, STAFF_ROLES]
+    );
+    if (!rowCount) return res.status(404).json({ success: false, error: 'Staff member not found' });
+    return res.json({ success: true, data: { updated: true } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: 'Could not reset password' });
+  }
+});
+
+/** Removes portal access (the account becomes a normal customer); never deletes order history. */
+router.delete('/staff/:id', async (req, res) => {
+  try {
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({ success: false, error: 'You cannot remove your own access' });
+    }
+    const { rows } = await query(`SELECT role FROM users WHERE id = $1`, [req.params.id]);
+    if (!rows[0] || !STAFF_ROLES.includes(rows[0].role)) {
+      return res.status(404).json({ success: false, error: 'Staff member not found' });
+    }
+    if (rows[0].role === 'admin') {
+      const admins = await query(`SELECT COUNT(*)::int AS c FROM users WHERE role = 'admin'`);
+      if (admins.rows[0].c <= 1) {
+        return res.status(400).json({ success: false, error: 'At least one admin must remain' });
+      }
+    }
+    await query(`UPDATE users SET role = 'customer' WHERE id = $1`, [req.params.id]);
+    return res.json({ success: true, data: { removed: true } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: 'Could not remove access' });
+  }
 });
 
 router.get('/emails', async (_req, res) => {
