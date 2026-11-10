@@ -136,31 +136,13 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="footer-payments">
-        <div className="container payments-row">
-          <span className="ssl-badge">🔒 256 Bit SSL</span>
-          <span className="pay-logo">VISA</span>
-          <span className="pay-logo">Mastercard</span>
-          <span className="pay-logo">Amex</span>
-          <span className="pay-logo">RuPay</span>
-          <span className="pay-logo">UPI</span>
-          <span className="pay-logo">Net Banking</span>
-          <span className="pay-logo">Cash on Delivery</span>
-        </div>
-      </div>
-
       <div className="footer-bottom">
         <div className="container footer-bottom-inner">
           <span>© {new Date().getFullYear()} Salem Book House. All rights reserved.</span>
-          <span className="footer-bottom-links">
-            <Link to="/terms">Terms</Link>
-            <Link to="/privacy">Privacy</Link>
-            <Link to="/contact">Contact</Link>
-          </span>
           <span className="footer-credit">
             Developed by{' '}
             <a href="https://www.mrrokesh.com/" target="_blank" rel="noopener noreferrer">
-              MR_ROKESH
+              MR ROKESH SOFTWARES
             </a>
           </span>
         </div>

@@ -93,3 +93,11 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 ## Scripts
 
 One-off data scripts live in `backend/src/scripts` (cover backfill, category cleanup and nav sync, Kannada → Tamil migration, …). Read the header comment before running any of them; `replaceKannadaWithTamil.js` is a dry run unless you pass `--apply`.
+
+### CMS pages
+
+About, Contact, FAQ, Terms and Privacy are edited in **Admin → CMS pages**. The startup seed only creates pages that are missing and never overwrites edited content. To reset all five to the full default text, run `node src/scripts/ensureCmsAndFooterPages.js` in `backend`.
+
+## Credits
+
+Developed by [MR ROKESH SOFTWARES](https://www.mrrokesh.com/).

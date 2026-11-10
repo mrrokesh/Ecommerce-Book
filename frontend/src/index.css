@@ -12,6 +12,7 @@
   --heading: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
   --body: 'Source Sans 3', 'Segoe UI', sans-serif;
   --cursive: 'Libre Baskerville', Georgia, cursive;
+  --accent-font: 'Montserrat', 'Segoe UI', sans-serif;
   --site-header-height: 72px;
 }
 
@@ -1268,14 +1269,17 @@ p {
 }
 
 .footer-credit {
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
 .footer-credit a {
   display: inline !important;
-  margin: 0 !important;
+  margin: 0 0 0 0.2rem !important;
   color: #60a5fa !important;
-  font-weight: 600;
+  font-family: 'Orbitron', var(--accent-font);
+  font-weight: 700;
+  font-size: 0.9em;
+  letter-spacing: 0.06em;
 }
 
 .footer-credit a:hover {
@@ -1302,8 +1306,11 @@ p {
 
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0.9rem 0;
-  font-size: 0.85rem;
+  padding: 1.9rem 0 2.1rem;
+  font-family: var(--accent-font);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   text-align: center;
 }
 
