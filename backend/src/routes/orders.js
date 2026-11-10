@@ -291,6 +291,10 @@ router.post('/', checkoutLimiter, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Cart is empty' });
     }
 
+    // Serialise concurrent checkouts of the same cart: the second request waits here, then
+    // finds the cart already emptied instead of ordering (and paying) twice.
+    await client.query(`SELECT id FROM carts WHERE id = $1 FOR UPDATE`, [cart.id]);
+
     const itemsRes = await client.query(
       `SELECT ci.quantity, b.id AS book_id, b.title, b.author_name, b.image_url, b.sale_price, b.stock, b.product_type
        FROM cart_items ci
@@ -394,6 +398,15 @@ router.post('/', checkoutLimiter, async (req, res) => {
     const status = online || fullyCovered ? 'confirmed' : 'placed';
     const storeMethod = fullyCovered && paymentMethod === 'cod' ? 'gift_card' : paymentMethod;
 
+    // Gift-card value must only be issued against settled money, never on unpaid cash-on-delivery.
+    if (itemsRes.rows.some((it) => it.product_type === 'gift-card') && paymentStatus !== 'paid') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        success: false,
+        error: 'Gift cards must be paid for online. Please choose UPI, card or net banking.',
+      });
+    }
+
     const orderRes = await client.query(
       `INSERT INTO orders (
          order_number, user_id, status, subtotal, discount, shipping, total,
@@ -473,8 +486,8 @@ router.post('/', checkoutLimiter, async (req, res) => {
           const code = `SBH-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
           const amount = Number(item.sale_price);
           await client.query(
-            `INSERT INTO gift_cards (code, amount, remaining, buyer_email) VALUES ($1,$2,$2,$3)`,
-            [code, amount, req.user?.email || guestEmail]
+            `INSERT INTO gift_cards (code, amount, remaining, buyer_email, order_id) VALUES ($1,$2,$2,$3,$4)`,
+            [code, amount, req.user?.email || guestEmail, order.id]
           );
           giftCodes.push({ code, amount });
         }
@@ -515,6 +528,12 @@ router.post('/', checkoutLimiter, async (req, res) => {
       await client.query('ROLLBACK');
     } catch {
       /* ignore */
+    }
+    if (err?.code === '23505' && /razorpay_payment_id/.test(String(err.constraint || err.detail || ''))) {
+      return res.status(409).json({
+        success: false,
+        error: 'This payment has already been used for an order.',
+      });
     }
     console.error(err);
     return res.status(500).json({ success: false, error: 'Checkout failed' });
@@ -579,6 +598,22 @@ export async function restockOrder(client, orderId) {
   }
 }
 
+/**
+ * Void gift cards issued by an order that is being cancelled or refunded.
+ * Returns true (and changes nothing) when any of them was already spent, so the caller can refuse.
+ */
+export async function voidOrderGiftCards(client, orderId) {
+  const { rows } = await client.query(
+    `SELECT id, amount, remaining FROM gift_cards WHERE order_id = $1 FOR UPDATE`,
+    [orderId]
+  );
+  if (rows.some((g) => Number(g.remaining) < Number(g.amount))) return true;
+  if (rows.length) {
+    await client.query(`UPDATE gift_cards SET status = 'void', remaining = 0 WHERE order_id = $1`, [orderId]);
+  }
+  return false;
+}
+
 export function nextPaymentStatus(order, kind) {
   if (kind === 'cancel' || kind === 'return') {
     if (order.payment_method === 'cod' && order.payment_status !== 'paid') return 'cancelled';
@@ -612,12 +647,33 @@ router.patch('/:id/cancel', requireAuth, async (req, res) => {
     }
     const reason = String(req.body?.reason || '').trim().slice(0, 400);
     await client.query('BEGIN');
-    await restockOrder(client, order.id);
-    const paymentStatus = nextPaymentStatus(order, 'cancel');
+    // Re-read under a row lock so overlapping cancels are serialised and judged on the current state.
+    const lockedRes = await client.query(
+      `SELECT * FROM orders WHERE id = $1 AND user_id = $2 FOR UPDATE`,
+      [order.id, req.user.id]
+    );
+    const current = lockedRes.rows[0];
+    if (!current || !customerActions(current).canCancel) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        success: false,
+        error: 'This order can no longer be cancelled. It has already been dispatched or cancelled.',
+      });
+    }
+    const giftBlock = await voidOrderGiftCards(client, current.id);
+    if (giftBlock) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        success: false,
+        error: 'This order issued a gift card that has already been used, so it cannot be cancelled online. Please contact support.',
+      });
+    }
+    if (!current.stock_restored) await restockOrder(client, current.id);
+    const paymentStatus = nextPaymentStatus(current, 'cancel');
     const { rows } = await client.query(
       `UPDATE orders SET status = 'cancelled', payment_status = $1, stock_restored = TRUE, updated_at = NOW()
        WHERE id = $2 RETURNING *`,
-      [paymentStatus, order.id]
+      [paymentStatus, current.id]
     );
     await client.query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,'cancelled',$2)`, [
       order.id,

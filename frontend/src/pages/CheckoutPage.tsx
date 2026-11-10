@@ -190,6 +190,9 @@ export default function CheckoutPage() {
             modal: { ondismiss: () => reject(new Error('Payment cancelled')) },
             prefill: { name: form.fullName, email: form.email || user?.email, contact: form.phone },
           } as Record<string, unknown>);
+          rzp.on('payment.failed', (resp) => {
+            reject(new Error(resp?.error?.description || 'Payment failed. Please try again.'));
+          });
           rzp.open();
         });
         return;

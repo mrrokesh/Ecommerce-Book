@@ -97,9 +97,37 @@ router.post('/create-order', payLimiter, optionalAuth, async (req, res) => {
       data: { mode: 'razorpay', orderId: order.id, amount: order.amount, currency: order.currency },
     });
   } catch (err) {
-    console.error(err);
+    console.error('razorpay create-order:', err?.error?.description || err?.message || err);
+    if (Number(err?.statusCode) === 401) {
+      return res.status(401).json({ success: false, error: 'Payment gateway authentication failed' });
+    }
     return res.status(500).json({ success: false, error: 'Could not create payment order' });
   }
+});
+
+/**
+ * Standalone signature check: HMAC-SHA256(order_id|payment_id, KEY_SECRET).
+ * Checkout re-verifies the same signature (and the amount) before an order is stored,
+ * so this endpoint never marks anything paid; it only reports whether the signature is genuine.
+ */
+router.post('/verify', payLimiter, (req, res) => {
+  const b = req.body || {};
+  const orderId = b.razorpay_order_id ?? b.razorpayOrderId;
+  const paymentId = b.razorpay_payment_id ?? b.razorpayPaymentId;
+  const signature = b.razorpay_signature ?? b.razorpaySignature;
+  if ([orderId, paymentId, signature].some((v) => typeof v !== 'string' || !v.trim())) {
+    return res.status(400).json({
+      success: false,
+      error: 'razorpay_order_id, razorpay_payment_id and razorpay_signature are required',
+    });
+  }
+  if (!razorpayEnabled()) {
+    return res.status(503).json({ success: false, error: 'Online payments are not configured' });
+  }
+  if (!verifyRazorpaySignature({ orderId, paymentId, signature })) {
+    return res.status(400).json({ success: false, error: 'Payment signature mismatch' });
+  }
+  return res.json({ success: true, data: { verified: true, orderId, paymentId } });
 });
 
 export default router;

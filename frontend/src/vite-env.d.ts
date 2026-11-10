@@ -10,6 +10,7 @@ interface ImportMeta {
 
 interface RazorpayInstance {
   open: () => void;
+  on: (event: string, handler: (response: { error?: { description?: string } }) => void) => void;
 }
 
 interface Window {

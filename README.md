@@ -44,6 +44,21 @@ All settings live in `backend/.env` (see `backend/.env.example`, which lists eve
 | `SHIPPING_WEBHOOK_SECRET` | Shared secret for carrier tracking webhooks |
 | `ERP_API_URL` / `ERP_API_KEY` | Optional product and stock sync |
 
+## Payments (Razorpay)
+
+Standard Web Checkout is wired end to end:
+
+| Step | Where |
+| --- | --- |
+| Create a Razorpay order (amount in paise, minimum ₹1) | `POST /api/payments/create-order` (returns 401 if Razorpay rejects the keys, 500 on other gateway errors) |
+| Public key for the checkout modal | `GET /api/payments/config` (the secret never reaches the browser, so no `VITE_` key variable is needed) |
+| Check a signature (HMAC-SHA256 of `order_id\|payment_id` with the key secret) | `POST /api/payments/verify` (400 on missing fields or mismatch) |
+| Store the order | `POST /api/orders` re-verifies the signature and the paid amount with Razorpay before saving, rejects reused payment ids, and never trusts a client price |
+
+Set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in `backend/.env` (gitignored). Without keys, development builds simulate online payments; production builds offer Cash on Delivery only.
+
+**Testing with test keys:** use `rzp_test_…` keys, start both apps, add a book to the cart and choose UPI or card at checkout. Razorpay's published test card is `4100 2800 0000 1007` (CVV `123`, any future expiry); the test UPI id is `test@razorpay`. For go-live, put the **live** key pair in the host's environment (for example the Render dashboard) and never commit either key.
+
 ## Production
 
 ```bash
@@ -57,7 +72,8 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 ## Security notes
 
 - Auth uses an httpOnly cookie; state-changing requests from foreign origins are rejected; login, register and reset are rate-limited.
-- Order totals are always computed on the server; Razorpay payments are verified by signature and amount.
+- Order totals are always computed on the server; Razorpay payments are verified by signature and amount, one payment can back only one order (unique index plus a cart lock), and gift cards must be paid online and are voided when their order is cancelled.
+- Customer cancellation locks the order row, so overlapping cancels cannot restock twice.
 - Helmet CSP/HSTS headers on the API and security headers in `frontend/vercel.json`.
 - Admin uploads accept raster images only.
 - Report vulnerabilities privately to the store owner rather than opening a public issue.

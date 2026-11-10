@@ -518,6 +518,11 @@ router.patch('/orders/:id', async (req, res) => {
       await restockOrder(client, order.id);
       stockRestored = true;
       notes.push('Stock restored');
+      const voided = await client.query(
+        `UPDATE gift_cards SET status = 'void', remaining = 0 WHERE order_id = $1 AND status = 'active'`,
+        [order.id]
+      );
+      if (voided.rowCount) notes.push('Unspent gift cards from this order voided');
       if (!requestedPayment) {
         paymentStatus = nextPaymentStatus(order, nextStatus === 'cancelled' ? 'cancel' : 'return');
       }

@@ -170,6 +170,16 @@ export async function initSchema() {
   for (const stmt of MIGRATIONS) {
     await query(stmt);
   }
+  // One Razorpay payment may back at most one order. Skipped (with a warning) if existing
+  // duplicate rows would make the index impossible to build; resolve them, then restart.
+  try {
+    await query(
+      `CREATE UNIQUE INDEX IF NOT EXISTS uq_orders_razorpay_payment_id
+       ON orders (razorpay_payment_id) WHERE razorpay_payment_id IS NOT NULL`
+    );
+  } catch (err) {
+    console.warn('Could not create unique index on orders.razorpay_payment_id:', err.message);
+  }
   console.log('Schema applied successfully');
 }
 
