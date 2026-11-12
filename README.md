@@ -158,6 +158,7 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 - Mail that visitors can trigger (password reset, verification, guest order link) is capped per recipient and overall each hour; reset and verification tokens are single-use and stored hashed; unverified accounts lose their password if the same address later signs in with Google or Facebook.
 - Promotional email goes only to customers who ticked the unticked-by-default offers box (sign-up or account page); every promotion has an unsubscribe link that works without signing in.
 - Gift-card codes carry 64 bits of randomness; carrier API secrets are encrypted at rest.
+- Staff screens never show email bodies (they can hold reset and verification links), and non-admin staff see gift-card codes masked. Coupons never discount gift cards, the per-customer coupon limit also counts the delivery phone, shipping is priced from the entered pincode (the address must agree), and promotions go only to verified opt-ins.
 - Dependencies are kept at zero known advisories (`npm audit --omit=dev` in `backend` and `frontend`).
 - Report vulnerabilities privately to the store owner rather than opening a public issue.
 
