@@ -40,6 +40,25 @@ function isBadCover(buf) {
   return false;
 }
 
+const MAX_COVER_BYTES = 4 * 1024 * 1024;
+// Public route only: at most this many NEW upstream lookups per minute across all callers.
+// A global budget (not per-IP) keeps the cost bounded even if the proxy hides client IPs.
+const UPSTREAM_PER_MINUTE = 40;
+let budgetWindow = 0;
+let budgetUsed = 0;
+const inflight = new Map();
+
+function takeUpstreamSlot() {
+  const now = Date.now();
+  if (now - budgetWindow >= 60_000) {
+    budgetWindow = now;
+    budgetUsed = 0;
+  }
+  if (budgetUsed >= UPSTREAM_PER_MINUTE) return false;
+  budgetUsed += 1;
+  return true;
+}
+
 async function fetchBuffer(url) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 8000);
@@ -55,7 +74,9 @@ async function fetchBuffer(url) {
     if (!res.ok) return null;
     const ctype = String(res.headers.get('content-type') || '');
     if (ctype && !/^image\//i.test(ctype) && !/octet-stream/i.test(ctype)) return null;
+    if (Number(res.headers.get('content-length') || 0) > MAX_COVER_BYTES) return null;
     const ab = await res.arrayBuffer();
+    if (ab.byteLength > MAX_COVER_BYTES) return null;
     return Buffer.from(ab);
   } catch {
     return null;
@@ -76,9 +97,17 @@ function mimeOf(buf) {
  * Resolve a real cover for an ISBN: Open Library → Google Books (validated).
  * Caches successes and misses under uploads/covers/.
  */
-export async function resolveIsbnCover(isbn) {
+export async function resolveIsbnCover(isbn, { throttle = false } = {}) {
   const digits = isbnDigits(isbn);
   if (!digits) return null;
+  // Concurrent requests for the same ISBN share one lookup.
+  if (inflight.has(digits)) return inflight.get(digits);
+  const job = resolveIsbnCoverUncached(digits, throttle).finally(() => inflight.delete(digits));
+  inflight.set(digits, job);
+  return job;
+}
+
+async function resolveIsbnCoverUncached(digits, throttle) {
 
   const hitJpg = path.join(cacheDir, `${digits}.jpg`);
   const hitPng = path.join(cacheDir, `${digits}.png`);
@@ -94,6 +123,9 @@ export async function resolveIsbnCover(isbn) {
     const age = Date.now() - fs.statSync(miss).mtimeMs;
     if (age < 7 * 24 * 60 * 60 * 1000) return null;
   }
+
+  // Out of budget: answer "no cover" now and do NOT cache a miss, so it is retried later.
+  if (throttle && !takeUpstreamSlot()) return null;
 
   const candidates = [
     `https://covers.openlibrary.org/b/isbn/${digits}-L.jpg?default=false`,

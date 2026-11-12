@@ -6,6 +6,7 @@ import { getPool, query } from './pool.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const MIGRATIONS = [
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INT NOT NULL DEFAULT 0`,
   `ALTER TABLE books ADD COLUMN IF NOT EXISTS binding VARCHAR(60) DEFAULT 'Paper Back'`,
   `ALTER TABLE books ADD COLUMN IF NOT EXISTS publishing_date VARCHAR(40)`,
   `ALTER TABLE books ADD COLUMN IF NOT EXISTS edition VARCHAR(40)`,

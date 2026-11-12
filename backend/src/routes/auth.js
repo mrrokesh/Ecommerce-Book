@@ -54,7 +54,7 @@ router.post('/register', async (req, res) => {
       [name.trim(), emailNorm, passwordHash, phone || null]
     );
 
-    const token = signToken(rows[0].id);
+    const token = signToken(rows[0].id, 0);
     setAuthCookie(res, token);
     return res.status(201).json({
       success: true,
@@ -74,7 +74,7 @@ router.post('/login', async (req, res) => {
     }
 
     const { rows } = await query(
-      `SELECT id, name, email, phone, role, created_at, password_hash
+      `SELECT id, name, email, phone, role, created_at, password_hash, token_version
        FROM users WHERE lower(email) = lower($1)`,
       [email.trim()]
     );
@@ -83,7 +83,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Invalid email or password' });
     }
 
-    const token = signToken(user.id);
+    const token = signToken(user.id, user.token_version);
     setAuthCookie(res, token);
     const { password_hash: _, ...safe } = user;
     return res.json({
@@ -161,7 +161,10 @@ router.post('/reset', async (req, res) => {
     );
     if (!rows[0]) return res.status(400).json({ success: false, error: 'Invalid or expired reset token' });
     const hash = await bcrypt.hash(password, 10);
-    await query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [hash, rows[0].user_id]);
+    await query(
+      `UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE id = $2`,
+      [hash, rows[0].user_id]
+    );
     await query(`UPDATE password_resets SET used = TRUE WHERE id = $1`, [rows[0].id]);
     return res.json({ success: true, data: { message: 'Password updated. You can sign in now.' } });
   } catch (err) {

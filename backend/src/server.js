@@ -42,6 +42,13 @@ async function setupDatabase() {
   const { replaceSapnaImages } = await import('./db/replaceSapnaImages.js');
   const { startErpAutoSync } = await import('./erp/syncProducts.js');
   startErpAutoSync();
+  // Abandoned guest carts older than 30 days are removed daily (their items cascade).
+  const pruneGuestCarts = () =>
+    query(`DELETE FROM carts WHERE user_id IS NULL AND updated_at < NOW() - INTERVAL '30 days'`).catch((err) =>
+      console.warn('guest cart cleanup:', err.message || err)
+    );
+  setTimeout(pruneGuestCarts, 60_000).unref();
+  setInterval(pruneGuestCarts, 24 * 60 * 60 * 1000).unref();
   setTimeout(() => {
     seedExtras().catch((err) => console.warn('seedExtras:', err.message || err));
     replaceSapnaImages().catch((err) => console.warn('replaceSapnaImages:', err.message || err));

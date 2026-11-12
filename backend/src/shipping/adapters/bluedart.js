@@ -1,3 +1,4 @@
+import { assertSafeEndpoint } from '../safeUrl.js';
 /**
  * BlueDart uses SOAP/XML in many accounts. We call their REST-style gateway when
  * credentials are present; otherwise createShipment fails with a clear setup message.
@@ -20,7 +21,7 @@ export async function createShipment(order, creds) {
     };
   }
   const pin = String(order.shippingAddress || '').match(/\b(\d{6})\b/)?.[1] || '636001';
-  const res = await fetch(creds.endpoint, {
+  const res = await fetch(assertSafeEndpoint(creds.endpoint), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

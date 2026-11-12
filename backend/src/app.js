@@ -65,16 +65,11 @@ app.use(
   })
 );
 
+// Only origins listed in CLIENT_URL may use credentialed cross-origin requests. The storefront
+// calls /api on its own origin (Vercel rewrite), which sameSiteOrigin() covers, so shared
+// hosting domains such as *.vercel.app are deliberately NOT trusted by name.
 function originAllowed(origin) {
-  if (!origin || origins.includes(origin)) return true;
-  try {
-    const host = new URL(origin).hostname;
-    // Vercel preview deployments of this project only.
-    if (/^ecommerce-book-one(-[a-z0-9-]+)?\.vercel\.app$/i.test(host)) return true;
-  } catch {
-    /* ignore */
-  }
-  return false;
+  return !origin || origins.includes(origin);
 }
 
 app.use(
@@ -141,7 +136,7 @@ app.use('/uploads', express.static(uploadsDir));
 
 app.get('/api/covers/isbn/:isbn', async (req, res) => {
   const { resolveIsbnCover } = await import('./utils/coverFetch.js');
-  const result = await resolveIsbnCover(req.params.isbn);
+  const result = await resolveIsbnCover(req.params.isbn, { throttle: true });
   if (!result) return res.status(404).end();
   res.set('Content-Type', result.mime);
   res.set('Cache-Control', 'public, max-age=604800');

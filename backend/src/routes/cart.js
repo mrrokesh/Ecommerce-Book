@@ -72,6 +72,28 @@ async function loadCartPayload(cart) {
 
 router.use(optionalAuth);
 
+// Bound guest-cart creation across all callers (not per IP, so it holds behind any proxy chain).
+const MAX_GUEST_CARTS_PER_MINUTE = 600;
+router.use(async (req, res, next) => {
+  if (req.user) return next();
+  try {
+    const sid = String(req.headers['x-session-id'] || '').slice(0, 80);
+    if (sid) {
+      const existing = await query(`SELECT 1 FROM carts WHERE session_id = $1`, [sid]);
+      if (existing.rowCount) return next();
+    }
+    const recent = await query(
+      `SELECT COUNT(*)::int AS c FROM carts WHERE user_id IS NULL AND updated_at > NOW() - INTERVAL '1 minute'`
+    );
+    if (recent.rows[0].c >= MAX_GUEST_CARTS_PER_MINUTE) {
+      return res.status(429).json({ success: false, error: 'Too many new carts right now. Please retry shortly.' });
+    }
+  } catch (err) {
+    console.warn('guest cart guard:', err.message || err);
+  }
+  return next();
+});
+
 router.get('/', async (req, res) => {
   try {
     const cart = await getOrCreateCart(req);

@@ -1,3 +1,4 @@
+import { assertSafeEndpoint } from '../safeUrl.js';
 export async function createShipment(order, creds) {
   if (!creds?.apiKey || !creds?.customerCode) {
     throw new Error('DTDC apiKey and customerCode are required in Shipping settings');
@@ -14,7 +15,7 @@ export async function createShipment(order, creds) {
     };
   }
   const pin = String(order.shippingAddress || '').match(/\b(\d{6})\b/)?.[1] || '636001';
-  const res = await fetch(creds.endpoint, {
+  const res = await fetch(assertSafeEndpoint(creds.endpoint), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -26,11 +26,15 @@ export async function requireAuth(req, res, next) {
     }
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     const { rows } = await query(
-      `SELECT id, name, email, phone, role, created_at FROM users WHERE id = $1`,
+      `SELECT id, name, email, phone, role, created_at, token_version FROM users WHERE id = $1`,
       [payload.sub]
     );
     if (!rows[0]) {
       return res.status(401).json({ success: false, error: 'User not found' });
+    }
+    // A password reset bumps token_version, which ends every session issued before it.
+    if (Number(payload.tv ?? 0) !== Number(rows[0].token_version ?? 0)) {
+      return res.status(401).json({ success: false, error: 'Session expired. Please sign in again.' });
     }
     req.user = rows[0];
     next();
@@ -108,18 +112,18 @@ export async function optionalAuth(req, _res, next) {
     if (!token) return next();
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     const { rows } = await query(
-      `SELECT id, name, email, phone, role, created_at FROM users WHERE id = $1`,
+      `SELECT id, name, email, phone, role, created_at, token_version FROM users WHERE id = $1`,
       [payload.sub]
     );
-    if (rows[0]) req.user = rows[0];
+    if (rows[0] && Number(payload.tv ?? 0) === Number(rows[0].token_version ?? 0)) req.user = rows[0];
   } catch {
     // ignore invalid token for optional auth
   }
   next();
 }
 
-export function signToken(userId) {
-  return jwt.sign({ sub: userId }, process.env.JWT_SECRET, {
+export function signToken(userId, tokenVersion = 0) {
+  return jwt.sign({ sub: userId, tv: Number(tokenVersion) || 0 }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 }

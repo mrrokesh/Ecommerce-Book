@@ -116,6 +116,10 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 - Auth uses an httpOnly cookie; state-changing requests from foreign origins are rejected; login, register and reset are rate-limited.
 - Order totals are always computed on the server; Razorpay payments are verified by signature and amount, one payment can back only one order (unique index plus a cart lock), and gift cards must be paid online and are voided when their order is cancelled.
 - Customer cancellation locks the order row, so overlapping cancels cannot restock twice.
+- A password reset ends every login session issued before it (`users.token_version` in the signed token).
+- Only origins listed in `CLIENT_URL`, or the site's own host, may make state-changing requests; shared domains such as `*.vercel.app` are not trusted by name. The storefront always calls `/api` on its own origin.
+- Carrier endpoints set in the admin must be public `https` URLs (internal and cloud-metadata addresses are refused when saved and again before every call).
+- The public ISBN cover route is capped at 40 new upstream lookups a minute with a response-size limit, and guest-cart creation is capped at 600 a minute; guest carts untouched for 30 days are deleted daily.
 - Helmet CSP/HSTS headers on the API and security headers in `frontend/vercel.json`.
 - Admin uploads accept raster images only.
 - Report vulnerabilities privately to the store owner rather than opening a public issue.

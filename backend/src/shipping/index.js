@@ -6,6 +6,7 @@ import * as delhivery from './adapters/delhivery.js';
 import * as shadowfax from './adapters/shadowfax.js';
 import * as bluedart from './adapters/bluedart.js';
 import * as dtdc from './adapters/dtdc.js';
+import { assertSafeEndpoint } from './safeUrl.js';
 
 const ADAPTERS = {
   manual,
@@ -163,10 +164,14 @@ export async function updatePartner(code, body = {}) {
       if (f.secret && (val === '••••••••' || val === '')) continue;
       next[f.key] = val;
     }
-    // allow custom keys like endpoint
-    for (const [k, v] of Object.entries(body.credentials)) {
-      if (def.fields.some((f) => f.key === k)) continue;
-      if (String(v) && String(v) !== '••••••••') next[k] = String(v);
+    // Only the carrier endpoint may be a custom key, and it must be a safe public https URL.
+    const customEndpoint = body.credentials.endpoint;
+    if (
+      customEndpoint != null &&
+      String(customEndpoint).trim() !== '' &&
+      !def.fields.some((f) => f.key === 'endpoint')
+    ) {
+      next.endpoint = assertSafeEndpoint(customEndpoint);
     }
   }
   const enabled = body.enabled != null ? Boolean(body.enabled) : undefined;

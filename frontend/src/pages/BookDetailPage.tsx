@@ -363,6 +363,13 @@ export default function BookDetailPage() {
           </div>
         </div>
       </section>
+
+      <div className="sticky-buy" role="region" aria-label="Quick purchase">
+        <span className="sticky-buy-price">{formatPrice(sale || mrp)}</span>
+        <button type="button" className="btn btn-orange" disabled={busy || !book.stock} onClick={handleAdd}>
+          {book.stock ? 'ADD TO CART' : 'OUT OF STOCK'}
+        </button>
+      </div>
     </div>
   );
 }

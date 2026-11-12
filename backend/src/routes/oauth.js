@@ -143,11 +143,11 @@ router.get('/:provider', (req, res, next) => {
 
 async function findOrCreateUser(providerName, profile) {
   const { idColumn } = PROVIDERS[providerName];
-  const byId = await query(`SELECT id, role FROM users WHERE ${idColumn} = $1`, [profile.id]);
+  const byId = await query(`SELECT id, role, token_version FROM users WHERE ${idColumn} = $1`, [profile.id]);
   if (byId.rows[0]) return byId.rows[0];
   if (!profile.email) throw Object.assign(new Error('no email'), { code: 'email_required' });
 
-  const byEmail = await query(`SELECT id, role FROM users WHERE lower(email) = $1`, [profile.email]);
+  const byEmail = await query(`SELECT id, role, token_version FROM users WHERE lower(email) = $1`, [profile.email]);
   if (byEmail.rows[0]) {
     if (byEmail.rows[0].role !== 'customer') {
       throw Object.assign(new Error('portal account'), { code: 'portal_account' });
@@ -164,7 +164,7 @@ async function findOrCreateUser(providerName, profile) {
   const hash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
   const name = String(profile.name || profile.email.split('@')[0]).trim().slice(0, 120);
   const created = await query(
-    `INSERT INTO users (name, email, password_hash, ${idColumn}) VALUES ($1,$2,$3,$4) RETURNING id, role`,
+    `INSERT INTO users (name, email, password_hash, ${idColumn}) VALUES ($1,$2,$3,$4) RETURNING id, role, token_version`,
     [name, profile.email, hash, profile.id]
   );
   return created.rows[0];
@@ -201,7 +201,7 @@ router.get('/:provider/callback', async (req, res, next) => {
     const user = await findOrCreateUser(providerName, profile);
     // Admin portal accounts must sign in with their password.
     if (user.role !== 'customer') return fail(res, 'portal_account');
-    setAuthCookie(res, signToken(user.id));
+    setAuthCookie(res, signToken(user.id, user.token_version));
     return res.redirect(`${publicBase()}${safeNext(saved.next)}`);
   } catch (err) {
     if (err.code === 'email_required' || err.code === 'portal_account') return fail(res, err.code);
