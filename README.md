@@ -111,6 +111,28 @@ serves the API and the built storefront on port 5000. The repository also deploy
 
 The API refuses to start in production without a strong `JWT_SECRET` and an `ADMIN_PASSWORD`.
 
+### Vercel + Render
+
+- **Vercel** serves `frontend/`. `frontend/vercel.json` rewrites `/api/*` and `/uploads/*` to the Render API, so the browser only talks to your own domain: login cookies stay first-party and no CORS entry is needed. The storefront always calls `/api`; `VITE_API_URL` is ignored, so a leftover value in the Vercel project settings cannot break a custom domain.
+- **Render** runs the `Dockerfile` (`render.yaml`). Set these in the Render dashboard (Environment):
+
+| Variable | Notes |
+| --- | --- |
+| `NODE_ENV` | `production` (set by `render.yaml`) |
+| `DATABASE_URL`, `JWT_SECRET`, `ADMIN_PASSWORD` | required; the API refuses to start without a strong secret and an admin password |
+| `CLIENT_URL` | every public site origin, comma-separated, for example `https://www.salembookhouse.com,https://salembookhouse.com,https://ecommerce-book-one.vercel.app`. The **first** entry is the base of password-reset links, so put the main domain first |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | a matching key pair from the same Razorpay mode (`rzp_test_…` or `rzp_live_…`); a mismatch shows "Payment gateway authentication failed" at checkout |
+| `SHIPPING_WEBHOOK_SECRET` | carrier webhook secret (`render.yaml` generates one) |
+| `SMTP_*`, `MSG91_*`, `ERP_*`, `GOOGLE_*`, `FACEBOOK_*` | optional |
+
+### Go-live checklist
+
+1. Deploy, then open `/api/health` on the live domain (status `ok`).
+2. Sign in on the live domain (a login error "Origin not allowed" means the domain is missing from `CLIENT_URL`).
+3. Place a Cash on Delivery order and check it in **Admin → Orders**.
+4. Test online payments with **test keys** first (test card above), then switch the Render variables to the live pair and place one small real order.
+5. Change the admin password if any database ever used a development default, and keep every key out of git.
+
 ## Security notes
 
 - Auth uses an httpOnly cookie; state-changing requests from foreign origins are rejected; login, register and reset are rate-limited.
