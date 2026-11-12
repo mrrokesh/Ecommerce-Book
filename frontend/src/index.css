@@ -3335,3 +3335,20 @@ textarea:focus {
 
 .cod-note { margin: .5rem 0 .75rem; padding: .55rem .8rem; border-radius: 8px; background: #fff6e0; border: 1px solid #f0d58a; color: #6b4a00; font-size: .9rem; line-height: 1.4; }
 .cod-note strong { color: #4f3600; }
+
+/* ---------- phones and small tablets: comfortable tap targets, no 320px overflow ---------- */
+@media (max-width: 768px) {
+  .action-btn { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .view-all { display: inline-flex; align-items: center; min-height: 40px; padding: 0 8px; }
+  .carousel-nav { min-width: 40px; min-height: 40px; }
+  .promo-strip-offer { display: block; padding: 10px 0; }
+  .hero-dots button { position: relative; }
+  .hero-dots button::after { content: ''; position: absolute; inset: -12px; }
+  footer a { display: inline-block; padding: 9px 0; }
+  footer .footer-social a { padding: 0; }
+  footer .know-more { padding: 11px 0; }
+}
+@media (max-width: 480px) {
+  .sort-label { max-width: 100%; flex-wrap: wrap; }
+  .sort-label select { max-width: 100%; min-width: 0; }
+}

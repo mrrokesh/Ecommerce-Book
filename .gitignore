@@ -9,3 +9,5 @@ frontend/dist
 
 backend/.test-pg*/
 backend/.qa-pg/
+
+.security-audit/
