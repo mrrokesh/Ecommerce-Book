@@ -66,6 +66,7 @@ export const ADMIN_MODULES = [
   'shipping',
   'marketing',
   'emails',
+  'support',
   'refunds',
   'orders_edit',
   'products_edit',

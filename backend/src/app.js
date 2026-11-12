@@ -1,4 +1,5 @@
 import campaignRoutes from './routes/campaigns.js';
+import complaintRoutes from './routes/complaints.js';
 import returnRoutes from './routes/returns.js';
 import securityRoutes from './routes/security.js';
 import customerTools from './routes/customerTools.js';
@@ -175,6 +176,7 @@ app.use('/api/addresses', addressesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/operations',operationsRoutes);
 app.use('/api/campaigns', campaignRoutes);
+app.use('/api/complaints', complaintRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/coupons', couponsRoutes);
 app.use('/api/shipping', shippingRoutes);

@@ -12,6 +12,7 @@ export const MODULES: { key: string; label: string; hint: string }[] = [
   { key: 'shipping', label: 'Shipping partners', hint: 'Courier settings and credentials' },
   { key: 'marketing', label: 'Banners & coupons', hint: 'Homepage banners and discount codes' },
   { key: 'emails', label: 'Email outbox', hint: 'Emails sent by the store' },
+  { key: 'support', label: 'Complaints', hint: 'View, answer and resolve customer complaints' },
 ];
 
 export const MODULE_LABEL: Record<string, string> = Object.fromEntries(MODULES.map((m) => [m.key, m.label]));
@@ -39,6 +40,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: '/admin/returns', label: 'Returns', module: 'orders' },
       { to: '/admin/customers', label: 'Customers', module: 'customers' },
       { to: '/admin/reviews', label: 'Reviews', module: 'reviews' },
+      { to: '/admin/complaints', label: 'Complaints', module: 'support' },
       { to: '/admin/gifts', label: 'Gift cards', module: 'marketing' },
     ],
   },
@@ -92,6 +94,7 @@ export function moduleForPath(pathname: string) {
     marketing: 'marketing',
     campaigns: 'marketing',
     subscribers: 'marketing',
+    complaints: 'support',
     help: 'any',
     security: 'any',
     emails: 'emails',

@@ -3352,3 +3352,31 @@ textarea:focus {
   .sort-label { max-width: 100%; flex-wrap: wrap; }
   .sort-label select { max-width: 100%; min-width: 0; }
 }
+
+/* ---- Complaints (storefront pages and the admin thread view) ---- */
+.complaint-card, .complaint-track .auth-card { max-width: 640px; width: 100%; }
+.complaint-card textarea { width: 100%; resize: vertical; min-height: 120px; }
+.complaint-count { display: block; text-align: right; font-size: .78rem; }
+.complaint-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.complaint-as { margin: 0 0 .5rem; }
+.complaint-ticket { font-size: 1.5rem; font-weight: 800; letter-spacing: .08em; color: var(--navy, #123a6d); margin: .25rem 0 .75rem; }
+.complaint-done { text-align: center; }
+.complaint-mine { margin-top: 1.25rem; border-top: 1px solid #e4e8ef; padding-top: 1rem; }
+.complaint-mine h2 { font-size: 1.05rem; margin: 0 0 .5rem; }
+.complaint-mine ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.complaint-mine li { display: flex; justify-content: space-between; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.complaint-track .link-btn, .complaints-admin .link-btn, .complaint-detail .link-btn { background: none; border: 0; padding: 0; font: inherit; color: var(--navy, #123a6d); text-decoration: underline; cursor: pointer; text-align: left; }
+.c-pill { display: inline-block; padding: .1rem .6rem; border-radius: 999px; font-size: .78rem; font-weight: 700; background: #eef1f6; color: #425066; }
+.c-pill.ok { background: #e5f6ed; color: #17784a; }
+.c-pill.warn { background: #fdf1e1; color: #8a4c00; }
+.c-pill.bad { background: #fdeaea; color: #b02a2a; }
+.complaint-thread { display: grid; gap: .6rem; margin: 1rem 0; }
+.complaint-msg { border-radius: 10px; padding: .6rem .8rem; max-width: 92%; overflow-wrap: anywhere; }
+.complaint-msg p { margin: .25rem 0; white-space: pre-wrap; }
+.complaint-msg small { color: #6a7385; }
+.complaint-msg.you { background: #eef3fb; justify-self: start; }
+.complaint-msg.team { background: #fff7e0; justify-self: end; }
+.complaint-msg.note { background: #f3eefc; border: 1px dashed #8a6fd1; justify-self: end; }
+.complaint-reply { display: grid; gap: .5rem; }
+.complaint-reply textarea { width: 100%; resize: vertical; }
+.complaints-admin tr.is-selected td { background: #f4f8ff; }

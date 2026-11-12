@@ -44,6 +44,9 @@ import AdminStaff from './admin/AdminStaff';
 import AdminOrders from './admin/AdminOrders';
 import AdminMarketing from './admin/AdminMarketing';
 import AdminHelp from './admin/AdminHelp';
+import AdminComplaints from './admin/AdminComplaints';
+import ComplaintPage from './pages/ComplaintPage';
+import ComplaintTrackPage from './pages/ComplaintTrackPage';
 import AdminEmails from './admin/AdminEmails';
 import AdminCustomers from './admin/AdminCustomers';
 import AdminShipping from './admin/AdminShipping';
@@ -77,6 +80,7 @@ export default function App() {
               <Route path="campaigns" element={<AdminCampaigns />} />
               <Route path="subscribers" element={<AdminSubscribers />} />
               <Route path="help" element={<AdminHelp />} />
+              <Route path="complaints" element={<AdminComplaints />} />
               <Route path="emails" element={<AdminOperations section="emails" />} />
             </Route>
             <Route element={<Layout />}>
@@ -107,6 +111,8 @@ export default function App() {
               <Route path="exams" element={<ExamsPage />} />
               <Route path="guest-order" element={<GuestOrderPage />} />
               <Route path="track" element={<TrackPage />} />
+              <Route path="complaint" element={<ComplaintPage />} />
+              <Route path="complaint/track" element={<ComplaintTrackPage />} />
               <Route path="order-placed" element={<OrderPlacedPage />} />
               <Route path="forgot-password" element={<ForgotPasswordPage />} />
               <Route path="reset-password" element={<ResetPasswordPage />} />

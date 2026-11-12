@@ -24,6 +24,7 @@ const TITLES = {
   '/admin/emails': 'Email outbox',
   '/admin/shipping': 'Shipping partners',
   '/admin/reviews': 'Reviews',
+  '/admin/complaints': 'Complaints',
   '/admin/staff': 'Staff & roles',
   '/admin/campaigns': 'Promotional emails',
   '/admin/subscribers': 'Subscribers',
@@ -76,13 +77,16 @@ export default function AdminLayout() {
     api.get('/admin/summary').then(({ data }) => {
       if (!alive) return;
       const s = data.stats || {};
-      setBadges({
+      setBadges((b) => ({ ...b,
         '/admin/orders': Number(s.toConfirm || 0) + Number(s.toShip || 0),
         '/admin/returns': Number(s.returnsOpen || 0),
         '/admin/payments': Number(s.refundsOpen || 0),
         '/admin/inventory': Number(s.lowStock || 0),
-      });
+      }));
     }).catch(() => undefined);
+    if (role === 'admin' || permissions.includes('support')) {
+      api.get('/complaints/admin/counts').then(({ data }) => alive && setBadges((b) => ({ ...b, '/admin/complaints': Number(data.attention || 0) }))).catch(() => undefined);
+    }
     if (role === 'admin' || permissions.includes('marketing')) {
       api.get('/campaigns').then(({ data }) => alive && setUsage({ used: Number(data.sentToday || 0), cap: Number(data.dailyCap || 0) })).catch(() => undefined);
     }

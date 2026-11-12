@@ -83,6 +83,21 @@ export async function migrateOperations(query) {
       unsubscribed_at TIMESTAMPTZ, created_by UUID, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
     CREATE UNIQUE INDEX IF NOT EXISTS uq_marketing_subscribers_email ON marketing_subscribers (lower(email));
+    CREATE TABLE IF NOT EXISTS complaints (
+      id SERIAL PRIMARY KEY, ticket TEXT UNIQUE, user_id UUID, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT,
+      order_number TEXT, category TEXT NOT NULL DEFAULT 'other', subject TEXT NOT NULL, message TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open', priority TEXT NOT NULL DEFAULT 'normal', assigned_to UUID,
+      resolution TEXT, resolved_at TIMESTAMPTZ, resolved_by UUID,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS complaint_messages (
+      id SERIAL PRIMARY KEY, complaint_id INT NOT NULL REFERENCES complaints(id) ON DELETE CASCADE,
+      author_type TEXT NOT NULL, author_id UUID, author_name TEXT, body TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_complaints_status ON complaints(status, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_complaints_email ON complaints(lower(email));
+    CREATE INDEX IF NOT EXISTS idx_complaint_messages_c ON complaint_messages(complaint_id, created_at);
     CREATE INDEX IF NOT EXISTS idx_refund_order ON refund_requests(order_id);
     CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_log(created_at DESC);
   `);

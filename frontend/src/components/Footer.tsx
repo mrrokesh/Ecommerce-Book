@@ -23,6 +23,7 @@ const HELP_LINKS = [
   { label: 'About Us', to: '/about' },
   { label: 'Contact Us', to: '/contact' },
   { label: 'Help Centre', to: '/help' },
+  { label: 'Raise a Complaint', to: '/complaint' },
   { label: 'Shipping & Delivery', to: '/shipping' },
   { label: 'Returns & Refunds', to: '/returns' },
   { label: 'Terms & Conditions', to: '/terms' },

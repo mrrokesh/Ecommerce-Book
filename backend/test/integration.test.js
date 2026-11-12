@@ -281,6 +281,58 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       const blockedPay=await request('/payments/create-order',{method:'POST',body:{},user:u});
       assert.equal(blockedPay.status,403);assert.equal(blockedPay.code,'EMAIL_NOT_VERIFIED');
     });
+    await t.test('complaints: customers raise tickets, staff with the support permission answer and resolve them',async()=>{
+      const raw=async(url,{method='GET',body}={})=>{const r=await fetch(base+url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});return {status:r.status,...await r.json()};};
+      const outbox=async(to,like)=>(await query('SELECT * FROM email_outbox WHERE lower(to_email)=lower($1) AND subject LIKE $2',[to,like])).rows;
+      const good={category:'order_delivery',subject:'Parcel arrived damaged',message:'The parcel for my order arrived with a torn cover and wet pages.',orderNumber:'sbh-1001'};
+      // validation and the honeypot
+      assert.equal((await raw('/complaints',{method:'POST',body:{...good,name:'Guest One',email:'guest1@test.invalid',message:'too short'}})).status,400,'short details refused');
+      assert.equal((await raw('/complaints',{method:'POST',body:{...good,name:'Guest One',email:'guest1@test.invalid',website:'http://spam'}})).status,400,'honeypot');
+      assert.equal((await raw('/complaints',{method:'POST',body:{...good,category:'nope',name:'Guest One',email:'guest1@test.invalid'}})).status,400,'bad category');
+      // a guest and a signed-in customer each raise one
+      const g=await raw('/complaints',{method:'POST',body:{...good,name:'Guest One',email:'Guest1@test.invalid',phone:'9876543210'}});
+      assert.equal(g.status,200,JSON.stringify(g));assert.match(g.data.ticket,/^CMP-[0-9]{6}$/);
+      const c=await request('/complaints',{method:'POST',body:{...good,subject:'Refund not received'},user});
+      assert.equal(c.status,200,JSON.stringify(c));
+      await new Promise(r=>setTimeout(r,300));
+      assert.ok((await outbox('guest1@test.invalid','We received your complaint%')).length,'confirmation email queued');
+      assert.equal((await request('/complaints/mine',{user})).data.complaints.length,1,'customer sees their own ticket');
+      // guests need ticket + email
+      assert.equal((await raw('/complaints/t/'+g.data.ticket+'?email=other@test.invalid')).status,404,'wrong email refused');
+      const seen=await raw('/complaints/t/'+g.data.ticket+'?email=guest1@test.invalid');
+      assert.equal(seen.status,200);assert.equal(seen.data.complaint.status,'open');assert.ok(!('priority' in seen.data.complaint),'no staff fields for customers');
+      // staff access is permission based
+      const plain=(await query("INSERT INTO users(name,email,password_hash,role) VALUES('Plain Staff','plain-staff@test.invalid','x','staff') RETURNING *")).rows[0];
+      assert.equal((await request('/complaints/admin',{user:plain})).status,403,'no role, no access');
+      const srole=(await query("INSERT INTO staff_roles(name,permissions) VALUES('Support',ARRAY['support']) RETURNING id")).rows[0];
+      const agent=(await query("INSERT INTO users(name,email,password_hash,role,staff_role_id) VALUES('Support Agent','agent@test.invalid','x','staff',$1) RETURNING *",[srole.id])).rows[0];
+      const list=await request('/complaints/admin',{user:agent});
+      assert.equal(list.status,200);assert.ok(list.data.counts.open>=2&&list.data.complaints.length>=2);
+      const id=list.data.complaints.find(x=>x.ticket===g.data.ticket).id;
+      const detail=await request('/complaints/admin/'+id,{user:agent});assert.equal(detail.status,200);assert.equal(detail.data.complaint.email,'guest1@test.invalid');
+      assert.equal((await request('/complaints/admin/abc',{user:agent})).status,404);
+      // internal notes stay internal, public replies reach the customer and move the ticket along
+      assert.equal((await request('/complaints/admin/'+id+'/reply',{method:'POST',body:{body:'Checked with the courier, claim raised.',visibility:'note'},user:agent})).status,200);
+      assert.equal((await request('/complaints/admin/'+id+'/reply',{method:'POST',body:{body:'We are sorry. A replacement is on its way.'},user:agent})).status,200);
+      await new Promise(r=>setTimeout(r,300));
+      assert.ok((await outbox('guest1@test.invalid','Update on your complaint%')).length,'reply email queued');
+      const thread=await raw('/complaints/t/'+g.data.ticket+'?email=guest1@test.invalid');
+      assert.equal(thread.data.complaint.status,'in_progress');
+      assert.ok(thread.data.messages.some(m=>/replacement/.test(m.body))&&!thread.data.messages.some(m=>/courier/.test(m.body)),'customer sees the reply but not the note');
+      // resolving needs an explanation and emails the customer
+      assert.equal((await request('/complaints/admin/'+id,{method:'PATCH',body:{status:'resolved'},user:agent})).status,400,'resolution note required');
+      assert.equal((await request('/complaints/admin/'+id,{method:'PATCH',body:{status:'bogus'},user:agent})).status,400);
+      const done=await request('/complaints/admin/'+id,{method:'PATCH',body:{status:'resolved',resolution:'Replacement book dispatched under order SBH-1001-R.',assign:'me',priority:'high'},user:agent});
+      assert.equal(done.status,200,JSON.stringify(done));assert.equal(done.data.complaint.status,'resolved');assert.ok(done.data.complaint.resolvedAt);
+      await new Promise(r=>setTimeout(r,300));
+      assert.ok((await outbox('guest1@test.invalid','Your complaint%is resolved')).length,'resolved email queued');
+      // a customer reply reopens it
+      const re=await raw('/complaints/t/'+g.data.ticket+'/reply',{method:'POST',body:{email:'guest1@test.invalid',message:'The replacement also has a damaged cover.'}});
+      assert.equal(re.status,200,JSON.stringify(re));assert.equal(re.data.status,'open');
+      // closed tickets take no more replies
+      assert.equal((await request('/complaints/admin/'+id,{method:'PATCH',body:{status:'closed'},user:agent})).status,200);
+      assert.equal((await raw('/complaints/t/'+g.data.ticket+'/reply',{method:'POST',body:{email:'guest1@test.invalid',message:'Hello again'}})).status,400);
+    });
     await t.test('run-3 audit fixes: no mail bodies for staff, masked gift codes, no coupon on gift cards, pincode bound to address, coupon limit by phone',async()=>{
       // 1. the admin email list never returns message bodies (they hold reset / verification / guest links)
       await query("INSERT INTO email_outbox(to_email,subject,body) VALUES('leak@test.invalid','Reset your Salem Book House password','Open https://x.example/reset-password?token=SECRET')");

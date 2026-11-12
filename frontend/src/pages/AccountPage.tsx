@@ -85,6 +85,9 @@ export default function AccountPage() {
           <Link to="/wishlist" className="btn btn-outline">
             Wishlist
           </Link>
+          <Link to="/complaint/track" className="btn btn-outline">
+            My complaints
+          </Link>
           <button type="button" className="btn btn-outline" onClick={logout}>
             Logout
           </button>
