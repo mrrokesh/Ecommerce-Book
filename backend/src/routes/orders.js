@@ -16,6 +16,7 @@ import {
   refundRazorpayPayment,
 } from './payments.js';
 import { sendMail } from '../mailer.js';
+import { codOrderCapReached } from '../utils/abuseGuard.js';
 import { notifyOrderEvent } from '../notify/index.js';
 
 const router = Router();
@@ -141,6 +142,9 @@ function orderNumber() {
 }
 
 export async function placeOrder(req, res) {
+  if (String(req.body?.paymentMethod || 'cod').toLowerCase() === 'cod' && !req.body?.razorpayOrderId && (await codOrderCapReached())) {
+    return res.status(429).json({ success: false, error: 'We are receiving a very high number of cash-on-delivery orders. Please pay online or try again later.' });
+  }
   const client = await (await getPool()).connect();
   try {
     await client.query('BEGIN');

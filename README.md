@@ -52,6 +52,7 @@ All settings live in `backend/.env` (see `backend/.env.example`, which lists eve
 | `OAUTH_REDIRECT_BASE` | Public site origin for social sign-in callbacks (e.g. `https://www.salembookhouse.com`); defaults to the first `CLIENT_URL` |
 | `WELCOME_COUPON` / `MAIL_DAILY_CAP` | Coupon code shown in the welcome email (default `WELCOME10`) and the most emails sent in 24 hours (default 1500; Rokesh Notify Pro allows 2000) |
 | `TRUST_PROXY_HOPS` | Proxy hops before the API (default 1; **4 on Vercel + Render**, measured on the live site: Vercel, Cloudflare and two Render hops sit in front of the API). Without the right value every visitor shares one rate-limit address. Sign in as admin, open `/api/security/network`: `ip` must equal your own public address, and the page tells you the number to use |
+| `LOGIN_MAX_FAILS` / `SIGNUP_DAILY_CAP` / `COD_DAILY_CAP` | Limits that do not depend on the visitor's address, so they still hold if someone calls the Render URL directly and fakes `X-Forwarded-For`: failed sign-ins per account per 15 minutes before a lock (default 10; the right password is refused until it clears or the password is reset), new accounts per 24 hours (default 500), and cash-on-delivery orders per 24 hours (default 300; paid online orders are not capped) |
 | `ROKESH_NOTIFY_API_URL`, `ROKESH_NOTIFY_API_KEY` | Outgoing email through Rokesh Notify (preferred). Needs `salembookhouse.com` verified in Notify (SPF + DKIM DNS records). Mail is sent from `MAIL_FROM`, default `Salem Book House <noreply@salembookhouse.com>` |
 | `SMTP_*` | Fallback email via SMTP, used only if Rokesh Notify is not set. With neither, mail stays in Admin → Email outbox (password-reset emails will not be delivered) |
 | `SHIPPING_WEBHOOK_SECRET` | Shared secret for carrier tracking webhooks |
@@ -142,7 +143,7 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 4. Test online payments with **test keys** first (test card above), then switch the Render variables to the live pair and place one small real order.
 5. Change the admin password if any database ever used a development default, and keep every key out of git.
 6. Make sure the schema step (`npm run db:init`) runs on deploy: new tables and columns (refunds, audit log, returns, `email_verified_at`) are created there.
-7. As admin, open `/api/security/network`. If `ip` is a Vercel or Render address instead of yours, set `TRUST_PROXY_HOPS=2` so rate limits are per visitor.
+7. As admin, open `/api/security/network`. If `ip` is a Vercel or Render address instead of yours, set `TRUST_PROXY_HOPS=4` (Vercel + Render) so rate limits are per visitor.
 
 ## Security notes
 

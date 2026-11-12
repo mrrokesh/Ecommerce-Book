@@ -13,6 +13,7 @@ import {
 import { sendMail, mailConfigured, mailBudgetOk } from '../mailer.js';
 import { welcomeEmail, signInAlert, passwordChangedEmail, verifyEmailMail, passwordResetEmail } from '../notify/accountMail.js';
 import rateLimit from 'express-rate-limit';
+import { loginLocked, recordLoginFailure, clearLoginFailures, signupCapReached } from '../utils/abuseGuard.js';
 
 const router = Router();
 
@@ -53,6 +54,9 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ success: false, error: 'Email already registered' });
     }
 
+    if (await signupCapReached()) {
+      return res.status(429).json({ success: false, error: 'Sign-ups are busy right now. Please try again later.' });
+    }
     const passwordHash = await bcrypt.hash(password, 10);
     const { rows } = await query(
       `INSERT INTO users (name, email, password_hash, phone, marketing_opt_in, marketing_consent_at)
@@ -140,9 +144,14 @@ router.post('/login', async (req, res) => {
       [email.trim()]
     );
     const user = rows[0];
+    if (loginLocked(email)) {
+      return res.status(429).json({ success: false, error: 'Too many failed sign-in attempts for this account. Please wait 15 minutes or reset your password.' });
+    }
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      recordLoginFailure(email);
       return res.status(401).json({ success: false, error: 'Invalid email or password' });
     }
+    clearLoginFailures(email);
 
     if(user.mfa_secret&&!verifyTotp(decryptSecret(user.mfa_secret),req.body.code))return res.status(401).json({success:false,error:'Enter a valid authenticator code'});
     const token = signToken(user.id, user.token_version);

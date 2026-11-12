@@ -223,6 +223,31 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       await request('/admin/books/'+book.id,{method:'PATCH',body:{codAllowed:true}});
       assert.equal((await query('SELECT cod_allowed FROM books WHERE id=$1',[book.id])).rows[0].cod_allowed,true);
     });
+    await t.test('address-independent abuse limits: per-account login lock, daily sign-up and COD caps',async()=>{
+      const post=async(url,body)=>{const r=await fetch(base+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:r.status,...await r.json()};};
+      const email='lock-test@test.invalid',pw='Locked#2026ok';
+      assert.equal((await post('/auth/register',{name:'Lock Test',email,password:pw})).status,201);
+      assert.equal((await post('/auth/login',{email,password:'wrong'})).status,401);
+      const { recordLoginFailure } = await import('../src/utils/abuseGuard.js');
+      for(let i=0;i<9;i++)recordLoginFailure(email); // 10 failures in total (the shared per-IP limiter would otherwise trip first)
+      const locked=await post('/auth/login',{email,password:pw});
+      assert.equal(locked.status,429,'locked after 10 failures even with the right password');
+      const other=await post('/auth/login',{email:'nobody-else@test.invalid',password:'x'});
+      assert.equal(other.status,401,'other accounts are not affected');
+      const { resetLoginLocksForTests } = await import('../src/utils/abuseGuard.js');
+      resetLoginLocksForTests();
+      assert.equal((await post('/auth/login',{email,password:pw})).status,200,'works again after the lock clears');
+      // site-wide daily sign-up cap
+      process.env.SIGNUP_DAILY_CAP='1';
+      try{assert.equal((await post('/auth/register',{name:'Cap Test',email:'cap-test@test.invalid',password:'Capped#2026ok'})).status,429,'sign-up cap');}
+      finally{delete process.env.SIGNUP_DAILY_CAP;}
+      // site-wide daily COD cap
+      const { codOrderCapReached } = await import('../src/utils/abuseGuard.js');
+      process.env.COD_DAILY_CAP='0';
+      try{assert.equal(await codOrderCapReached(),true,'COD cap reached at 0');}
+      finally{delete process.env.COD_DAILY_CAP;}
+      assert.equal(await codOrderCapReached(),false,'COD cap not reached by default');
+    });
     await t.test('run-3 audit fixes: no mail bodies for staff, masked gift codes, no coupon on gift cards, pincode bound to address, coupon limit by phone',async()=>{
       // 1. the admin email list never returns message bodies (they hold reset / verification / guest links)
       await query("INSERT INTO email_outbox(to_email,subject,body) VALUES('leak@test.invalid','Reset your Salem Book House password','Open https://x.example/reset-password?token=SECRET')");
