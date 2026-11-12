@@ -1,3 +1,4 @@
+import { firstError } from '../utils/validate.js';
 import { Router } from 'express';
 import { query } from '../db/pool.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -38,6 +39,16 @@ router.post('/', async (req, res) => {
     if (!fullName?.trim() || !phone?.trim() || !line1?.trim() || !pincode?.trim()) {
       return res.status(400).json({ success: false, error: 'Name, phone, address and pincode are required' });
     }
+    const bad = firstError([
+      ['name', fullName, 'Name'],
+      ['phone', phone, 'Phone'],
+      ['pincode', pincode, 'Pincode'],
+      ['text', line1, 'Address line 1', { max: 200 }],
+      ['text', line2, 'Address line 2', { min: 0, max: 200 }],
+      ['text', city, 'City', { min: 0, max: 80 }],
+      ['text', state, 'State', { min: 0, max: 80 }],
+    ]);
+    if (bad) return res.status(400).json({ success: false, error: bad });
     if (isDefault) {
       await query(`UPDATE addresses SET is_default = FALSE WHERE user_id = $1`, [req.user.id]);
     }

@@ -10,9 +10,11 @@ Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeS
 - Sign in / sign up with email, Google or Facebook; email verification on sign-up, welcome, new sign-in and password-changed emails
 - Order tracking and GST invoice download for signed-in customers (own orders only), cancellations, item-level returns with refunds, and a secure emailed link for guest orders
 - Reviews, store locator, exam-prep section, CMS pages (About, Contact, FAQ, Terms, Privacy)
-- Admin panel at `/admin` (separate sign-in, no storefront chrome): products, categories, orders, customers, reviews, coupons and banners, CMS pages, email outbox, staff accounts, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), ERP product sync
+- Admin panel at `/admin` with a dark sidebar of collapsible groups, a jump-to-page search, a dashboard of pending actions, low stock and recent orders, and a layout that works on phones (separate sign-in, no storefront chrome): products, categories, orders, customers, reviews, coupons and banners, CMS pages, email outbox, staff accounts, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), ERP product sync
 - Back-office operations in the admin: inventory and stock history, CSV import and bulk edits, payments and refunds, returns, sales reports, gift cards, store settings and delivery coverage, audit history, and optional authenticator-app two-factor sign-in
+- Branded HTML emails for every message (welcome with a real coupon, order receipt, shipping status tracker, returns, refunds, password reset, security alerts) and an admin **Promotional emails** section for seasonal sales (Diwali, Pongal, flash sales): templates, coupon attachment, preview, test send, send to opted-in customers, unsubscribe link and delivery stats
 - All store email (orders, shipping, returns, refunds, account) is sent through Rokesh Notify from `noreply@salembookhouse.com`, with SMTP as a fallback and an admin outbox with automatic retries
+- Live form validation on every form (names, email, Indian mobile numbers, pincodes, passwords, links, ISBNs) with matching server-side checks
 - Responsive layout (phones from 320px up), toast feedback, in-page dialogs (no browser pop-ups), 404 and error screens
 
 ## Quick start
@@ -46,6 +48,7 @@ All settings live in `backend/.env` (see `backend/.env.example`, which lists eve
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | "Continue with Google". The button hides when unset |
 | `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | "Continue with Facebook". The button hides when unset |
 | `OAUTH_REDIRECT_BASE` | Public site origin for social sign-in callbacks (e.g. `https://www.salembookhouse.com`); defaults to the first `CLIENT_URL` |
+| `WELCOME_COUPON` / `MAIL_DAILY_CAP` | Coupon code shown in the welcome email (default `WELCOME10`) and the most emails sent in 24 hours (default 1500; Rokesh Notify Pro allows 2000) |
 | `TRUST_PROXY_HOPS` | Proxy hops before the API (default 1). If rate limits seem shared between visitors, sign in as admin, open `/api/security/network` and set 2 when `ip` is not your own address |
 | `ROKESH_NOTIFY_API_URL`, `ROKESH_NOTIFY_API_KEY` | Outgoing email through Rokesh Notify (preferred). Needs `salembookhouse.com` verified in Notify (SPF + DKIM DNS records). Mail is sent from `MAIL_FROM`, default `Salem Book House <noreply@salembookhouse.com>` |
 | `SMTP_*` | Fallback email via SMTP, used only if Rokesh Notify is not set. With neither, mail stays in Admin → Email outbox (password-reset emails will not be delivered) |
@@ -151,6 +154,7 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 - Helmet CSP/HSTS headers on the API and security headers in `frontend/vercel.json`.
 - Admin uploads accept raster images only; admin-entered links (banners, tracking URLs) must be `http(s)` or same-site paths.
 - Mail that visitors can trigger (password reset, verification, guest order link) is capped per recipient and overall each hour; reset and verification tokens are single-use and stored hashed; unverified accounts lose their password if the same address later signs in with Google or Facebook.
+- Promotional email goes only to customers who ticked the unticked-by-default offers box (sign-up or account page); every promotion has an unsubscribe link that works without signing in.
 - Gift-card codes carry 64 bits of randomness; carrier API secrets are encrypted at rest.
 - Dependencies are kept at zero known advisories (`npm audit --omit=dev` in `backend` and `frontend`).
 - Report vulnerabilities privately to the store owner rather than opening a public issue.

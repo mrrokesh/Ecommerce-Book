@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, Navigate, Link, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { LoadingState } from '../components/States';
-import { firstAllowedPath, moduleForPath, NAV_SECTIONS } from './modules';
+import { firstAllowedPath, moduleForPath, NAV_GROUPS } from './modules';
+import AdminIcon from './AdminIcon';
 import './admin.css';
+import './admin-v2.css';
 
 const TITLES = {
   '/admin/inventory':'Inventory','/admin/payments':'Payments & refunds','/admin/returns':'Returns','/admin/reports':'Sales reports','/admin/gifts':'Gift cards','/admin/settings':'Store settings','/admin/audit':'Audit history','/admin/catalogue-tools':'Catalogue tools','/admin/security':'Account security',
@@ -20,12 +22,15 @@ const TITLES = {
   '/admin/shipping': 'Shipping partners',
   '/admin/reviews': 'Reviews',
   '/admin/staff': 'Staff & roles',
+  '/admin/campaigns': 'Promotional emails',
 };
 
 export default function AdminLayout() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const loc = useLocation();
   const [permissions, setPermissions] = useState<string[] | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [loc.pathname]);
   const role = user?.role;
   const inPortal = isAuthenticated && (role === 'admin' || role === 'staff');
 
@@ -59,52 +64,56 @@ export default function AdminLayout() {
     if (fallback && fallback !== loc.pathname) return <Navigate to={fallback} replace />;
   }
 
+  const canSee = (m: string) => (m === 'any' ? true : m === 'staff' ? isAdmin : allowed(m));
+  const isOn = (to: string) => (to === '/admin' ? loc.pathname === '/admin' : loc.pathname === to || loc.pathname.startsWith(to + '/'));
+  const groups = NAV_GROUPS.map((g) => ({ ...g, links: g.links.filter((l) => canSee(l.module)) })).filter((g) => (g.to ? canSee(g.module || 'dashboard') : g.links.length));
+  const initials = String(user.name || user.email || 'A').trim().slice(0, 1).toUpperCase();
+
   return (
     <div className="erp-shell">
-      <aside className="erp-side">
-        <div className="erp-brand">
+      {menuOpen ? <div className="erp-scrim" onClick={() => setMenuOpen(false)} /> : null}
+      <aside className={`erp-side${menuOpen ? ' open' : ''}`} aria-label="Admin navigation">
+        <Link to="/admin" className="erp-brand">
+          <img className="erp-brand-mark" src="/sbh-logo.jpg" alt="" width={36} height={36} />
           <div>
             <strong>Salem Book House</strong>
             <span>{isAdmin ? 'Store admin' : 'Staff portal'}</span>
           </div>
-        </div>
+        </Link>
         <nav className="erp-nav">
-          {NAV_SECTIONS.map((section) => {
-            const links = section.links.filter((l) => allowed(l.module));
-            if (!links.length) return null;
-            return (
-              <div key={section.title} style={{ display: 'contents' }}>
-                <div className="erp-group">{section.title}</div>
-                {links.map((l) => (
-                  <NavLink key={l.to} to={l.to} end={l.to === '/admin'}>
-                    {l.label}
-                  </NavLink>
-                ))}
-              </div>
-            );
-          })}
-          <NavLink to="/admin/security">Account security</NavLink>
-          {isAdmin ? (
-            <>
-              <div className="erp-group">Store</div>
-              <NavLink to="/admin/settings">Store settings</NavLink><NavLink to="/admin/audit">Audit history</NavLink><NavLink to="/admin/staff">Staff & roles</NavLink>
-              <Link to="/">View storefront</Link>
-            </>
-          ) : null}
-          <button type="button" onClick={logout}>
-            Sign out
-          </button>
+          {groups.map((g) =>
+            g.to ? (
+              <NavLink key={g.key} to={g.to} end className={`erp-link${isOn(g.to) ? ' active' : ''}`}>
+                <AdminIcon name={g.icon} /> <span>{g.title}</span>
+              </NavLink>
+            ) : (
+              <NavGroupBlock key={g.key} title={g.title} icon={g.icon} links={g.links} isOn={isOn} />
+            )
+          )}
         </nav>
+        <div className="erp-side-foot">
+          <Link to="/" className="erp-link"><AdminIcon name="store" /> <span>View storefront</span></Link>
+          <button type="button" className="erp-link" onClick={logout}><AdminIcon name="logout" /> <span>Sign out</span></button>
+        </div>
       </aside>
       <div className="erp-main">
         <header className="erp-top">
-          <div>
+          <button type="button" className="erp-menu-btn" aria-label="Open menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((o) => !o)}>
+            <AdminIcon name="menu" />
+          </button>
+          <PageSearch groups={groups} />
+          <div className="erp-top-right">
+            <Link to="/" className="erp-icon-btn" title="View storefront"><AdminIcon name="store" /></Link>
+            <Link to="/admin/security" className="erp-icon-btn" title="Account security"><AdminIcon name="shield" /></Link>
+            <span className="erp-user">{String(user.name || user.email).split(/[\s@]/)[0]}</span>
+            <span className="erp-avatar" title={user.email}>{initials}</span>
+          </div>
+        </header>
+        <div className="erp-body">
+          <div className="erp-pagehead">
             <p className="erp-crumb">{isAdmin ? 'Admin' : 'Staff'} / {title}</p>
             <h1>{title}</h1>
           </div>
-          <span className="muted">{user.email}</span>
-        </header>
-        <div className="erp-body">
           {pageAllowed ? (
             <Outlet />
           ) : (
@@ -117,6 +126,44 @@ export default function AdminLayout() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Collapsible sidebar group; opens by itself when one of its pages is showing. */
+function NavGroupBlock({ title, icon, links, isOn }: { title: string; icon: string; links: { to: string; label: string }[]; isOn: (to: string) => boolean }) {
+  const active = links.some((l) => isOn(l.to));
+  const [open, setOpen] = useState(active);
+  useEffect(() => { if (active) setOpen(true); }, [active]);
+  return (
+    <div className="erp-navgroup">
+      <button type="button" className={`erp-link erp-head${open ? ' open' : ''}${active ? ' active-head' : ''}`} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <AdminIcon name={icon} /> <span>{title}</span> <AdminIcon name="chevron" size={14} className="erp-chev" />
+      </button>
+      {open ? links.map((l) => (
+        <NavLink key={l.to} to={l.to} end className={`erp-link sub${isOn(l.to) && !links.some((o) => o.to !== l.to && o.to.length > l.to.length && isOn(o.to)) ? ' active' : ''}`}>{l.label}</NavLink>
+      )) : null}
+    </div>
+  );
+}
+
+/** Jump-to-page search in the top bar (type a page name, press Enter). */
+function PageSearch({ groups }: { groups: { title: string; to?: string; links: { to: string; label: string }[] }[] }) {
+  const [term, setTerm] = useState('');
+  const navigate = useNavigate();
+  const all = groups.flatMap((g) => (g.to ? [{ to: g.to, label: g.title }] : g.links.map((l) => ({ to: l.to, label: `${g.title} / ${l.label}` }))));
+  const hits = term.trim() ? all.filter((l) => l.label.toLowerCase().includes(term.trim().toLowerCase())).slice(0, 6) : [];
+  return (
+    <div className="erp-search" data-no-validate>
+      <AdminIcon name="search" size={16} />
+      <input type="text" placeholder="Jump to a page: orders, coupons, returns…" value={term} aria-label="Jump to a page"
+        onChange={(e) => setTerm(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter' && hits[0]) { navigate(hits[0].to); setTerm(''); } if (e.key === 'Escape') setTerm(''); }} />
+      {hits.length ? (
+        <ul className="erp-search-pop" role="listbox">
+          {hits.map((h) => <li key={h.to}><button type="button" onClick={() => { navigate(h.to); setTerm(''); }}>{h.label}</button></li>)}
+        </ul>
+      ) : null}
     </div>
   );
 }

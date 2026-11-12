@@ -65,6 +65,17 @@ export async function migrateOperations(query) {
       token_hash TEXT NOT NULL UNIQUE, expires_at TIMESTAMPTZ NOT NULL, used BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_opt_in BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_consent_at TIMESTAMPTZ;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS unsubscribe_token TEXT UNIQUE;
+    ALTER TABLE email_outbox ADD COLUMN IF NOT EXISTS campaign_id INT;
+    CREATE INDEX IF NOT EXISTS idx_outbox_campaign ON email_outbox(campaign_id);
+    CREATE TABLE IF NOT EXISTS campaigns (
+      id SERIAL PRIMARY KEY, name TEXT NOT NULL, subject TEXT NOT NULL, preheader TEXT, headline TEXT NOT NULL, body TEXT NOT NULL,
+      coupon_code TEXT, cta_label TEXT NOT NULL DEFAULT 'Shop the sale', cta_url TEXT NOT NULL DEFAULT '/shop/books',
+      status TEXT NOT NULL DEFAULT 'draft', recipients INT NOT NULL DEFAULT 0, created_by UUID,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), sent_at TIMESTAMPTZ
+    );
     CREATE INDEX IF NOT EXISTS idx_refund_order ON refund_requests(order_id);
     CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_log(created_at DESC);
   `);

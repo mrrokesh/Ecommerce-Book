@@ -6,7 +6,7 @@ import { LoadingState } from '../components/States';
 
 export default function AccountPage() {
   const { user, loading, isAuthenticated, logout, refresh } = useAuth();
-  const [profile, setProfile] = useState({ name: '', phone: '' });
+  const [profile, setProfile] = useState({ name: '', phone: '', marketingOptIn: false });
   const [addresses, setAddresses] = useState([]);
   const [addr, setAddr] = useState({
     fullName: '',
@@ -20,7 +20,7 @@ export default function AccountPage() {
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    if (user) setProfile({ name: user.name || '', phone: user.phone || '' });
+    if (user) setProfile({ name: user.name || '', phone: user.phone || '', marketingOptIn: !!user.marketingOptIn });
   }, [user]);
 
   useEffect(() => {
@@ -65,6 +65,10 @@ export default function AccountPage() {
           <label>
             Phone
             <input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
+          </label>
+          <label className="check-row">
+            <input type="checkbox" checked={profile.marketingOptIn} onChange={(e) => setProfile({ ...profile, marketingOptIn: e.target.checked })} />
+            <span>Email me offers, new arrivals and sale alerts</span>
           </label>
           <button className="btn btn-navy" type="submit">
             Save profile

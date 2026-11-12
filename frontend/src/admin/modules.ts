@@ -17,42 +17,65 @@ export const MODULES: { key: string; label: string; hint: string }[] = [
 
 export const MODULE_LABEL: Record<string, string> = Object.fromEntries(MODULES.map((m) => [m.key, m.label]));
 
-export const NAV_SECTIONS: { title: string; links: { to: string; label: string; module: string }[] }[] = [
-  { title: 'Operations', links: [
-    {to:'/admin/inventory',label:'Inventory',module:'products'},
-    {to:'/admin/catalogue-tools',label:'Import & bulk tools',module:'products_edit'},
-    {to:'/admin/payments',label:'Payments & refunds',module:'refunds'},
-    {to:'/admin/returns',label:'Returns',module:'orders'},
-    {to:'/admin/reports',label:'Sales reports',module:'dashboard'},
-    {to:'/admin/gifts',label:'Gift cards',module:'marketing'},
-  ]},
-  { title: 'Overview', links: [{ to: '/admin', label: 'Dashboard', module: 'dashboard' }] },
+export type NavLinkDef = { to: string; label: string; module: string };
+export type NavGroup = { key: string; title: string; icon: string; to?: string; module?: string; links: NavLinkDef[] };
+
+/** Sidebar structure: single links (Home) and collapsible groups. 'staff' modules are admin-only. */
+export const NAV_GROUPS: NavGroup[] = [
+  { key: 'home', title: 'Home', icon: 'home', to: '/admin', module: 'dashboard', links: [] },
   {
-    title: 'Catalogue',
+    key: 'catalogue', title: 'Catalogue', icon: 'catalogue',
     links: [
-      { to: '/admin/products', label: 'Product list', module: 'products' },
+      { to: '/admin/products', label: 'Products', module: 'products' },
       { to: '/admin/products/new', label: 'Add product', module: 'products' },
       { to: '/admin/categories', label: 'Categories', module: 'categories' },
+      { to: '/admin/inventory', label: 'Inventory', module: 'products' },
+      { to: '/admin/catalogue-tools', label: 'Import & bulk tools', module: 'products_edit' },
     ],
   },
   {
-    title: 'Sales',
+    key: 'sales', title: 'Sales', icon: 'sales',
     links: [
       { to: '/admin/orders', label: 'Orders', module: 'orders' },
+      { to: '/admin/returns', label: 'Returns', module: 'orders' },
       { to: '/admin/customers', label: 'Customers', module: 'customers' },
       { to: '/admin/reviews', label: 'Reviews', module: 'reviews' },
+      { to: '/admin/gifts', label: 'Gift cards', module: 'marketing' },
     ],
   },
-  { title: 'Fulfilment', links: [{ to: '/admin/shipping', label: 'Shipping partners', module: 'shipping' }] },
   {
-    title: 'Content',
+    key: 'payments', title: 'Payments', icon: 'money',
+    links: [
+      { to: '/admin/payments', label: 'Payments & refunds', module: 'refunds' },
+      { to: '/admin/reports', label: 'Sales reports', module: 'dashboard' },
+    ],
+  },
+  { key: 'fulfilment', title: 'Fulfilment', icon: 'truck', links: [{ to: '/admin/shipping', label: 'Shipping partners', module: 'shipping' }] },
+  {
+    key: 'marketing', title: 'Marketing', icon: 'megaphone',
     links: [
       { to: '/admin/marketing', label: 'Banners & coupons', module: 'marketing' },
-      { to: '/admin/pages', label: 'CMS pages', module: 'pages' },
+      { to: '/admin/campaigns', label: 'Promotional emails', module: 'marketing' },
       { to: '/admin/emails', label: 'Email outbox', module: 'emails' },
     ],
   },
+  { key: 'content', title: 'Content', icon: 'file', links: [{ to: '/admin/pages', label: 'CMS pages', module: 'pages' }] },
+  {
+    key: 'settings', title: 'Settings', icon: 'settings',
+    links: [
+      { to: '/admin/settings', label: 'Store settings', module: 'staff' },
+      { to: '/admin/staff', label: 'Staff & roles', module: 'staff' },
+      { to: '/admin/audit', label: 'Audit history', module: 'staff' },
+      { to: '/admin/security', label: 'Account security', module: 'any' },
+    ],
+  },
 ];
+
+/** Flat list kept for firstAllowedPath and page-title lookups. */
+export const NAV_SECTIONS: { title: string; links: NavLinkDef[] }[] = NAV_GROUPS.map((g) => ({
+  title: g.title,
+  links: g.to ? [{ to: g.to, label: g.title, module: g.module || 'dashboard' }] : g.links.filter((l) => l.module !== 'staff' && l.module !== 'any'),
+}));
 
 /** Module that guards an admin URL ('staff' means admin-only). */
 export function moduleForPath(pathname: string) {
@@ -67,6 +90,7 @@ export function moduleForPath(pathname: string) {
     reviews: 'reviews',
     shipping: 'shipping',
     marketing: 'marketing',
+    campaigns: 'marketing',
     pages: 'pages',
     emails: 'emails',
     staff: 'staff',

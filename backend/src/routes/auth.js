@@ -1,3 +1,4 @@
+import { firstError, checks } from '../utils/validate.js';
 import {decryptSecret,verifyTotp} from '../domain/totp.js';
 import crypto from 'crypto';
 import { Router } from 'express';
@@ -10,7 +11,7 @@ import {
   clearAuthCookie,
 } from '../middleware/auth.js';
 import { sendMail, mailConfigured, mailBudgetOk } from '../mailer.js';
-import { welcomeEmail, signInAlert, passwordChangedEmail, verifyEmailMail } from '../notify/accountMail.js';
+import { welcomeEmail, signInAlert, passwordChangedEmail, verifyEmailMail, passwordResetEmail } from '../notify/accountMail.js';
 import rateLimit from 'express-rate-limit';
 
 const router = Router();
@@ -24,17 +25,19 @@ function publicUser(u) {
     role: u.role,
     createdAt: u.created_at,
     emailVerified: Boolean(u.email_verified_at),
+    marketingOptIn: Boolean(u.marketing_opt_in),
   };
 }
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body || {};
+    const { name, email, password, phone, marketingOptIn } = req.body || {};
     if (!name?.trim() || !email?.trim() || !password) {
       return res.status(400).json({ success: false, error: 'Name, email and password are required' });
     }
-    if (String(password).length < 8) {
-      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+    {
+      const bad = firstError([['name', name, 'Name'], ['phone', phone, 'Phone', { skipEmpty: true }], ['password', password]]);
+      if (bad) return res.status(400).json({ success: false, error: bad });
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return res.status(400).json({ success: false, error: 'Enter a valid email address' });
@@ -52,10 +55,10 @@ router.post('/register', async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const { rows } = await query(
-      `INSERT INTO users (name, email, password_hash, phone)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, name, email, phone, role, created_at, email_verified_at`,
-      [name.trim(), emailNorm, passwordHash, phone || null]
+      `INSERT INTO users (name, email, password_hash, phone, marketing_opt_in, marketing_consent_at)
+       VALUES ($1, $2, $3, $4, $5, CASE WHEN $5 THEN NOW() END)
+       RETURNING id, name, email, phone, role, created_at, email_verified_at, marketing_opt_in`,
+      [name.trim(), emailNorm, passwordHash, phone || null, marketingOptIn === true]
     );
 
     const token = signToken(rows[0].id, 0);
@@ -111,6 +114,14 @@ router.post('/resend-verification', verifyLimiter, requireAuth, async (req, res)
   return res.json({ success: true, data: { sent: true } });
 });
 
+/** One-click unsubscribe from promotional email (no sign-in needed; the token comes from the email footer). */
+router.post('/unsubscribe', verifyLimiter, async (req, res) => {
+  const token = String(req.body?.token || '');
+  if (!/^[0-9a-f]{32}$/.test(token)) return res.status(400).json({ success: false, error: 'This unsubscribe link is not valid' });
+  await query('UPDATE users SET marketing_opt_in = FALSE WHERE unsubscribe_token = $1', [token]);
+  return res.json({ success: true, data: { unsubscribed: true } });
+});
+
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body || {};
@@ -119,7 +130,7 @@ router.post('/login', async (req, res) => {
     }
 
     const { rows } = await query(
-      `SELECT id, name, email, phone, role, created_at, password_hash, token_version, mfa_secret, email_verified_at
+      `SELECT id, name, email, phone, role, created_at, password_hash, token_version, mfa_secret, email_verified_at, marketing_opt_in
        FROM users WHERE lower(email) = lower($1)`,
       [email.trim()]
     );
@@ -149,11 +160,18 @@ router.get('/me', requireAuth, async (req, res) => {
 
 router.patch('/me', requireAuth, async (req, res) => {
   try {
-    const { name, phone } = req.body || {};
+    const { name, phone, marketingOptIn } = req.body || {};
+    {
+      const bad = firstError([['name', name, 'Name', { skipEmpty: true }], ['phone', phone, 'Phone', { skipEmpty: true }]]);
+      if (bad) return res.status(400).json({ success: false, error: bad });
+    }
     const { rows } = await query(
-      `UPDATE users SET name = COALESCE($1, name), phone = COALESCE($2, phone) WHERE id = $3
-       RETURNING id, name, email, phone, role, created_at, email_verified_at`,
-      [name?.trim() || null, phone?.trim() || null, req.user.id]
+      `UPDATE users SET name = COALESCE($1, name), phone = COALESCE($2, phone),
+         marketing_opt_in = COALESCE($4::boolean, marketing_opt_in),
+         marketing_consent_at = CASE WHEN $4::boolean IS TRUE AND NOT marketing_opt_in THEN NOW() ELSE marketing_consent_at END
+       WHERE id = $3
+       RETURNING id, name, email, phone, role, created_at, email_verified_at, marketing_opt_in`,
+      [name?.trim() || null, phone?.trim() || null, req.user.id, typeof marketingOptIn === 'boolean' ? marketingOptIn : null]
     );
     return res.json({ success: true, data: { user: publicUser(rows[0]) } });
   } catch (err) {
@@ -166,7 +184,7 @@ router.post('/forgot', async (req, res) => {
   try {
     const email = String(req.body?.email || '').trim().toLowerCase();
     if (!email) return res.status(400).json({ success: false, error: 'Email is required' });
-    const { rows } = await query(`SELECT id FROM users WHERE lower(email) = $1`, [email]);
+    const { rows } = await query(`SELECT id, name FROM users WHERE lower(email) = $1`, [email]);
     const payload = {
       message: mailConfigured()
         ? 'If that email is registered, a reset link has been sent.'
@@ -178,13 +196,7 @@ router.post('/forgot', async (req, res) => {
         `INSERT INTO password_resets (user_id, token, expires_at) VALUES ($1,$2, NOW() + INTERVAL '2 hours')`,
         [rows[0].id, hashToken(token)]
       );
-      const origin = (process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0];
-      const resetPath = `/reset-password?token=${token}`;
-      await sendMail({
-        to: email,
-        subject: 'Reset your Salem Book House password',
-        text: `Reset your password: ${origin}${resetPath}`,
-      });
+      await passwordResetEmail({ name: rows[0].name, email }, token);
       if (!mailConfigured()) {
         console.warn('Password reset requested but no email provider is configured; no email was sent (set ROKESH_NOTIFY_API_URL/KEY or SMTP_*).');
       }
@@ -199,8 +211,8 @@ router.post('/forgot', async (req, res) => {
 router.post('/reset', async (req, res) => {
   try {
     const { token, password } = req.body || {};
-    if (!token || !password || String(password).length < 8) {
-      return res.status(400).json({ success: false, error: 'Valid token and password (8+ characters) are required' });
+    if (!token || !password || checks.password(password)) {
+      return res.status(400).json({ success: false, error: 'A valid token and a password of 8+ characters with a letter and a number are required' });
     }
     const { rows } = await query(
       `SELECT * FROM password_resets WHERE token = $1 AND used = FALSE AND expires_at > NOW()`,

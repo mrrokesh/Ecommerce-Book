@@ -109,6 +109,9 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       const post=async(url,body,cookie)=>{const r=await fetch(base+url,{method:'POST',headers:{'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{})},body:JSON.stringify(body)});return {status:r.status,cookie:(r.headers.get('set-cookie')||'').split(';')[0],...await r.json()};};
       const outbox=async(to,subject)=>(await query('SELECT * FROM email_outbox WHERE to_email=$1 AND subject ILIKE $2 ORDER BY created_at DESC',[to,subject])).rows;
       const email='newbie@test.invalid';
+      assert.equal((await post('/auth/register',{name:'N1',email:'bad-name@test.invalid',password:'Newbie#2026ok'})).status,400,'digits in name rejected');
+      assert.equal((await post('/auth/register',{name:'Newbie',email:'bad-phone@test.invalid',phone:'123',password:'Newbie#2026ok'})).status,400,'bad phone rejected');
+      assert.equal((await post('/auth/register',{name:'Newbie',email:'weak@test.invalid',password:'alllettersonly'})).status,400,'weak password rejected');
       const reg=await post('/auth/register',{name:'Newbie',email,password:'Newbie#2026ok'});
       assert.equal(reg.status,201);assert.equal(reg.data.user.emailVerified,false);
       await new Promise(r=>setTimeout(r,300));
@@ -144,6 +147,27 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       const fresh=(await query('SELECT * FROM users WHERE id=$1',[ad.id])).rows[0];
       const dis=await fetch(base+'/security/disable',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+signToken(fresh.id,fresh.token_version)},body:JSON.stringify({password:pw,code:totp(setup.data.secret)})});assert.equal(dis.status,200);
       assert.equal((await login({})).status,200,'no code needed after disable');
+    });
+    await t.test('promotional campaigns reach only opted-in customers and honour unsubscribe',async()=>{
+      const post=async(url,body)=>{const r=await fetch(base+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:r.status,...await r.json()};};
+      const yes=await post('/auth/register',{name:'Promo Yes',email:'promo-yes@test.invalid',password:'Promo#2026ok',marketingOptIn:true});assert.equal(yes.status,201);assert.equal(yes.data.user.marketingOptIn,true);
+      const no=await post('/auth/register',{name:'Promo No',email:'promo-no@test.invalid',password:'Promo#2026ok'});assert.equal(no.data.user.marketingOptIn,false,'consent box is off unless ticked');
+      assert.equal((await request('/campaigns',{user})).status,403,'customers cannot open campaigns');
+      await query("INSERT INTO coupons(code,description,percent_off,min_order) VALUES('DIWALI20','Diwali',20,300) ON CONFLICT (code) DO NOTHING");
+      const draft={name:'Diwali',subject:'Diwali sale: 20% off festive reads',preheader:'This week only',headline:'Happy Diwali!',body:'Enjoy a festive discount.'+String.fromCharCode(10,10)+'Offer ends Sunday.',couponCode:'DIWALI20',ctaLabel:'Shop now',ctaUrl:'/shop/books'};
+      assert.equal((await request('/campaigns',{method:'POST',body:{...draft,ctaUrl:'javascript:alert(1)'}})).status,400,'unsafe button link rejected');
+      const c=await request('/campaigns',{method:'POST',body:draft});assert.equal(c.status,200,JSON.stringify(c));
+      const pv=await request('/campaigns/'+c.data.id+'/preview',{method:'POST',body:{}});assert.match(pv.data.html,/DIWALI20/);assert.match(pv.data.html,/Unsubscribe/);
+      const list=await request('/campaigns');assert.equal(list.data.subscribers,1);
+      assert.equal((await request('/campaigns/'+c.data.id+'/send',{method:'POST',body:{}})).status,400,'needs explicit confirmation');
+      const sent=await request('/campaigns/'+c.data.id+'/send',{method:'POST',body:{confirm:true}});assert.equal(sent.data.queued,1);
+      const rows=(await query("SELECT to_email,html_body FROM email_outbox WHERE campaign_id=$1",[c.data.id])).rows;
+      assert.deepEqual(rows.map(r=>r.to_email),['promo-yes@test.invalid']);
+      const tok=rows[0].html_body.match(/unsubscribe\?token=([0-9a-f]{32})/)[1];
+      assert.equal((await request('/campaigns/'+c.data.id+'/send',{method:'POST',body:{confirm:true}})).status,400,'a campaign cannot be sent twice');
+      assert.equal((await post('/auth/unsubscribe',{token:tok})).status,200);
+      assert.equal((await query("SELECT marketing_opt_in FROM users WHERE email='promo-yes@test.invalid'")).rows[0].marketing_opt_in,false);
+      assert.equal((await request('/campaigns')).data.subscribers,0);
     });
   }finally{console.log('Integration assertions complete');}
 });

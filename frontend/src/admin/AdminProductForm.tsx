@@ -135,11 +135,11 @@ export default function AdminProductForm() {
         <div className="form-row">
           <label>
             SKU / ISBN-13 (barcode)
-            <input value={form.isbn13} onChange={(e) => set('isbn13', e.target.value)} />
+            <input data-validate="isbn" value={form.isbn13} onChange={(e) => set('isbn13', e.target.value)} />
           </label>
           <label>
             ISBN-10
-            <input value={form.isbn10} onChange={(e) => set('isbn10', e.target.value)} />
+            <input data-validate="isbn" value={form.isbn10} onChange={(e) => set('isbn10', e.target.value)} />
           </label>
         </div>
         <div className="form-row">
@@ -195,7 +195,7 @@ export default function AdminProductForm() {
         {form.imageUrl ? <img className="erp-thumb" style={{ width: 120, height: 160 }} src={bookImage({ imageUrl: form.imageUrl })} alt="" /> : null}
         <label>
           Cover image URL
-          <input value={form.imageUrl} onChange={(e) => set('imageUrl', e.target.value)} />
+          <input data-validate="link" value={form.imageUrl} onChange={(e) => set('imageUrl', e.target.value)} />
         </label>
         <label>
           Upload image
@@ -208,11 +208,11 @@ export default function AdminProductForm() {
           </label>
           <label>
             Sale price
-            <input type="number" min="0" value={form.salePrice} onChange={(e) => set('salePrice', e.target.value)} />
+            <input type="number" min="0" max={form.mrp || undefined} step="any" value={form.salePrice} onChange={(e) => set('salePrice', e.target.value)} />
           </label>
           <label>
             Stock
-            <input type="number" min="0" value={form.stock} onChange={(e) => set('stock', e.target.value)} />
+            <input type="number" min="0" step="1" value={form.stock} onChange={(e) => set('stock', e.target.value)} />
           </label>
         </div>
         <div className="erp-checks">

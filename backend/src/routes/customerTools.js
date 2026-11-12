@@ -1,3 +1,4 @@
+import { renderEmail, siteBase } from '../notify/emailTemplate.js';
 import crypto from 'crypto';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
@@ -15,7 +16,7 @@ router.post('/guest-link',limit,async(req,res)=>{
   const o=(await query('SELECT id FROM orders WHERE order_number=$1 AND lower(guest_email)=lower($2) AND user_id IS NULL',[String(req.body.orderNumber||''),String(req.body.email||'')])).rows[0];
   if(o&&await mailBudgetOk(req.body.email,'Your secure order access link')){const token=crypto.randomBytes(32).toString('hex');await query('UPDATE orders SET guest_token_hash=$2 WHERE id=$1',[o.id,hash(token)]);
     const base=String(process.env.CLIENT_URL||'http://localhost:5173').split(',')[0];
-    await sendMail({to:req.body.email,subject:'Your secure order access link',text:`Open ${base}/guest-order#${token} to view your order. This link gives access to your order; keep it private.`});}
+    {const {html,text}=renderEmail({badge:'Secure link',title:'View your order',preheader:'Your private link to see this order.',greeting:'Hi,',paragraphs:['Use the button below to view your order, track it and request a cancellation or return. This link is private to you, so please do not share it.'],cta:{label:'View my order',url:`${base}/guest-order#${token}`}});await sendMail({to:req.body.email,subject:'Your secure order access link',text,html});}}
   res.json({success:true,data:{message:'If those details match a guest order, an access link has been emailed.'}});
 });
 async function guest(req,res,next){
@@ -58,6 +59,6 @@ router.post('/reorder/:id',requireAuth,async(req,res)=>{
 });
 export async function notifyStockAlerts(){
   const {rows}=await query('SELECT a.id,u.email,b.title,b.slug FROM stock_alerts a JOIN books b ON b.id=a.book_id JOIN users u ON u.id=a.user_id WHERE a.notified_at IS NULL AND b.stock>0 AND b.is_active=TRUE LIMIT 50');
-  for(const a of rows){await sendMail({to:a.email,subject:a.title+' is back in stock',text:`${a.title} is available again: ${String(process.env.CLIENT_URL||'').split(',')[0]}/books/${a.slug}`});await query('UPDATE stock_alerts SET notified_at=NOW() WHERE id=$1',[a.id]);}
+  for(const a of rows){{const {html,text}=renderEmail({badge:'Back in stock',title:`${a.title} is back in stock`,preheader:'The book you wanted is available again.',paragraphs:['Good news! A book you asked us to watch is available again. Copies can sell out quickly, so grab yours soon.'],cta:{label:'Buy now',url:`${siteBase()}/books/${a.slug}`}});await sendMail({to:a.email,subject:a.title+' is back in stock',text,html});}await query('UPDATE stock_alerts SET notified_at=NOW() WHERE id=$1',[a.id]);}
 }
 export default router;

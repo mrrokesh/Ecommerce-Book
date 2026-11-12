@@ -516,3 +516,35 @@
 }
 
 .ops-stack{display:grid;gap:20px}.ops-panel{padding:20px}.ops-form{display:flex;flex-wrap:wrap;align-items:end;gap:14px;margin:20px 0}.ops-form label{display:grid;gap:6px;flex:1;min-width:160px}.ops-form input,.ops-form select,.ops-form textarea{padding:10px;border:1px solid #ccc;border-radius:6px;max-width:100%}.ops-table{overflow:auto;max-width:100%}.ops-table td{max-width:340px;overflow-wrap:anywhere;white-space:normal}.ops-panel h2{font-size:20px;margin-top:24px}.ops-panel button{margin:3px}.ops-panel input[type=checkbox]{width:auto}.ops-panel .erp-toolbar{flex-wrap:wrap}@media(max-width:600px){.ops-panel{padding:12px}.ops-form{display:grid}.ops-form label{min-width:0}}
+
+/* Phones and tablets: slide-in menu, scrollable tables with no character-by-character wrapping */
+.erp-menu-btn{display:none;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:1.2rem;line-height:1;padding:.4rem .65rem;cursor:pointer;margin-right:.75rem}
+.erp-scrim{display:none}
+.erp-top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.erp-top .muted{margin-left:auto;font-size:.8rem;max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ops-table{-webkit-overflow-scrolling:touch}
+.ops-table table{min-width:max-content}
+.ops-table td,.ops-table th{white-space:nowrap}
+.ops-table td{max-width:260px;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;word-break:normal}
+.ops-table td.wide{white-space:normal;min-width:220px}
+@media (max-width:980px){
+  .erp-menu-btn{display:inline-flex}
+  .erp-shell{display:block}
+  .erp-side{position:fixed;inset:0 auto 0 0;width:min(280px,85vw);height:100vh;z-index:60;flex-direction:column;overflow-y:auto;transform:translateX(-102%);transition:transform .2s ease;box-shadow:0 0 30px rgba(0,0,0,.35)}
+  .erp-side.open{transform:none}
+  .erp-nav{flex-direction:column}
+  .erp-scrim{display:block;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:55}
+  .erp-body{padding:.75rem}
+}
+@media (prefers-reduced-motion:reduce){.erp-side{transition:none}}
+@media (max-width:980px){
+  .erp-card{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  .erp-card .erp-table{min-width:max-content}
+  .erp-card .erp-table th,.erp-card .erp-table td{white-space:nowrap}
+  .erp-card .erp-table td.wide{white-space:normal;min-width:220px}
+  .erp-card .erp-table td{max-width:280px;overflow:hidden;text-overflow:ellipsis}
+  .erp-card .erp-table td:last-child{overflow:visible}
+}
+
+.erp-shell .fg-error{color:#b42318}
+.erp-shell .fg-invalid{border-color:#d92d20!important}

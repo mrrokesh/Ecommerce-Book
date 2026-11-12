@@ -1,3 +1,5 @@
+import { orderConfirmationEmail } from '../notify/accountMail.js';
+import { firstError } from '../utils/validate.js';
 import { transitionOrder } from '../domain/lifecycle.js';
 import { canReturn } from '../domain/orderPolicy.js';
 import { deliveryQuote } from '../domain/settings.js';
@@ -167,6 +169,22 @@ export async function placeOrder(req, res) {
     if (!req.user && !guestEmail) {
       await client.query('ROLLBACK');
       return res.status(400).json({ success: false, error: 'Email is required for guest checkout' });
+    }
+    {
+      const bad = firstError([
+        ['email', guestEmail, 'Email', { skipEmpty: true }],
+        ...(addressId ? [] : [
+          ['name', shippingName, 'Name'],
+          ['phone', shippingPhone, 'Phone'],
+          ['pincode', shipping.pincode, 'Pincode'],
+          ['text', shipping.line1, 'Address line 1', { max: 200 }],
+          ['text', shipping.city, 'City', { max: 80 }],
+        ]),
+      ]);
+      if (bad) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, error: bad });
+      }
     }
 
     if (addressId) {
@@ -500,17 +518,7 @@ export async function placeOrder(req, res) {
     if(attempt) await client.query("UPDATE checkout_attempts SET order_id=$2,payment_id=$3,status='completed',error=NULL WHERE id=$1",[attempt.id,order.id,body.razorpayPaymentId]);
     await client.query('COMMIT');
 
-    const notifyEmail = req.user?.email || guestEmail;
-    if (notifyEmail) {
-      const giftLine = giftCodes.length
-        ? `\nGift card codes: ${giftCodes.map((g) => g.code).join(', ')}`
-        : '';
-      sendMail({
-        to: notifyEmail,
-        subject: `Salem Book House order ${onum}`,
-        text: `Thank you. Order ${onum} total ₹${total}. Invoice ${invNo}. View your order at ${String(process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0]}/${req.user ? 'account/orders' : 'guest-order'}.${giftLine}`,
-      }).catch(() => {});
-    }
+    orderConfirmationEmail(order.id, { giftCodes });
 
     // Fire-and-forget auto shipment when a live courier is configured.
     import('../shipping/service.js')

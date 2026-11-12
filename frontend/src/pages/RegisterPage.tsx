@@ -6,12 +6,13 @@ import SocialSignIn from '../components/SocialSignIn';
 export default function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', marketingOptIn: false });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
   function onChange(e) {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setForm((f) => ({ ...f, [e.target.name]: value }));
   }
 
   async function onSubmit(e) {
@@ -52,12 +53,17 @@ export default function RegisterPage() {
             type="password"
             name="password"
             required
-            minLength={8}
+            data-validate="new-password"
+            autoComplete="new-password"
             value={form.password}
             onChange={onChange}
           />
         </label>
         {error ? <p className="form-error">{error}</p> : null}
+        <label className="check-row">
+          <input type="checkbox" name="marketingOptIn" checked={form.marketingOptIn} onChange={onChange} />
+          <span>Email me offers, new arrivals and sale alerts (optional; you can unsubscribe any time)</span>
+        </label>
         <button type="submit" className="btn btn-navy block" disabled={busy}>
           {busy ? 'Creating…' : 'Register'}
         </button>

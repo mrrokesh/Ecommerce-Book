@@ -9,7 +9,7 @@ export type Book = {
   sku?: string; erpId?: string; productType?: string; averageRating?: number; reviewCount?: number;
   categories?: (string | {id?: number;name?: string;slug?: string})[];
 };
-export type User = { id: string; name: string; email: string; phone?: string; role: 'customer' | 'staff' | 'admin'; createdAt?: string; emailVerified?: boolean };
+export type User = { id: string; name: string; email: string; phone?: string; role: 'customer' | 'staff' | 'admin'; createdAt?: string; emailVerified?: boolean; marketingOptIn?: boolean };
 export type CategoryNode = {
   id?: number;
   slug: string;

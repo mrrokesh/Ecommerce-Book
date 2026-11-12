@@ -129,7 +129,7 @@ export default function AdminCategories() {
             <input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
           </td>
           <td>
-            <input value={edit.slug} onChange={(e) => setEdit({ ...edit, slug: e.target.value })} />
+            <input data-validate="slug" value={edit.slug} onChange={(e) => setEdit({ ...edit, slug: e.target.value })} />
           </td>
           <td>
             <select value={edit.parentId} onChange={(e) => setEdit({ ...edit, parentId: e.target.value })}>

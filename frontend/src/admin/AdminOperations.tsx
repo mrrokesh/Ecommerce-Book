@@ -5,10 +5,12 @@ import api from '../api/client';
 type Row = Record<string, unknown>;
 type Result = { rows?: Row[]; refunds?: Row[]; attempts?: Row[]; transactions?: Row[]; trend?: Row[]; bestsellers?: Row[]; stats?: Row; orders?: Row[]; notes?: Row[] } & Record<string, unknown>;
 const value = (v: unknown) => v == null ? '—' : typeof v === 'object' ? JSON.stringify(v) : String(v);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const cell = (v: unknown) => { const s = value(v); return UUID.test(s) ? s.slice(0, 8) + '…' : s; };
 function Table({ rows = [], actions }: { rows?: Row[]; actions?: (row: Row) => React.ReactNode }) {
   if (!rows.length) return <p className="muted">No records found.</p>;
   const keys = Object.keys(rows[0]).filter(k => !['payload', 'quote', 'razorpay_payment_id'].includes(k));
-  return <div className="ops-table"><table className="erp-table"><thead><tr>{keys.map(k => <th key={k}>{k.replaceAll('_', ' ')}</th>)}{actions && <th>Actions</th>}</tr></thead><tbody>{rows.map((r, i) => <tr key={String(r.id ?? i)}>{keys.map(k => <td key={k}>{value(r[k])}</td>)}{actions && <td>{actions(r)}</td>}</tr>)}</tbody></table></div>;
+  return <div className="ops-table"><table className="erp-table"><thead><tr>{keys.map(k => <th key={k}>{k.replaceAll('_', ' ')}</th>)}{actions && <th>Actions</th>}</tr></thead><tbody>{rows.map((r, i) => <tr key={String(r.id ?? i)}>{keys.map(k => <td key={k} title={value(r[k])} className={['reason','items','details','error','body','subject'].includes(k) ? 'wide' : undefined}>{cell(r[k])}</td>)}{actions && <td>{actions(r)}</td>}</tr>)}</tbody></table></div>;
 }
 export default function AdminOperations({ section }: { section: string }) {
   const [data, setData] = useState<Result>({});

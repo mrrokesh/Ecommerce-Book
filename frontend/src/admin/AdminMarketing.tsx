@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { confirmAction } from '../components/Dialogs';
 import api from '../api/client';
 import { formatPrice } from '../utils/format';
@@ -7,6 +8,8 @@ const emptyBanner = { title: '', subtitle: '', link: '/shop', imageUrl: '' };
 const emptyCoupon = { code: '', description: '', percentOff: '10', amountOff: '', minOrder: '199', expiresAt: '', usageLimit: '', perCustomerLimit: '1' };
 
 export default function AdminMarketing() {
+  const navigate = useNavigate();
+  const [announce, setAnnounce] = useState(false);
   const [banners, setBanners] = useState([]);
   const [coupons, setCoupons] = useState([]);
   const [banner, setBanner] = useState(emptyBanner);
@@ -77,11 +80,11 @@ export default function AdminMarketing() {
           </label>
           <label>
             Link
-            <input value={banner.link} onChange={(e) => setBanner({ ...banner, link: e.target.value })} />
+            <input data-validate="link" value={banner.link} onChange={(e) => setBanner({ ...banner, link: e.target.value })} />
           </label>
           <label>
             Image URL
-            <input value={banner.imageUrl} onChange={(e) => setBanner({ ...banner, imageUrl: e.target.value })} />
+            <input data-validate="link" value={banner.imageUrl} onChange={(e) => setBanner({ ...banner, imageUrl: e.target.value })} />
           </label>
           <div className="erp-actions">
             <button className="erp-btn primary" type="submit" disabled={busy}>
@@ -182,14 +185,33 @@ export default function AdminMarketing() {
                 setEditCouponId(null);
               } else {
                 await api.post('/admin/coupons', payload);
+                if (announce) {
+                  await api.post('/campaigns', {
+                    name: `Announce ${payload.code}`,
+                    subject: `${payload.code}: a special offer from Salem Book House`,
+                    headline: 'A special offer just for you',
+                    body: `We have a new offer for our customers. Use the code below at checkout and enjoy the savings.\n\nHappy reading!`,
+                    couponCode: String(payload.code).toUpperCase(),
+                    ctaLabel: 'Shop now',
+                    ctaUrl: '/shop/books',
+                  });
+                  setAnnounce(false);
+                  navigate('/admin/campaigns');
+                }
               }
               setCoupon(emptyCoupon);
             }, editCouponId ? 'Coupon updated' : 'Coupon saved');
           }}
         >
+          {!editCouponId ? (
+            <label className="check-row">
+              <input type="checkbox" checked={announce} onChange={(e) => setAnnounce(e.target.checked)} />
+              <span>Also prepare an email announcing this coupon (you review it, then send to subscribers)</span>
+            </label>
+          ) : null}
           <label>
             Code
-            <input required value={coupon.code} onChange={(e) => setCoupon({ ...coupon, code: e.target.value })} />
+            <input required data-validate="code" value={coupon.code} onChange={(e) => setCoupon({ ...coupon, code: e.target.value })} />
           </label>
           <label>
             Description

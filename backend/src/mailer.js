@@ -46,8 +46,13 @@ export async function sendMail({to,subject,text,html}){
   const {rows}=await query('INSERT INTO email_outbox(to_email,subject,body,html_body) VALUES($1,$2,$3,$4) RETURNING id',[to,subject,text||'',html||null]);
   return {...await deliverEmail(rows[0].id),id:rows[0].id};
 }
+let retrying=false;
 export async function retryEmails(){
-  if(!mailConfigured())return;
-  const {rows}=await query('SELECT id FROM email_outbox WHERE sent=FALSE AND attempts<5 AND next_attempt_at<=NOW() ORDER BY created_at LIMIT 20');
-  for(const m of rows)await deliverEmail(m.id);
+  if(!mailConfigured()||retrying)return;
+  retrying=true;
+  try{
+    // up to 150 a minute keeps campaigns moving while staying under the provider's rate limit
+    const {rows}=await query('SELECT id FROM email_outbox WHERE sent=FALSE AND attempts<5 AND next_attempt_at<=NOW() ORDER BY created_at LIMIT 150');
+    for(const m of rows)await deliverEmail(m.id);
+  }finally{retrying=false;}
 }

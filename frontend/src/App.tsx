@@ -28,6 +28,9 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import DialogHost from './components/Dialogs';
+import AdminCampaigns from './admin/AdminCampaigns';
+import UnsubscribePage from './pages/UnsubscribePage';
+import FormGuard from './components/FormGuard';
 import NotFoundPage from './pages/NotFoundPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import AdminLayout from './admin/AdminLayout';
@@ -53,6 +56,7 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <DialogHost />
+          <FormGuard />
           <Routes>
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminLayout />}>
@@ -69,6 +73,7 @@ export default function App() {
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="shipping" element={<AdminShipping />} />
               <Route path="marketing" element={<AdminMarketing />} />
+              <Route path="campaigns" element={<AdminCampaigns />} />
               <Route path="pages" element={<AdminCms />} />
               <Route path="emails" element={<AdminOperations section="emails" />} />
             </Route>
@@ -101,6 +106,7 @@ export default function App() {
               <Route path="forgot-password" element={<ForgotPasswordPage />} />
               <Route path="reset-password" element={<ResetPasswordPage />} />
               <Route path="verify-email" element={<VerifyEmailPage />} />
+              <Route path="unsubscribe" element={<UnsubscribePage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>

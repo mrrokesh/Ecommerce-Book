@@ -1,3 +1,4 @@
+import { checks } from '../utils/validate.js';
 import { safeLink } from '../utils/safeLink.js';
 import { transitionOrder } from '../domain/lifecycle.js';
 import { Router } from 'express';
@@ -104,6 +105,18 @@ router.get('/summary', async (_req, res) => {
       `SELECT id, order_number, status, total, payment_method, created_at
        FROM orders ORDER BY created_at DESC LIMIT 12`
     );
+    // Extra numbers for the dashboard's pending-actions panel; each one is best-effort so an older database still loads.
+    const safe = async (sql, fallback) => { try { return (await query(sql)).rows; } catch { return fallback; } };
+    const [toConfirm, toShip, inTransit, returnsOpen, refundsOpen, subs, today, low] = await Promise.all([
+      safe(`SELECT COUNT(*)::int AS c FROM orders WHERE status = 'placed'`, [{ c: 0 }]),
+      safe(`SELECT COUNT(*)::int AS c FROM orders WHERE status IN ('confirmed','packed')`, [{ c: 0 }]),
+      safe(`SELECT COUNT(*)::int AS c FROM orders WHERE status IN ('shipped','out_for_delivery')`, [{ c: 0 }]),
+      safe(`SELECT COUNT(*)::int AS c FROM return_cases WHERE status IN ('requested','approved')`, [{ c: 0 }]),
+      safe(`SELECT COUNT(*)::int AS c FROM refund_requests WHERE status IN ('pending','processing')`, [{ c: 0 }]),
+      safe(`SELECT COUNT(*)::int AS c FROM users WHERE role = 'customer' AND marketing_opt_in = TRUE`, [{ c: 0 }]),
+      safe(`SELECT COUNT(*)::int AS c, COALESCE(SUM(total),0)::numeric AS s FROM orders WHERE created_at >= date_trunc('day', NOW()) AND status NOT IN ('cancelled')`, [{ c: 0, s: 0 }]),
+      safe(`SELECT id, title, stock FROM books WHERE is_active = TRUE AND stock <= 5 ORDER BY stock ASC, title LIMIT 6`, []),
+    ]);
     return res.json({
       success: true,
       data: {
@@ -114,7 +127,16 @@ router.get('/summary', async (_req, res) => {
           revenue: Number(revenue.rows[0].s),
           pendingOrders: pending.rows[0].c,
           lowStock: lowStock.rows[0].c,
+          toConfirm: toConfirm[0].c,
+          toShip: toShip[0].c,
+          inTransit: inTransit[0].c,
+          returnsOpen: returnsOpen[0].c,
+          refundsOpen: refundsOpen[0].c,
+          subscribers: subs[0].c,
+          todayOrders: today[0].c,
+          todayRevenue: Number(today[0].s),
         },
+        lowStockItems: low,
         recentOrders: recent.rows.map((o) => ({
           id: o.id,
           orderNumber: o.order_number,
@@ -1000,8 +1022,8 @@ router.post('/staff', async (req, res) => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ success: false, error: 'Enter a valid email address' });
     }
-    if (password.length < 8) {
-      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+    if (checks.password(password)) {
+      return res.status(400).json({ success: false, error: checks.password(password) });
     }
     const existing = await query(`SELECT role FROM users WHERE lower(email) = $1`, [email]);
     if (existing.rows[0]) {
