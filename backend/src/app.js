@@ -55,6 +55,7 @@ app.use(
         defaultSrc: ["'self'"],
         // Razorpay checkout.js pulls scripts, frames and beacons from several *.razorpay.com hosts.
         scriptSrc: ["'self'", 'https://*.razorpay.com'],
+        workerSrc: ["'self'", 'blob:'],
         scriptSrcElem: ["'self'", 'https://*.razorpay.com'],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://*.razorpay.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],

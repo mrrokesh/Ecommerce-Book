@@ -19,24 +19,28 @@ export function unlockAudio() {
   if (c && c.state === 'suspended') void c.resume();
 }
 
-/** Two rising notes, like a shop doorbell. Safe to call anywhere: it does nothing if sound is blocked. */
+/** Soft two-note chime (880 Hz then 1320 Hz), the same sound the CRM uses. Does nothing if the browser blocks audio. */
 export function playChime() {
-  const c = audio();
-  if (!c) return;
-  if (c.state === 'suspended') void c.resume();
-  const now = c.currentTime;
-  [[659.25, 0], [987.77, 0.16], [1318.51, 0.34]].forEach(([freq, offset]) => {
-    const osc = c.createOscillator();
-    const gain = c.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.0001, now + offset);
-    gain.gain.exponentialRampToValueAtTime(0.22, now + offset + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.55);
-    osc.connect(gain).connect(c.destination);
-    osc.start(now + offset);
-    osc.stop(now + offset + 0.6);
-  });
+  try {
+    const c = audio();
+    if (!c) return;
+    if (c.state === 'suspended') void c.resume();
+    const t0 = c.currentTime;
+    [880, 1320].forEach((freq, i) => {
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, t0 + i * 0.14);
+      gain.gain.exponentialRampToValueAtTime(0.1, t0 + i * 0.14 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.14 + 0.5);
+      osc.connect(gain).connect(c.destination);
+      osc.start(t0 + i * 0.14);
+      osc.stop(t0 + i * 0.14 + 0.55);
+    });
+  } catch {
+    /* autoplay policy or no audio device */
+  }
 }
 
 export function notificationsSupported() {
@@ -54,7 +58,8 @@ export async function askNotificationPermission(): Promise<NotificationPermissio
 export function showDesktopNotification(title: string, body: string, tag: string) {
   if (!notificationsSupported() || Notification.permission !== 'granted') return;
   try {
-    const n = new Notification(title, { body, tag, icon: '/sbh-logo.jpg' });
+    // silent: false lets the operating system play its own notification sound too
+    const n = new Notification(title, { body, tag, icon: '/sbh-logo.jpg', silent: false });
     n.onclick = () => { window.focus(); n.close(); };
   } catch {
     /* some browsers only allow notifications from a service worker; the toast and chime still work */
