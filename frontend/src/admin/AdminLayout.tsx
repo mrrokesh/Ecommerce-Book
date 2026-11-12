@@ -30,6 +30,8 @@ export default function AdminLayout() {
   const loc = useLocation();
   const [permissions, setPermissions] = useState<string[] | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [badges, setBadges] = useState<Record<string, number>>({});
+  const [usage, setUsage] = useState<{ used: number; cap: number } | null>(null);
   useEffect(() => setMenuOpen(false), [loc.pathname]);
   const role = user?.role;
   const inPortal = isAuthenticated && (role === 'admin' || role === 'staff');
@@ -45,6 +47,26 @@ export default function AdminLayout() {
       alive = false;
     };
   }, [inPortal, user?.id]);
+
+  // Counts shown next to Orders, Returns and Payments, plus today's email usage; refreshed when you move between pages.
+  useEffect(() => {
+    if (!inPortal || !permissions) return;
+    let alive = true;
+    api.get('/admin/summary').then(({ data }) => {
+      if (!alive) return;
+      const s = data.stats || {};
+      setBadges({
+        '/admin/orders': Number(s.toConfirm || 0) + Number(s.toShip || 0),
+        '/admin/returns': Number(s.returnsOpen || 0),
+        '/admin/payments': Number(s.refundsOpen || 0),
+        '/admin/inventory': Number(s.lowStock || 0),
+      });
+    }).catch(() => undefined);
+    if (role === 'admin' || permissions.includes('marketing')) {
+      api.get('/campaigns').then(({ data }) => alive && setUsage({ used: Number(data.sentToday || 0), cap: Number(data.dailyCap || 0) })).catch(() => undefined);
+    }
+    return () => { alive = false; };
+  }, [inPortal, permissions, loc.pathname, role]);
 
   const title = loc.pathname.startsWith('/admin/products/') && loc.pathname !== '/admin/products/new'
     ? 'Edit product'
@@ -81,16 +103,24 @@ export default function AdminLayout() {
           </div>
         </Link>
         <nav className="erp-nav">
+          <div className="erp-nav-label">Menu</div>
           {groups.map((g) =>
             g.to ? (
               <NavLink key={g.key} to={g.to} end className={`erp-link${isOn(g.to) ? ' active' : ''}`}>
                 <AdminIcon name={g.icon} /> <span>{g.title}</span>
               </NavLink>
             ) : (
-              <NavGroupBlock key={g.key} title={g.title} icon={g.icon} links={g.links} isOn={isOn} />
+              <NavGroupBlock key={g.key} title={g.title} icon={g.icon} links={g.links} isOn={isOn} badges={badges} />
             )
           )}
         </nav>
+        {usage && usage.cap > 0 ? (
+          <div className="erp-side-card" title="Emails sent in the last 24 hours against the daily limit">
+            <span>Emails today</span>
+            <strong>{usage.used.toLocaleString('en-IN')} <small>of {usage.cap.toLocaleString('en-IN')}</small></strong>
+            <div className="erp-meter"><i style={{ width: `${Math.min(100, Math.round((usage.used / usage.cap) * 100))}%` }} /></div>
+          </div>
+        ) : null}
         <div className="erp-side-foot">
           <Link to="/" className="erp-link"><AdminIcon name="store" /> <span>View storefront</span></Link>
           <button type="button" className="erp-link" onClick={logout}><AdminIcon name="logout" /> <span>Sign out</span></button>
@@ -131,18 +161,28 @@ export default function AdminLayout() {
 }
 
 /** Collapsible sidebar group; opens by itself when one of its pages is showing. */
-function NavGroupBlock({ title, icon, links, isOn }: { title: string; icon: string; links: { to: string; label: string }[]; isOn: (to: string) => boolean }) {
+function NavGroupBlock({ title, icon, links, isOn, badges }: { title: string; icon: string; links: { to: string; label: string }[]; isOn: (to: string) => boolean; badges: Record<string, number> }) {
   const active = links.some((l) => isOn(l.to));
   const [open, setOpen] = useState(active);
   useEffect(() => { if (active) setOpen(true); }, [active]);
+  const total = links.reduce((n, l) => n + (badges[l.to] || 0), 0);
   return (
     <div className="erp-navgroup">
       <button type="button" className={`erp-link erp-head${open ? ' open' : ''}${active ? ' active-head' : ''}`} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        <AdminIcon name={icon} /> <span>{title}</span> <AdminIcon name="chevron" size={14} className="erp-chev" />
+        <AdminIcon name={icon} /> <span>{title}</span>
+        {!open && total > 0 ? <em className="erp-badge">{total > 99 ? '99+' : total}</em> : null}
+        <AdminIcon name="chevron" size={14} className="erp-chev" />
       </button>
-      {open ? links.map((l) => (
-        <NavLink key={l.to} to={l.to} end className={`erp-link sub${isOn(l.to) && !links.some((o) => o.to !== l.to && o.to.length > l.to.length && isOn(o.to)) ? ' active' : ''}`}>{l.label}</NavLink>
-      )) : null}
+      {open ? links.map((l) => {
+        const best = isOn(l.to) && !links.some((o) => o.to !== l.to && o.to.length > l.to.length && isOn(o.to));
+        const n = badges[l.to] || 0;
+        return (
+          <NavLink key={l.to} to={l.to} end className={`erp-link sub${best ? ' active' : ''}`}>
+            <span>{l.label}</span>
+            {n > 0 ? <em className="erp-badge">{n > 99 ? '99+' : n}</em> : null}
+          </NavLink>
+        );
+      }) : null}
     </div>
   );
 }

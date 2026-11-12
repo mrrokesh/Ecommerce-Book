@@ -134,11 +134,11 @@
 @media (max-width: 600px) { .dash-counts { grid-template-columns: repeat(3, minmax(0, 1fr)); } .dash-kpis { gap: 8px; } .dash-kpi strong { font-size: 20px; } }
 
 /* ---------- desktop: sticky sidebar; phones keep the slide-in drawer ---------- */
-@media (min-width: 981px) {
+@media (min-width: 861px) {
   .erp-side { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
   .erp-menu-btn { display: none; }
 }
-@media (max-width: 980px) {
+@media (max-width: 860px) {
   .erp-shell { display: block; }
   .erp-top { padding: 0 12px; gap: 8px; }
   .erp-user { display: none; }
@@ -191,3 +191,29 @@
 }
 
 .adm-login h1, .adm-login h2 { font-family: inherit; }
+
+/* ---------- refined sidebar: rounded pills, guide line under sub-items, count badges ---------- */
+.erp-side { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .22) transparent; }
+.erp-side::-webkit-scrollbar { width: 6px; }
+.erp-side::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .22); border-radius: 6px; }
+.erp-nav { padding: 4px 10px 10px; }
+.erp-nav-label { padding: 10px 12px 6px; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: #7f89a6; font-weight: 700; }
+.erp-link { width: 100%; margin: 2px 0; padding: 10px 12px; border-radius: 10px; font-weight: 500; transition: background .12s, color .12s; }
+.erp-link:hover { background: rgba(255, 255, 255, .07); }
+.erp-link.active { background: var(--a-primary); color: #fff; font-weight: 600; box-shadow: 0 6px 16px rgba(64, 141, 251, .32); }
+.erp-head.active-head { background: rgba(255, 255, 255, .06); color: #fff; }
+.erp-head .erp-chev { transition: transform .15s; }
+.erp-link.sub { width: calc(100% - 22px); margin: 1px 0 1px 22px; padding: 8px 12px 8px 16px; border-radius: 0 8px 8px 0; border-left: 1px solid rgba(255, 255, 255, .14); font-size: 13px; font-weight: 400; justify-content: space-between; }
+.erp-link.sub:hover { background: rgba(255, 255, 255, .06); color: #fff; }
+.erp-link.sub.active { background: rgba(64, 141, 251, .2); color: #fff; font-weight: 600; box-shadow: none; border-left: 2px solid var(--a-primary); padding-left: 15px; }
+.erp-badge { margin-left: auto; min-width: 20px; padding: 1px 7px; border-radius: 999px; background: #f5a524; color: #1b1f33; font-style: normal; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; }
+.erp-head .erp-badge + .erp-chev { margin-left: 8px; }
+.erp-link.sub .erp-badge { margin-left: 8px; }
+.erp-side-card { margin: 0 10px 8px; padding: 12px 14px; border-radius: 12px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .08); display: grid; gap: 4px; }
+.erp-side-card span { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: #8d97b5; font-weight: 700; }
+.erp-side-card strong { color: #fff; font-size: 16px; font-weight: 700; }
+.erp-side-card small { color: #9aa3b8; font-weight: 400; font-size: 12px; }
+.erp-meter { height: 6px; border-radius: 6px; background: rgba(255, 255, 255, .12); overflow: hidden; margin-top: 2px; }
+.erp-meter i { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, #408dfb, #6ab0ff); }
+.erp-side-foot { padding: 8px 10px 12px; }
+.erp-side-foot .erp-link { margin: 1px 0; }
