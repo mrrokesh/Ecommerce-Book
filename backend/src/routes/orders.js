@@ -223,6 +223,13 @@ export async function placeOrder(req, res) {
         .join(', ');
     }
 
+    {
+      const badPhone = firstError([['phone', shippingPhone, 'Mobile number']]);
+      if (badPhone) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, error: badPhone });
+      }
+    }
     if (!shippingName || !shippingPhone || !shippingAddress) {
       await client.query('ROLLBACK');
       return res.status(400).json({

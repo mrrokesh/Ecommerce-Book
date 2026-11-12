@@ -258,6 +258,10 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       const mine=await request('/auth/me',{method:'PATCH',body:{phone:'9876501234'},user:u});assert.equal(mine.status,200,'own phone can be re-saved');
       const blocked=await request('/orders',{method:'POST',body:{paymentMethod:'cod'},user:u});
       assert.equal(blocked.status,403);assert.equal(blocked.code,'EMAIL_NOT_VERIFIED');
+      const noPhone=await request('/payments/create-order',{method:'POST',body:{shipping:{fullName:'A B',phone:'',line1:'1 Main Road',city:'Salem',pincode:'636001'}},user});
+      assert.equal(noPhone.status,400,'online payment needs a mobile number');assert.match(noPhone.error,/mobile/i);
+      const badPhoneOrder=await request('/orders',{method:'POST',body:{paymentMethod:'cod',shipping:{fullName:'A B',phone:'12345',line1:'1 Main Road',city:'Salem',pincode:'636001'}},user});
+      assert.equal(badPhoneOrder.status,400);
       const blockedPay=await request('/payments/create-order',{method:'POST',body:{},user:u});
       assert.equal(blockedPay.status,403);assert.equal(blockedPay.code,'EMAIL_NOT_VERIFIED');
     });

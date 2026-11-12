@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import Razorpay from 'razorpay';
+import { firstError } from '../utils/validate.js';
 import { optionalAuth } from '../middleware/auth.js';
 import { emailVerificationRequired, VERIFY_BEFORE_ORDER_MESSAGE } from '../utils/abuseGuard.js';
 
@@ -99,6 +100,10 @@ router.post('/create-order', payLimiter, optionalAuth, async (req, res) => {
       const a=(await query('SELECT * FROM addresses WHERE id=$1 AND user_id=$2',[payload.addressId,req.user.id])).rows[0];
       if(!a)throw new Error('Saved address not found');
       payload.shipping={fullName:a.full_name,phone:a.phone,line1:a.line1,line2:a.line2,city:a.city,state:a.state,pincode:a.pincode};delete payload.addressId;
+    }
+    {
+      const badPhone=firstError([['phone',payload.shipping?.phone,'Mobile number']]);
+      if(badPhone)return res.status(400).json({success:false,error:badPhone});
     }
     const quote=await quoteCheckout(payload,req.user);
     const amount = Math.round(quote.total * 100);

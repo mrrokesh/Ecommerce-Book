@@ -291,8 +291,8 @@ export default function CheckoutPage() {
                 <input name="fullName" required value={form.fullName} onChange={onChange} />
               </label>
               <label>
-                Phone
-                <input name="phone" required value={form.phone} onChange={onChange} />
+                Mobile number *
+                <input name="phone" type="tel" inputMode="numeric" autoComplete="tel" required placeholder="10-digit mobile number" value={form.phone} onChange={onChange} />
               </label>
               <label>
                 Address Line 1
