@@ -17,7 +17,7 @@ Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeS
 - Branded HTML emails for every message (welcome with a real coupon, order receipt, shipping status tracker, returns, refunds, password reset, security alerts) and an admin **Promotional emails** section for seasonal sales (Diwali, Pongal, flash sales): templates, coupon attachment, preview, test send, send to opted-in customers, unsubscribe link and delivery stats, plus a **Subscribers** page (who agreed and when, add a person with a consent confirmation, remove, export CSV); a campaign goes to everyone subscribed or only the people you tick
 - All store email (orders, shipping, returns, refunds, account) is sent through Rokesh Notify from `noreply@salembookhouse.com`, with SMTP as a fallback and an admin outbox with automatic retries
 - Live form validation on every form (names, email, Indian mobile numbers, pincodes, passwords, links, ISBNs) with matching server-side checks
-- Responsive layout (phones from 320px up), toast feedback, in-page dialogs (no browser pop-ups), 404 and error screens
+- Responsive layout (phones from 320px up) with 44px header tap targets and finger-friendly footer links, checked with no sideways scrolling at 320, 360, 440, 768 and 1024px, toast feedback, in-page dialogs (no browser pop-ups), 404 and error screens
 
 ## Quick start
 
