@@ -1,0 +1,8 @@
+import {useEffect,useState} from 'react';
+import api from '../api/client';
+export default function AdminSecurity(){
+ const [enabled,setEnabled]=useState(false),[secret,setSecret]=useState(''),[password,setPassword]=useState(''),[code,setCode]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
+ useEffect(()=>{api.get('/security').then(r=>setEnabled(r.data.enabled)).catch(e=>setMessage(e.message));},[]);
+ async function act(action:string){setBusy(true);try{const r=await api.post('/security/'+action,{password,code});if(r.data.secret)setSecret(r.data.secret);else{setEnabled(r.data.enabled);setSecret('');setPassword('');setCode('');}setMessage('Security settings updated.');}catch(e){setMessage(e.message);}finally{setBusy(false);}}
+ return <section className="erp-card ops-panel"><h2>Two-factor authentication</h2><p>Status: {enabled?'Enabled':'Not enabled'}. Use an authenticator app to protect this account.</p><div className="ops-form"><label>Current password<input type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} /></label><label>Authenticator code<input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e=>setCode(e.target.value)} /></label></div>{secret&&<p>Add this setup key to your authenticator, then enter its six-digit code: <code>{secret}</code></p>}<button className="erp-btn primary" disabled={busy} onClick={()=>void act(enabled?'disable':secret?'enable':'setup')}>{enabled?'Disable two-factor authentication':secret?'Verify and enable':'Set up authenticator'}</button>{message&&<p role="status">{message}</p>}</section>;
+}

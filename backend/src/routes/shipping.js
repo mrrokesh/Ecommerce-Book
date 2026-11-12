@@ -1,3 +1,4 @@
+import { safeLink } from '../utils/safeLink.js';
 import crypto from 'crypto';
 import { Router } from 'express';
 import {
@@ -39,7 +40,7 @@ router.put('/admin/partners/:code', requirePermission('shipping'), async (req, r
   }
 });
 
-router.post('/admin/orders/:id/ship', requirePermission('orders'), async (req, res) => {
+router.post('/admin/orders/:id/ship', requirePermission('orders_edit'), async (req, res) => {
   try {
     const out = await shipOrder(req.params.id, req.body || {});
     return res.json({ success: true, data: out });
@@ -78,7 +79,7 @@ router.post('/webhooks/:carrier', async (req, res) => {
       b.shipment_status ||
       b.data?.status ||
       'shipped';
-    const trackingUrl = b.tracking_url || b.trackingUrl || null;
+    const trackingUrl = safeLink(b.tracking_url || b.trackingUrl, { allowRelative: false });
     const data = await applyTrackingWebhook({
       carrier,
       awb: String(awb || ''),

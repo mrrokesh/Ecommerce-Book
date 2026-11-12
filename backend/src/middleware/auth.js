@@ -26,7 +26,7 @@ export async function requireAuth(req, res, next) {
     }
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     const { rows } = await query(
-      `SELECT id, name, email, phone, role, created_at, token_version FROM users WHERE id = $1`,
+      `SELECT id, name, email, phone, role, created_at, token_version, email_verified_at FROM users WHERE id = $1`,
       [payload.sub]
     );
     if (!rows[0]) {
@@ -67,6 +67,9 @@ export const ADMIN_MODULES = [
   'marketing',
   'pages',
   'emails',
+  'refunds',
+  'orders_edit',
+  'products_edit',
 ];
 
 export async function loadPermissions(user) {
@@ -112,7 +115,7 @@ export async function optionalAuth(req, _res, next) {
     if (!token) return next();
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     const { rows } = await query(
-      `SELECT id, name, email, phone, role, created_at, token_version FROM users WHERE id = $1`,
+      `SELECT id, name, email, phone, role, created_at, token_version, email_verified_at FROM users WHERE id = $1`,
       [payload.sub]
     );
     if (rows[0] && Number(payload.tv ?? 0) === Number(rows[0].token_version ?? 0)) req.user = rows[0];

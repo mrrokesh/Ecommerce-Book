@@ -1,3 +1,5 @@
+import { safeHref } from '../utils/safeHref';
+import {Link} from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import api from '../api/client';
@@ -41,7 +43,7 @@ export default function TrackPage() {
 
   return (
     <div className="container cms-page">
-      <h1>Track your Order</h1>
+      <p><Link to="/guest-order">Bought as a guest? Access your order here.</Link></p><h1>Track your Order</h1>
       <form className="checkout-form" onSubmit={onSubmit} style={{ maxWidth: 480 }}>
         <label>
           Order number
@@ -65,8 +67,8 @@ export default function TrackPage() {
             <p className="muted">
               {order.courier ? <>Courier: {order.courier} · </> : null}
               {order.awb ? <>AWB: {order.awb} · </> : null}
-              {order.trackingUrl ? (
-                <a href={order.trackingUrl} target="_blank" rel="noreferrer">
+              {safeHref(order.trackingUrl) ? (
+                <a href={safeHref(order.trackingUrl)} target="_blank" rel="noreferrer">
                   Live tracking
                 </a>
               ) : null}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { confirmAction } from '../components/Dialogs';
 import api from '../api/client';
 import { formatPrice } from '../utils/format';
 
@@ -149,8 +150,8 @@ export default function AdminMarketing() {
                       type="button"
                       className="erp-btn danger"
                       disabled={busy}
-                      onClick={() => {
-                        if (window.confirm(`Delete banner "${b.title}"?`)) {
+                      onClick={async () => {
+                        if (await confirmAction(`Delete banner "${b.title}"?`)) {
                           run(() => api.delete(`/admin/banners/${b.id}`), 'Banner deleted');
                         }
                       }}
@@ -306,8 +307,8 @@ export default function AdminMarketing() {
                       type="button"
                       className="erp-btn danger"
                       disabled={busy}
-                      onClick={() => {
-                        if (window.confirm(`Delete coupon ${c.code}?`)) {
+                      onClick={async () => {
+                        if (await confirmAction(`Delete coupon ${c.code}?`)) {
                           run(() => api.delete(`/admin/coupons/${c.id}`), 'Coupon deleted');
                         }
                       }}

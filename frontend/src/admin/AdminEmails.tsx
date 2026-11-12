@@ -15,7 +15,7 @@ export default function AdminEmails() {
   return (
     <div className="erp-card">
       <p className="muted" style={{ padding: '0.85rem' }}>
-        Messages are stored here. SMTP sends them when SMTP_HOST is set.
+        Every message is stored here first. Rokesh Notify (or SMTP as a fallback) sends it; failed sends retry automatically.
       </p>
       {error ? <p className="erp-error" style={{ padding: '0 0.85rem' }}>{error}</p> : null}
       <table className="erp-table">

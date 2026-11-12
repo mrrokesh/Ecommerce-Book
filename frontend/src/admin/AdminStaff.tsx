@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { askText, confirmAction } from '../components/Dialogs';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { MODULES, MODULE_LABEL } from './modules';
@@ -86,8 +87,8 @@ export default function AdminStaff() {
     if (done) setRole(EMPTY_ROLE);
   }
 
-  function onDeleteRole(r: Role) {
-    if (!window.confirm(`Delete role "${r.name}"?`)) return;
+  async function onDeleteRole(r: Role) {
+    if (!(await confirmAction(`Delete role "${r.name}"?`))) return;
     run(() => api.delete(`/admin/roles/${r.id}`), `Deleted role "${r.name}".`);
   }
 
@@ -106,14 +107,14 @@ export default function AdminStaff() {
     run(() => api.patch(`/admin/staff/${m.id}`, accessBody(value)), `Updated access for ${m.name}.`);
   }
 
-  function onReset(m: Member) {
-    const password = window.prompt(`New password for ${m.name} (at least 8 characters):`);
+  async function onReset(m: Member) {
+    const password = await askText({ title: 'Reset password', label: `New password for ${m.name}`, type: 'password', minLength: 8, confirmText: 'Update password' });
     if (!password) return;
     run(() => api.patch(`/admin/staff/${m.id}/password`, { password }), `Password updated for ${m.name}.`);
   }
 
-  function onRemove(m: Member) {
-    if (!window.confirm(`Remove portal access for ${m.name}? Their account stays as a normal customer.`)) return;
+  async function onRemove(m: Member) {
+    if (!(await confirmAction(`Remove portal access for ${m.name}? Their account stays as a normal customer.`))) return;
     run(() => api.delete(`/admin/staff/${m.id}`), `Removed access for ${m.name}.`);
   }
 

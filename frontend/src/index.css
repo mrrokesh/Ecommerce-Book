@@ -3313,3 +3313,15 @@ textarea:focus {
     bottom: 4.75rem;
   }
 }
+
+.verify-banner{display:flex;gap:.75rem;align-items:center;justify-content:center;flex-wrap:wrap;padding:.55rem 1rem;background:#fff6e0;color:#5c4400;font-size:.9rem;text-align:center}
+.verify-banner .link-btn{background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit;padding:0}
+
+.dialog-backdrop{position:fixed;inset:0;background:rgba(10,20,40,.55);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:1000}
+.dialog-card{background:#fff;color:#14233f;border-radius:12px;padding:1.25rem;width:min(440px,100%);display:grid;gap:.75rem;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.dialog-card h2{margin:0;font-size:1.15rem}
+.dialog-card label{display:grid;gap:.35rem;font-size:.9rem}
+.dialog-card input,.dialog-card textarea,.order-action-form textarea,.order-action-form select{width:100%;padding:.6rem;border:1px solid #c8d0de;border-radius:8px;font:inherit}
+.dialog-actions{display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap}
+.return-line{display:flex;gap:.75rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.return-line select{width:auto;min-width:9rem}

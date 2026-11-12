@@ -7,6 +7,7 @@ import { firstAllowedPath, moduleForPath, NAV_SECTIONS } from './modules';
 import './admin.css';
 
 const TITLES = {
+  '/admin/inventory':'Inventory','/admin/payments':'Payments & refunds','/admin/returns':'Returns','/admin/reports':'Sales reports','/admin/gifts':'Gift cards','/admin/settings':'Store settings','/admin/audit':'Audit history','/admin/catalogue-tools':'Catalogue tools','/admin/security':'Account security',
   '/admin': 'Dashboard',
   '/admin/products': 'Products',
   '/admin/products/new': 'New product',
@@ -51,7 +52,7 @@ export default function AdminLayout() {
   const isAdmin = role === 'admin';
   const allowed = (module: string) => isAdmin || permissions.includes(module);
   const current = moduleForPath(loc.pathname);
-  const pageAllowed = current === 'staff' ? isAdmin : allowed(current);
+  const pageAllowed = loc.pathname === '/admin/security' || (current === 'staff' ? isAdmin : allowed(current));
 
   if (!pageAllowed) {
     const fallback = firstAllowedPath(allowed);
@@ -82,10 +83,11 @@ export default function AdminLayout() {
               </div>
             );
           })}
+          <NavLink to="/admin/security">Account security</NavLink>
           {isAdmin ? (
             <>
               <div className="erp-group">Store</div>
-              <NavLink to="/admin/staff">Staff & roles</NavLink>
+              <NavLink to="/admin/settings">Store settings</NavLink><NavLink to="/admin/audit">Audit history</NavLink><NavLink to="/admin/staff">Staff & roles</NavLink>
               <Link to="/">View storefront</Link>
             </>
           ) : null}

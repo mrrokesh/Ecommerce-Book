@@ -20,8 +20,8 @@ type CartValue = {
   loading: boolean;
   refresh: () => Promise<void>;
   addItem: (bookId: number, quantity?: number) => Promise<unknown>;
-  updateItem: (itemId: number, quantity: number) => Promise<unknown>;
-  removeItem: (itemId: number) => Promise<void>;
+  updateItem: (itemId: string, quantity: number) => Promise<unknown>;
+  removeItem: (itemId: string) => Promise<void>;
   clear: () => Promise<void>;
 };
 
@@ -35,7 +35,7 @@ function normalizeCart(data: Record<string, unknown> | undefined): Cart {
   const cart = ((data?.cart as Record<string, unknown>) || data || {}) as Record<string, unknown>;
   const items = (cart.items || data?.items || []) as CartItem[];
   return {
-    id: (cart.id as number) || null,
+    id: (cart.id as string) || null,
     items,
     itemCount: items.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0),
     subtotal: Number(cart.subtotal ?? data?.subtotal ?? 0),
@@ -69,13 +69,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return data;
   }, []);
 
-  const updateItem = useCallback(async (itemId: number, quantity: number) => {
+  const updateItem = useCallback(async (itemId: string, quantity: number) => {
     const { data } = await api.patch(`/cart/items/${itemId}`, { quantity });
     setCart(normalizeCart(data));
     return data;
   }, []);
 
-  const removeItem = useCallback(async (itemId: number) => {
+  const removeItem = useCallback(async (itemId: string) => {
     const { data } = await api.delete(`/cart/items/${itemId}`);
     setCart(normalizeCart(data));
   }, []);

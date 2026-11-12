@@ -1,4 +1,5 @@
-import { query } from '../db/pool.js';
+import { transitionOrder } from '../domain/lifecycle.js';
+import { query, getPool } from '../db/pool.js';
 import { createShipmentForOrder, shouldAutoCreate } from './index.js';
 import { notifyOrderEvent } from '../notify/index.js';
 
@@ -30,9 +31,15 @@ async function loadOrderBundle(orderId) {
 }
 
 export async function shipOrder(orderId, { partnerCode, awb, trackingUrl, force } = {}) {
+  const lock=await (await getPool()).connect();
+  try {
+  await lock.query('BEGIN');
+  await lock.query('SELECT id FROM orders WHERE id=$1 FOR UPDATE',[orderId]);
   const order = await loadOrderBundle(orderId);
   if (!order) throw new Error('Order not found');
+  if (!['placed','confirmed','packed'].includes(order.status)) throw new Error('Only unshipped active orders can create shipments');
   if (order.awb && !force && !awb) {
+    await lock.query('COMMIT');
     return { order, skipped: true, message: 'Already has AWB' };
   }
 
@@ -53,7 +60,7 @@ export async function shipOrder(orderId, { partnerCode, awb, trackingUrl, force 
     result.awb || result.deferred ? (order.status === 'placed' ? 'confirmed' : order.status) : order.status;
   const shipStatus = result.awb ? 'shipped' : nextStatus;
 
-  const { rows } = await query(
+  const { rows } = await lock.query(
     `UPDATE orders SET
        awb = COALESCE($2, awb),
        courier = COALESCE($3, courier),
@@ -62,7 +69,7 @@ export async function shipOrder(orderId, { partnerCode, awb, trackingUrl, force 
        shipped_at = CASE WHEN $2 IS NOT NULL THEN COALESCE(shipped_at, NOW()) ELSE shipped_at END,
        status = CASE WHEN $2 IS NOT NULL THEN 'shipped' ELSE status END,
        updated_at = NOW()
-     WHERE id = $1
+     WHERE id = $1 AND status IN ('placed','confirmed','packed')
      RETURNING *`,
     [
       orderId,
@@ -73,16 +80,18 @@ export async function shipOrder(orderId, { partnerCode, awb, trackingUrl, force 
     ]
   );
 
+  if (!rows[0]) throw new Error('Order changed during booking. Check the carrier booking and cancel it before retrying.');
   const note = result.message
     || (result.awb
       ? `Shipment created via ${result.carrier}. AWB ${result.awb}`
       : `Shipment queued via ${result.carrier}`);
-  await query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,$2,$3)`, [
+  await lock.query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,$2,$3)`, [
     orderId,
     result.awb ? 'shipped' : shipStatus,
     note,
   ]);
 
+  await lock.query('COMMIT');
   const updated = await loadOrderBundle(orderId);
   await notifyOrderEvent({
     order: updated,
@@ -91,6 +100,7 @@ export async function shipOrder(orderId, { partnerCode, awb, trackingUrl, force 
   });
 
   return { order: rows[0], result };
+  }catch(e){await lock.query('ROLLBACK');throw e;}finally{lock.release();}
 }
 
 export async function maybeAutoShip(orderId) {
@@ -122,17 +132,19 @@ export async function applyTrackingWebhook({ carrier, awb, status, note, trackin
     rto: 'returned',
     cancelled: 'cancelled',
   };
-  const next = map[String(status || '').toLowerCase()] || rows[0].status;
-  await query(
-    `UPDATE orders SET status = $2, tracking_url = COALESCE($3, tracking_url), courier = COALESCE($4, courier), updated_at = NOW()
-     WHERE id = $1`,
-    [rows[0].id, next, trackingUrl || null, carrier || null]
-  );
-  await query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,$2,$3)`, [
-    rows[0].id,
-    next,
-    note || `Carrier webhook: ${status}`,
-  ]);
+  const next = map[String(status || '').toLowerCase()];
+  if(!next) return {orderId:rows[0].id,status:rows[0].status,ignored:true};
+  const client=await (await getPool()).connect();
+  try {
+    await client.query('BEGIN');
+    const locked=await client.query('SELECT * FROM orders WHERE id=$1 FOR UPDATE',[rows[0].id]);
+    const current=locked.rows[0];
+    if(current.status===next){await client.query('COMMIT');return {orderId:current.id,status:next,duplicate:true};}
+    try { await transitionOrder(client,current,next,{note:note || 'Carrier update: '+status}); }
+    catch(e){ if(e.message.startsWith('Cannot change')) {await client.query('ROLLBACK');return {orderId:current.id,status:current.status,ignored:true};} throw e; }
+    await client.query('UPDATE orders SET tracking_url=COALESCE($2,tracking_url) WHERE id=$1',[current.id,trackingUrl || null]);
+    await client.query('COMMIT');
+  }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
   const order = {
     ...rows[0],
     orderNumber: rows[0].order_number,

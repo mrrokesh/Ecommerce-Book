@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { confirmAction } from '../components/Dialogs';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import CoverImage from '../components/CoverImage';
@@ -89,7 +90,7 @@ export default function AdminProducts() {
   }
 
   async function remove(book) {
-    if (!window.confirm(`Delete "${book.title}"? Products that have been ordered are hidden instead.`)) return;
+    if (!(await confirmAction(`Delete "${book.title}"? Products that have been ordered are hidden instead.`))) return;
     setError('');
     try {
       const { data } = await api.delete(`/admin/books/${book.id}`);

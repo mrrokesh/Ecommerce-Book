@@ -1,3 +1,5 @@
+import { safeLink } from '../utils/safeLink.js';
+import { transitionOrder } from '../domain/lifecycle.js';
 import { Router } from 'express';
 import path from 'path';
 import multer from 'multer';
@@ -42,6 +44,16 @@ router.use((req, res, next) => {
   return res.status(403).json({ success: false, error: 'You do not have access to this section' });
 });
 
+router.use((req,res,next)=>{
+  if(req.user.role!=='admin' && !['GET','HEAD'].includes(req.method)){
+    const needed=/^\/orders/.test(req.path)?'orders_edit':/^\/(books|erp|covers)/.test(req.path)?'products_edit':null;
+    if(needed&&!req.permissions.includes(needed))return res.status(403).json({success:false,error:'Your role has read-only access to this section'});
+  }
+  if(!['GET','HEAD'].includes(req.method))res.on('finish',()=>{
+    if(res.statusCode<400)query('INSERT INTO audit_log(actor_id,actor_name,action,entity_id) VALUES($1,$2,$3,$4)',[req.user.id,req.user.name,req.method+' '+req.path,req.params.id || req.path]).catch(console.error);
+  });
+  next();
+});
 // Uploads live in Postgres, not on disk: Render's filesystem is wiped on every deploy.
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -83,7 +95,7 @@ router.get('/summary', async (_req, res) => {
       query(`SELECT COUNT(*)::int AS c FROM orders`),
       query(`SELECT COUNT(*)::int AS c FROM users WHERE role <> 'admin'`),
       query(
-        `SELECT COALESCE(SUM(total),0)::numeric AS s FROM orders WHERE status NOT IN ('cancelled','returned')`
+        `SELECT COALESCE(SUM(total),0)::numeric AS s FROM orders WHERE payment_status = 'paid' AND status NOT IN ('cancelled','returned')`
       ),
       query(`SELECT COUNT(*)::int AS c FROM orders WHERE status IN ('placed','confirmed','packed')`),
       query(`SELECT COUNT(*)::int AS c FROM books WHERE is_active = TRUE AND stock <= 5`),
@@ -570,6 +582,10 @@ router.get('/orders', async (req, res) => {
     const pageSize = Math.min(100, Math.max(10, Number(req.query.pageSize) || 25));
     const where = [];
     const params = [];
+    for(const [field,column] of [['payment','o.payment_status'],['courier','o.courier']])if(req.query[field]){params.push(String(req.query[field]));where.push(column+' = $'+params.length);}
+    if(req.query.from){params.push(req.query.from);where.push('o.created_at >= $'+params.length+'::date');}
+    if(req.query.to){params.push(req.query.to);where.push('o.created_at < $'+params.length+"::date + INTERVAL '1 day'");}
+
     if (q) {
       params.push(`%${q}%`);
       const i = params.length;
@@ -673,91 +689,14 @@ router.patch('/orders/:id', async (req, res) => {
       await client.query('ROLLBACK');
       return res.status(404).json({ success: false, error: 'Order not found' });
     }
-    const nextStatus = status || order.status;
-    let stockRestored = order.stock_restored;
-    let paymentStatus = requestedPayment || order.payment_status;
-    const notes = [];
-
-    // Keep catalogue stock in step with the order: give it back on cancel/return,
-    // take it again if the order is re-opened.
-    if (RESTOCK_STATUSES.includes(nextStatus) && !stockRestored) {
-      await restockOrder(client, order.id);
-      stockRestored = true;
-      notes.push('Stock restored');
-      const voided = await client.query(
-        `UPDATE gift_cards SET status = 'void', remaining = 0 WHERE order_id = $1 AND status = 'active'`,
-        [order.id]
-      );
-      if (voided.rowCount) notes.push('Unspent gift cards from this order voided');
-      if (!requestedPayment) {
-        paymentStatus = nextPaymentStatus(order, nextStatus === 'cancelled' ? 'cancel' : 'return');
-      }
-    } else if (!RESTOCK_STATUSES.includes(nextStatus) && stockRestored) {
-      const items = await client.query(
-        `SELECT oi.book_id, oi.quantity, oi.title, b.stock FROM order_items oi
-         JOIN books b ON b.id = oi.book_id WHERE oi.order_id = $1 FOR UPDATE OF b`,
-        [order.id]
-      );
-      const short = items.rows.find((it) => it.stock < it.quantity);
-      if (short) {
-        await client.query('ROLLBACK');
-        return res.status(409).json({
-          success: false,
-          error: `Not enough stock of "${short.title}" to re-open this order`,
-        });
-      }
-      for (const it of items.rows) {
-        await client.query(`UPDATE books SET stock = stock - $1 WHERE id = $2`, [it.quantity, it.book_id]);
-      }
-      stockRestored = false;
-      notes.push('Stock reserved again');
-      if (!requestedPayment && ['refunded', 'cancelled'].includes(paymentStatus)) {
-        paymentStatus = order.payment_method === 'cod' ? 'pending' : 'paid';
-      }
-    }
-    // Cash on delivery is collected at the door.
-    if (!requestedPayment && nextStatus === 'delivered' && order.payment_method === 'cod') {
-      paymentStatus = 'paid';
-    }
-
-    await client.query(
-      `UPDATE orders SET status = $1, payment_status = $2, stock_restored = $3, updated_at = NOW() WHERE id = $4`,
-      [nextStatus, paymentStatus, stockRestored, order.id]
-    );
-    if (nextStatus !== order.status || paymentStatus !== order.payment_status) {
-      const base =
-        req.body?.note ||
-        (nextStatus !== order.status ? `Status updated to ${nextStatus}` : `Payment marked ${paymentStatus}`);
-      await client.query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,$2,$3)`, [
-        order.id,
-        nextStatus,
-        [base, ...notes].join('. '),
-      ]);
-    }
+    if(req.user.role!=='admin' && ['cancelled','returned'].includes(status) && order.payment_status==='paid' && !req.permissions.includes('refunds'))throw new Error('Refund permission is required to cancel or return a paid order');
+    await transitionOrder(client,order,status || order.status,{actor:req.user,note:String(req.body?.note || '').slice(0,1000),paymentStatus:requestedPayment});
     await client.query('COMMIT');
-    if (paymentStatus === 'refunded' && order.payment_status !== 'refunded' && order.razorpay_payment_id) {
-      refundRazorpayPayment(order.razorpay_payment_id, order.total)
-        .then((r) =>
-          query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,$2,$3)`, [
-            order.id,
-            nextStatus,
-            r.skipped ? 'Refund marked (Razorpay not configured).' : `Razorpay refund ${r.refundId}`,
-          ])
-        )
-        .catch((err) => console.warn('refund:', err.message));
-    }
-    if (nextStatus !== order.status && ['returned', 'delivered'].includes(nextStatus) && order.status === 'return_requested') {
-      notifyOrderEvent({
-        order: { ...order, orderNumber: order.order_number, guestEmail: order.guest_email, shippingPhone: order.shipping_phone },
-        event: nextStatus === 'returned' ? 'Return approved' : 'Return declined',
-        note: req.body?.note || '',
-      }).catch(() => {});
-    }
     return res.json({ success: true, data: { order: await loadAdminOrder(order.id) } });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     console.error(err);
-    return res.status(500).json({ success: false, error: 'Failed to update order' });
+    return res.status(400).json({ success: false, error: err.message || 'Failed to update order' });
   } finally {
     client.release();
   }
@@ -797,7 +736,7 @@ router.post('/banners', async (req, res) => {
   if (!title?.trim()) return res.status(400).json({ success: false, error: 'Title is required' });
   const { rows } = await query(
     `INSERT INTO banners (title, subtitle, cta, link, image_url, sort_order) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-    [title.trim(), subtitle || null, cta || 'Shop', link || '/shop', imageUrl || null, Number(sortOrder) || 0]
+    [title.trim(), subtitle || null, cta || 'Shop', (link ? safeLink(link) : '/shop') || '/shop', imageUrl || null, Number(sortOrder) || 0]
   );
   return res.status(201).json({ success: true, data: { id: rows[0].id } });
 });
@@ -818,7 +757,7 @@ router.patch('/banners/:id', async (req, res) => {
       title || null,
       subtitle || null,
       cta || null,
-      link || null,
+      link ? safeLink(link) : null,
       imageUrl || null,
       typeof isActive === 'boolean' ? isActive : null,
       sortOrder != null ? Number(sortOrder) : null,

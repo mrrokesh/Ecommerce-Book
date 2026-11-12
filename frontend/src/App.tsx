@@ -1,3 +1,6 @@
+import AdminSecurity from './admin/AdminSecurity';
+import GuestOrderPage from './pages/GuestOrderPage';
+import AdminOperations from './admin/AdminOperations';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
@@ -23,6 +26,8 @@ import TrackPage from './pages/TrackPage';
 import OrderPlacedPage from './pages/OrderPlacedPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
+import DialogHost from './components/Dialogs';
 import NotFoundPage from './pages/NotFoundPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import AdminLayout from './admin/AdminLayout';
@@ -47,6 +52,7 @@ export default function App() {
       <ScrollToTop />
       <AuthProvider>
         <CartProvider>
+          <DialogHost />
           <Routes>
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminLayout />}>
@@ -55,14 +61,16 @@ export default function App() {
               <Route path="products/new" element={<AdminProductForm />} />
               <Route path="products/:id" element={<AdminProductForm />} />
               <Route path="categories" element={<AdminCategories />} />
+              {['inventory','payments','returns','reports','gifts','settings','audit','catalogue-tools'].map(section=><Route key={section} path={section} element={<AdminOperations section={section==='catalogue-tools'?'products':section} />} />)}
+              <Route path="security" element={<AdminSecurity />} />
               <Route path="staff" element={<AdminStaff />} />
               <Route path="orders" element={<AdminOrders />} />
-              <Route path="customers" element={<AdminCustomers />} />
+              <Route path="customers" element={<AdminOperations section="customers" />} />
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="shipping" element={<AdminShipping />} />
               <Route path="marketing" element={<AdminMarketing />} />
               <Route path="pages" element={<AdminCms />} />
-              <Route path="emails" element={<AdminEmails />} />
+              <Route path="emails" element={<AdminOperations section="emails" />} />
             </Route>
             <Route element={<Layout />}>
               <Route index element={<HomePage />} />
@@ -87,10 +95,12 @@ export default function App() {
               <Route path="publishers/:slug" element={<PublisherPage />} />
               <Route path="stores" element={<StoresPage />} />
               <Route path="exams" element={<ExamsPage />} />
+              <Route path="guest-order" element={<GuestOrderPage />} />
               <Route path="track" element={<TrackPage />} />
               <Route path="order-placed" element={<OrderPlacedPage />} />
               <Route path="forgot-password" element={<ForgotPasswordPage />} />
               <Route path="reset-password" element={<ResetPasswordPage />} />
+              <Route path="verify-email" element={<VerifyEmailPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>

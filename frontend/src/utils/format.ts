@@ -55,7 +55,7 @@ export function generatedCover(title?: string, slug?: string) {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
-export function coverCandidates(book?: Book | null): string[] {
+export function coverCandidates(book?: Omit<Book,'id'> | null): string[] {
   const title = book?.title;
   const slug = book?.slug;
   const isbn = book?.isbn13 || book?.isbn10 || book?.isbn;
@@ -89,11 +89,11 @@ export function mediaUrl(url?: string, slug?: string, title?: string, isbn?: unk
   return isbnCoverUrl(isbn) || generatedCover(title, slug) || '/placeholder-book.svg';
 }
 
-export function bookImage(book?: Book | null) {
+export function bookImage(book?: Omit<Book,'id'> | null) {
   return coverCandidates(book)[0] || '/placeholder-book.svg';
 }
 
-function advanceCover(el: HTMLImageElement, book?: Book | null) {
+function advanceCover(el: HTMLImageElement, book?: Omit<Book,'id'> | null) {
   const list = coverCandidates(book);
   const step = Number(el.dataset.coverStep || '0') + 1;
   if (step >= list.length) return;
@@ -101,16 +101,16 @@ function advanceCover(el: HTMLImageElement, book?: Book | null) {
   el.src = list[step];
 }
 
-export function onCoverError(event: { currentTarget: HTMLImageElement }, book?: Book | null) {
+export function onCoverError(event: { currentTarget: HTMLImageElement }, book?: Omit<Book,'id'> | null) {
   advanceCover(event.currentTarget, book);
 }
 
-export function onCoverLoad(event: { currentTarget: HTMLImageElement }, book?: Book | null) {
+export function onCoverLoad(event: { currentTarget: HTMLImageElement }, book?: Omit<Book,'id'> | null) {
   const el = event.currentTarget;
   if (el.naturalWidth > 2 && el.naturalHeight > 2) return;
   advanceCover(el, book);
 }
 
-export function bookAuthor(book?: Book | null) {
-  return book?.author_name || book?.authorName || book?.author || 'Unknown';
+export function bookAuthor(book?: Omit<Book,'id'> | null) {
+  return book?.author_name || book?.authorName || (typeof book?.author==='string'?book.author:book?.author?.name) || 'Unknown';
 }

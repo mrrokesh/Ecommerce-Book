@@ -6,3 +6,6 @@ backend/uploads
 frontend/dist
 *.log
 .DS_Store
+
+backend/.test-pg*/
+backend/.qa-pg/

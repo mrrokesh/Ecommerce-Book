@@ -7,11 +7,13 @@ Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeS
 - Catalogue with nested categories (Books → Tamil, Fiction, …), multi-select category and language filters, search, author and publisher pages
 - Cart (guest and signed-in), wishlist, saved addresses, coupons and gift cards, pincode delivery check
 - Guest and signed-in checkout: Cash on Delivery, or UPI / cards / net banking through Razorpay
-- Sign in / sign up with email, Google or Facebook
-- Order tracking and GST invoice download for signed-in customers (own orders only), cancellations, returns
+- Sign in / sign up with email, Google or Facebook; email verification on sign-up, welcome, new sign-in and password-changed emails
+- Order tracking and GST invoice download for signed-in customers (own orders only), cancellations, item-level returns with refunds, and a secure emailed link for guest orders
 - Reviews, store locator, exam-prep section, CMS pages (About, Contact, FAQ, Terms, Privacy)
 - Admin panel at `/admin` (separate sign-in, no storefront chrome): products, categories, orders, customers, reviews, coupons and banners, CMS pages, email outbox, staff accounts, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), ERP product sync
-- Responsive layout (phones from 320px up), toast feedback, 404 and error screens
+- Back-office operations in the admin: inventory and stock history, CSV import and bulk edits, payments and refunds, returns, sales reports, gift cards, store settings and delivery coverage, audit history, and optional authenticator-app two-factor sign-in
+- All store email (orders, shipping, returns, refunds, account) is sent through Rokesh Notify from `noreply@salembookhouse.com`, with SMTP as a fallback and an admin outbox with automatic retries
+- Responsive layout (phones from 320px up), toast feedback, in-page dialogs (no browser pop-ups), 404 and error screens
 
 ## Quick start
 
@@ -44,7 +46,9 @@ All settings live in `backend/.env` (see `backend/.env.example`, which lists eve
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | "Continue with Google". The button hides when unset |
 | `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | "Continue with Facebook". The button hides when unset |
 | `OAUTH_REDIRECT_BASE` | Public site origin for social sign-in callbacks (e.g. `https://www.salembookhouse.com`); defaults to the first `CLIENT_URL` |
-| `SMTP_*` | Outgoing email. Without SMTP, mail goes to Admin → Email outbox (password-reset emails will not be delivered) |
+| `TRUST_PROXY_HOPS` | Proxy hops before the API (default 1). If rate limits seem shared between visitors, sign in as admin, open `/api/security/network` and set 2 when `ip` is not your own address |
+| `ROKESH_NOTIFY_API_URL`, `ROKESH_NOTIFY_API_KEY` | Outgoing email through Rokesh Notify (preferred). Needs `salembookhouse.com` verified in Notify (SPF + DKIM DNS records). Mail is sent from `MAIL_FROM`, default `Salem Book House <noreply@salembookhouse.com>` |
+| `SMTP_*` | Fallback email via SMTP, used only if Rokesh Notify is not set. With neither, mail stays in Admin → Email outbox (password-reset emails will not be delivered) |
 | `SHIPPING_WEBHOOK_SECRET` | Shared secret for carrier tracking webhooks |
 | `ERP_API_URL` / `ERP_API_KEY` | Optional product and stock sync |
 
@@ -129,9 +133,11 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 
 1. Deploy, then open `/api/health` on the live domain (status `ok`).
 2. Sign in on the live domain (a login error "Origin not allowed" means the domain is missing from `CLIENT_URL`).
-3. Place a Cash on Delivery order and check it in **Admin → Orders**.
+3. Place a Cash on Delivery order and check it in **Admin → Orders**. Sign up with a real address and confirm the verification and welcome emails arrive.
 4. Test online payments with **test keys** first (test card above), then switch the Render variables to the live pair and place one small real order.
 5. Change the admin password if any database ever used a development default, and keep every key out of git.
+6. Make sure the schema step (`npm run db:init`) runs on deploy: new tables and columns (refunds, audit log, returns, `email_verified_at`) are created there.
+7. As admin, open `/api/security/network`. If `ip` is a Vercel or Render address instead of yours, set `TRUST_PROXY_HOPS=2` so rate limits are per visitor.
 
 ## Security notes
 
@@ -143,8 +149,15 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 - Carrier endpoints set in the admin must be public `https` URLs (internal and cloud-metadata addresses are refused when saved and again before every call).
 - The public ISBN cover route is capped at 40 new upstream lookups a minute with a response-size limit, and guest-cart creation is capped at 600 a minute; guest carts untouched for 30 days are deleted daily.
 - Helmet CSP/HSTS headers on the API and security headers in `frontend/vercel.json`.
-- Admin uploads accept raster images only.
+- Admin uploads accept raster images only; admin-entered links (banners, tracking URLs) must be `http(s)` or same-site paths.
+- Mail that visitors can trigger (password reset, verification, guest order link) is capped per recipient and overall each hour; reset and verification tokens are single-use and stored hashed; unverified accounts lose their password if the same address later signs in with Google or Facebook.
+- Gift-card codes carry 64 bits of randomness; carrier API secrets are encrypted at rest.
+- Dependencies are kept at zero known advisories (`npm audit --omit=dev` in `backend` and `frontend`).
 - Report vulnerabilities privately to the store owner rather than opening a public issue.
+
+## Tests
+
+`cd backend && npm test` runs unit tests and an integration suite against a throwaway embedded Postgres (checkout, cancellations, refunds, returns, gift cards, CSV import, staff permissions, guest access, email verification, account emails, two-factor sign-in). It needs no database or keys.
 
 ## Scripts
 

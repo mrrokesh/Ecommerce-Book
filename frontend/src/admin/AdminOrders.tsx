@@ -12,9 +12,10 @@ const STATUSES = [
   'delivered',
   'cancelled',
   'return_requested',
+  'return_approved',
   'returned',
 ];
-const PAYMENT_STATUSES = ['pending', 'paid', 'refunded', 'cancelled'];
+const PAYMENT_STATUSES = ['pending', 'paid', 'refund_pending', 'partially_refunded', 'refunded', 'cancelled'];
 
 function statusPill(status) {
   if (['delivered', 'confirmed'].includes(status)) return 'ok';
@@ -121,7 +122,10 @@ function OrderDetail({ id, onChanged, onClose }) {
           </>
         ) : null}
       </p>
-      <button type="button" className="erp-btn primary" disabled={busy} onClick={createShipment}>
+      <a className="erp-btn" target="_blank" rel="noreferrer" href={'/api/operations/orders/'+id+'/document'}>Packing slip</a>
+      <a className="erp-btn" target="_blank" rel="noreferrer" href={'/api/operations/orders/'+id+'/document?kind=label'}>Address label</a>
+      <a className="erp-btn" href="/admin/payments">Refunds</a>
+      <button type="button" className="erp-btn primary" disabled={busy || !['placed','confirmed','packed'].includes(order.status)} onClick={createShipment}>
         {order.awb ? 'Refresh / re-ship' : 'Create shipment'}
       </button>
       <table className="erp-table">
@@ -194,6 +198,8 @@ function OrderDetail({ id, onChanged, onClose }) {
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
+  const [filters,setFilters]=useState({from:'',to:'',payment:'',courier:''});
+  const [checked,setChecked]=useState<string[]>([]);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
@@ -205,7 +211,7 @@ export default function AdminOrders() {
   function load(nextPage = 1) {
     setError('');
     api
-      .get('/admin/orders', { params: { q, status, page: nextPage, pageSize: 25 } })
+      .get('/admin/orders', { params: { ...filters, q, status, page: nextPage, pageSize: 25 } })
       .then(({ data }) => {
         setOrders(data.orders || []);
         setPage(data.page || 1);
@@ -275,7 +281,7 @@ export default function AdminOrders() {
           <tbody>
             {orders.map((o) => (
               <tr key={o.id}>
-                <td>{o.orderNumber}</td>
+                <td><input type="checkbox" aria-label={"Select "+o.orderNumber} checked={checked.includes(o.id)} onChange={e=>setChecked(ids=>e.target.checked?[...ids,o.id]:ids.filter(id=>id!==o.id))} /> {o.orderNumber}</td>
                 <td>{new Date(o.createdAt).toLocaleDateString('en-IN')}</td>
                 <td>
                   {o.shippingName || '—'}

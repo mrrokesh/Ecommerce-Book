@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {assertTransition,canReturn,money} from '../src/domain/orderPolicy.js';
+import {base32,totp} from '../src/domain/totp.js';
+import {csv,parseCsv} from '../src/domain/csv.js';
+test('terminal orders cannot be reopened or shipped',()=>{for(const status of ['cancelled','returned'])for(const to of ['confirmed','shipped','delivered'])assert.throws(()=>assertTransition(status,to));});
+test('returns require approval before receipt',()=>{assert.throws(()=>assertTransition('return_requested','returned'));assert.doesNotThrow(()=>assertTransition('return_requested','return_approved'));assert.doesNotThrow(()=>assertTransition('return_approved','returned'));});
+test('return window is based on delivery, not edits',()=>{const now=Date.now();assert.equal(canReturn({status:'delivered',delivered_at:new Date(now-8*86400000),updated_at:new Date(now)},7,now),false);assert.equal(canReturn({status:'delivered',delivered_at:new Date(now-86400000)},7,now),true);});
+test('TOTP matches RFC 6238 SHA1 vector',()=>{const secret=base32(Buffer.from('12345678901234567890'));assert.equal(totp(secret,59000,8),'94287082');assert.equal(totp(secret,1111111109000,8),'07081804');});
+test('CSV handles commas, quotes, multiline text and spreadsheet formula protection',()=>{const data=csv([{id:1,title:'A, "book"\nsecond line'},{id:2,title:'=1+1'}]);const parsed=parseCsv(data);assert.equal(parsed[0].title,'A, "book"\nsecond line');assert.equal(parsed[1].title,"'=1+1");assert.throws(()=>parseCsv('a,b\n"open'));});
+test('currency arithmetic rounds once to paise',()=>{assert.equal(money(0.1+0.2),0.3);});

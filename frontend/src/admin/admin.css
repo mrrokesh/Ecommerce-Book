@@ -514,3 +514,5 @@
 .erp-login-foot a:hover {
   text-decoration: underline;
 }
+
+.ops-stack{display:grid;gap:20px}.ops-panel{padding:20px}.ops-form{display:flex;flex-wrap:wrap;align-items:end;gap:14px;margin:20px 0}.ops-form label{display:grid;gap:6px;flex:1;min-width:160px}.ops-form input,.ops-form select,.ops-form textarea{padding:10px;border:1px solid #ccc;border-radius:6px;max-width:100%}.ops-table{overflow:auto;max-width:100%}.ops-table td{max-width:340px;overflow-wrap:anywhere;white-space:normal}.ops-panel h2{font-size:20px;margin-top:24px}.ops-panel button{margin:3px}.ops-panel input[type=checkbox]{width:auto}.ops-panel .erp-toolbar{flex-wrap:wrap}@media(max-width:600px){.ops-panel{padding:12px}.ops-form{display:grid}.ops-form label{min-width:0}}

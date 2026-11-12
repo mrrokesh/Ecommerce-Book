@@ -9,6 +9,7 @@ export default function AdminLogin() {
   const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [code,setCode]=useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -26,7 +27,7 @@ export default function AdminLogin() {
     setBusy(true);
     setError('');
     try {
-      const data = (await login(email, password)) as { user?: { role?: string }; role?: string };
+      const data = (await login(email, password, code)) as { user?: { role?: string }; role?: string };
       const signedIn = data.user || data;
       if (signedIn?.role !== 'admin' && signedIn?.role !== 'staff') {
         await logout();
@@ -74,6 +75,7 @@ export default function AdminLogin() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </label>
+        <label>Authenticator code (if enabled)<input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e=>setCode(e.target.value)} /></label>
         {error ? <p className="erp-error">{error}</p> : null}
         <button type="submit" className="erp-btn primary erp-login-submit" disabled={busy}>
           {busy ? 'Signing in…' : 'Sign in'}

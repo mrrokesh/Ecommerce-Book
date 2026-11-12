@@ -1,3 +1,6 @@
+import {useCart} from '../context/CartContext';
+import ReturnItems from '../components/ReturnItems';
+import { showToast } from '../components/Toast';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import api from '../api/client';
@@ -8,10 +11,12 @@ import { EmptyState, LoadingState } from '../components/States';
 export default function OrdersPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const location = useLocation();
+  const {refresh}=useCart();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actingId, setActingId] = useState(null);
+  const [itemReturnId, setItemReturnId] = useState<string | null>(null);
   const [actionType, setActionType] = useState(null);
   const [reason, setReason] = useState('');
   const [actionError, setActionError] = useState('');
@@ -66,7 +71,7 @@ export default function OrdersPage() {
       setOrders((list) => list.map((o) => (o.id === updated.id ? { ...o, ...updated } : o)));
       closeAction();
       if (actionType === 'return') {
-        window.alert('Return requested. We will review it and confirm by email.');
+        showToast('Return requested. We will review it and confirm by email.');
       }
     } catch (err) {
       setActionError(err.message || 'Could not update order');
@@ -141,17 +146,20 @@ export default function OrdersPage() {
                     Download invoice
                   </a>
                 ) : null}
+                <button className="btn btn-outline" onClick={async()=>{try{const r=await api.post('/customer-tools/reorder/'+order.id);await refresh();showToast(r.data.added+' products added to cart'+(r.data.skipped?'; '+r.data.skipped+' unavailable.':'.'));}catch(e){setError(e.message);}}}>Buy again</button>
                 {order.canCancel ? (
                   <button type="button" className="text-btn" onClick={() => openAction(order, 'cancel')}>
                     Cancel order
                   </button>
                 ) : null}
+                {order.canReturn && <button className="btn btn-outline" onClick={() => setItemReturnId(itemReturnId === order.id ? null : order.id)}>Return selected items</button>}
                 {order.canReturn ? (
                   <button type="button" className="text-btn" onClick={() => openAction(order, 'return')}>
                     Return
                   </button>
                 ) : null}
               </div>
+              {itemReturnId === order.id ? <ReturnItems orderId={order.id} onDone={() => { setItemReturnId(null); void loadOrders(); }} onCancel={() => setItemReturnId(null)} /> : null}
               {actingId === order.id ? (
                 <form className="order-action-form" onSubmit={submitAction}>
                   <p>

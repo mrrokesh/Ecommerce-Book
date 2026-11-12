@@ -11,7 +11,9 @@
     "db:seed": "node src/db/seed.js",
     "covers:backfill": "node src/scripts/backfillCovers.js",
     "db:ensure-categories": "node src/scripts/ensureCategoriesAndContact.js",
-    "setup": "node src/db/init.js && node src/db/seed.js"
+    "setup": "node src/db/init.js && node src/db/seed.js",
+    "test": "node --test --test-force-exit test/policy.test.js test/mailer.test.js test/hardening.test.js test/integration.test.js",
+    "preview:qa": "node scripts/preview-qa.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -26,8 +28,7 @@
     "multer": "^2.4.0",
     "nodemailer": "^10.0.14",
     "pg": "^8.16.0",
-    "razorpay": "^2.9.8",
-    "zod": "^3.25.0"
+    "razorpay": "^2.9.8"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

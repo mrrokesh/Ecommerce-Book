@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { confirmAction } from '../components/Dialogs';
 import api from '../api/client';
 
 type Cat = {
@@ -111,8 +112,8 @@ export default function AdminCategories() {
     );
   }
 
-  function onDelete(c: Cat) {
-    if (!window.confirm(`Delete category "${c.name}"?`)) return;
+  async function onDelete(c: Cat) {
+    if (!(await confirmAction(`Delete category "${c.name}"?`))) return;
     run(() => api.delete(`/admin/categories/${c.id}`), `Deleted "${c.name}".`);
   }
 

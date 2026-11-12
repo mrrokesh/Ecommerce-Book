@@ -218,7 +218,8 @@ export default function BookDetailPage() {
             <button type="button" className="linkish wishlist-link" onClick={handleWishlist}>
               ♡ Add to Wishlist
             </button>
-            {msg ? <p className="form-msg">{msg}</p> : null}
+            {Number(book.stock)<=0 && <button className="btn btn-outline" onClick={async()=>{if(!isAuthenticated){navigate('/login');return;}try{await api.post('/customer-tools/stock-alerts/'+book.id);setMsg('We will email you when this book is back in stock.');}catch(e){setMsg(e.message);}}}>Notify me when available</button>}
+          {msg ? <p className="form-msg">{msg}</p> : null}
 
             <div className="service-icons">
               <div>

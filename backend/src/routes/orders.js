@@ -1,3 +1,6 @@
+import { transitionOrder } from '../domain/lifecycle.js';
+import { canReturn } from '../domain/orderPolicy.js';
+import { deliveryQuote } from '../domain/settings.js';
 import crypto from 'crypto';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
@@ -32,13 +35,7 @@ const checkoutLimiter = rateLimit({
 function customerActions(o) {
   const status = String(o.status || '');
   const canCancel = ['placed', 'confirmed', 'packed'].includes(status);
-  let canReturn = status === 'delivered';
-  if (canReturn) {
-    const start = o.updated_at || o.created_at;
-    const ageMs = Date.now() - new Date(start).getTime();
-    canReturn = Number.isFinite(ageMs) && ageMs <= 7 * 24 * 60 * 60 * 1000;
-  }
-  return { canCancel, canReturn };
+  return { canCancel, canReturn: canReturn(o,o.return_days || 7) };
 }
 
 function mapOrder(o, items = [], events = [], giftCodes = []) {
@@ -141,12 +138,24 @@ function orderNumber() {
   return `SBH-${stamp}-${rand}`;
 }
 
-router.post('/', checkoutLimiter, async (req, res) => {
+export async function placeOrder(req, res) {
   const client = await (await getPool()).connect();
   try {
     await client.query('BEGIN');
 
     const body = req.body || {};
+    let attempt=null;
+    if(body.razorpayOrderId){
+      const ar=await client.query('SELECT * FROM checkout_attempts WHERE gateway_order_id=$1 FOR UPDATE',[body.razorpayOrderId]);
+      attempt=ar.rows[0];
+      if(!attempt || (attempt.user_id ? attempt.user_id!==req.user?.id : attempt.session_id!==body.sessionId)) throw new Error('Payment checkout does not belong to this session');
+      Object.assign(body,attempt.payload,{paymentMethod:'razorpay'});
+      if(['refunded','refund_pending'].includes(attempt.status))throw new Error('This payment is being refunded.');
+      if(attempt.order_id){
+        const existing=await client.query('SELECT * FROM orders WHERE id=$1',[attempt.order_id]);
+        await client.query('COMMIT');return res.json({success:true,data:{order:mapOrder(existing.rows[0])}});
+      }
+    }
     const shipping = body.shipping || {};
     let shippingName = (body.shippingName || shipping.fullName || '').trim();
     let shippingPhone = (body.shippingPhone || shipping.phone || '').trim();
@@ -211,22 +220,6 @@ router.post('/', checkoutLimiter, async (req, res) => {
       });
     }
 
-    if (paymentMethod !== 'cod' && razorpayEnabled()) {
-      const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = body;
-      if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
-        await client.query('ROLLBACK');
-        return res.status(400).json({ success: false, error: 'Complete Razorpay payment first' });
-      }
-      if (!verifyRazorpaySignature({
-        orderId: razorpayOrderId,
-        paymentId: razorpayPaymentId,
-        signature: razorpaySignature,
-      })) {
-        await client.query('ROLLBACK');
-        return res.status(400).json({ success: false, error: 'Payment signature mismatch' });
-      }
-    }
-
     // Prefer user cart; optionally merge guest session cart
     let cart = null;
     if (req.user) {
@@ -268,6 +261,7 @@ router.post('/', checkoutLimiter, async (req, res) => {
       }
     }
 
+    if (!cart && attempt) cart={id:null};
     if (!cart) {
       await client.query('ROLLBACK');
       return res.status(400).json({ success: false, error: 'Cart is empty' });
@@ -277,7 +271,9 @@ router.post('/', checkoutLimiter, async (req, res) => {
     // finds the cart already emptied instead of ordering (and paying) twice.
     await client.query(`SELECT id FROM carts WHERE id = $1 FOR UPDATE`, [cart.id]);
 
-    const itemsRes = await client.query(
+    const itemsRes = attempt ? await client.query(
+      'SELECT b.id AS book_id,b.title,b.author_name,b.image_url,b.stock,b.product_type,q.quantity,q.price AS sale_price FROM jsonb_to_recordset($1::jsonb) AS q(id int,quantity int,price numeric) JOIN books b ON b.id=q.id ORDER BY b.id',[JSON.stringify(attempt.quote.items)]
+    ) : await client.query(
       `SELECT ci.quantity, b.id AS book_id, b.title, b.author_name, b.image_url, b.sale_price, b.stock, b.product_type
        FROM cart_items ci
        JOIN books b ON b.id = ci.book_id
@@ -323,14 +319,8 @@ router.post('/', checkoutLimiter, async (req, res) => {
     let giftApply = 0;
     let giftCardCode = null;
     const pinMatch = shippingAddress.match(/\b(\d{6})\b/);
-    let shippingFee = subtotal - discount >= 499 ? 0 : 40;
-    if (pinMatch) {
-      const pinRes = await client.query(`SELECT shipping, eta_days FROM pincodes WHERE pincode = $1`, [
-        pinMatch[1],
-      ]);
-      if (pinRes.rows[0] && subtotal - discount < 499) shippingFee = Number(pinRes.rows[0].shipping);
-      else if (subtotal - discount >= 499) shippingFee = 0;
-    }
+    const delivery = await deliveryQuote(pinMatch?.[1],subtotal-discount,(sql,params)=>client.query(sql,params));
+    const shippingFee = delivery.shipping;
     let total = Math.max(0, subtotal - discount + shippingFee);
     if (body.giftCardCode) {
       const gRes = await client.query(
@@ -349,8 +339,24 @@ router.post('/', checkoutLimiter, async (req, res) => {
         `UPDATE gift_cards SET remaining = $1, status = $2 WHERE id = $3`,
         [remaining, remaining <= 0 ? 'used' : 'active', gRes.rows[0].id]
       );
-      discount += giftApply;
+      // Gift credit is a payment, not a merchandise discount.
     }
+    if (paymentMethod !== 'cod' && razorpayEnabled() && total > 0) {
+      const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = body;
+      if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, error: 'Complete Razorpay payment first' });
+      }
+      if (!verifyRazorpaySignature({
+        orderId: razorpayOrderId,
+        paymentId: razorpayPaymentId,
+        signature: razorpaySignature,
+      })) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ success: false, error: 'Payment signature mismatch' });
+      }
+    }
+
     if (paymentMethod !== 'cod' && razorpayEnabled() && total > 0) {
       const dup = await client.query(`SELECT 1 FROM orders WHERE razorpay_payment_id = $1`, [
         body.razorpayPaymentId,
@@ -373,6 +379,8 @@ router.post('/', checkoutLimiter, async (req, res) => {
         });
       }
     }
+    if(attempt && JSON.stringify(attempt.quote.items.slice().sort((a,b)=>a.id-b.id)) !== JSON.stringify(itemsRes.rows.map(i=>({id:i.book_id,quantity:i.quantity,price:Number(i.sale_price)})).sort((a,b)=>a.id-b.id))) throw new Error('Your cart changed after payment. Payment is recorded for staff recovery; do not pay again.');
+    if(attempt && Number(attempt.quote.total)!==Math.round(total*100)/100) throw new Error('Checkout total changed. Your payment is recorded for recovery; do not pay again.');
     const onum = orderNumber();
     const online = paymentMethod !== 'cod';
     const fullyCovered = total <= 0;
@@ -417,6 +425,8 @@ router.post('/', checkoutLimiter, async (req, res) => {
       ]
     );
     const order = orderRes.rows[0];
+    await client.query('UPDATE orders SET gift_credit=$2,return_days=$3 WHERE id=$1',[order.id,giftApply,delivery.returnDays]);
+    if (giftApply) await client.query('INSERT INTO gift_transactions(code,order_id,amount,reason) VALUES($1,$2,$3,$4)',[giftCardCode,order.id,-giftApply,'checkout']);
     await client.query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,$2,$3)`, [
       order.id,
       status,
@@ -447,6 +457,7 @@ router.post('/', checkoutLimiter, async (req, res) => {
           unit * qty,
         ]
       );
+      await client.query('INSERT INTO stock_movements(book_id,delta,reason,order_id) VALUES($1,$2,$3,$4)',[item.book_id,-qty,'sale',order.id]);
       // Guarded decrement so two concurrent checkouts can't oversell the same stock.
       const dec = await client.query(
         `UPDATE books SET stock = stock - $1 WHERE id = $2 AND stock >= $1`,
@@ -465,7 +476,7 @@ router.post('/', checkoutLimiter, async (req, res) => {
     for (const item of itemsRes.rows) {
       if (item.product_type === 'gift-card') {
         for (let n = 0; n < Number(item.quantity); n++) {
-          const code = `SBH-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+          const code = `SBH-${crypto.randomBytes(8).toString('hex').toUpperCase().match(/.{4}/g).join('-')}`; // 64 bits, grouped for readability
           const amount = Number(item.sale_price);
           await client.query(
             `INSERT INTO gift_cards (code, amount, remaining, buyer_email, order_id) VALUES ($1,$2,$2,$3,$4)`,
@@ -476,10 +487,17 @@ router.post('/', checkoutLimiter, async (req, res) => {
       }
     }
 
-    await client.query(`DELETE FROM cart_items WHERE cart_id = $1`, [cart.id]);
+    if(attempt){
+      for(const item of itemsRes.rows){
+        const existing=await client.query('SELECT quantity FROM cart_items WHERE cart_id=$1 AND book_id=$2 FOR UPDATE',[cart.id,item.book_id]);
+        if(existing.rows[0]?.quantity>item.quantity)await client.query('UPDATE cart_items SET quantity=quantity-$3 WHERE cart_id=$1 AND book_id=$2',[cart.id,item.book_id,item.quantity]);
+        else await client.query('DELETE FROM cart_items WHERE cart_id=$1 AND book_id=$2',[cart.id,item.book_id]);
+      }
+    }else await client.query('DELETE FROM cart_items WHERE cart_id=$1',[cart.id]);
     const invNo = `INV-${onum.replace('SBH-', '')}`;
     await client.query(`UPDATE orders SET invoice_number = $2 WHERE id = $1`, [order.id, invNo]);
     order.invoice_number = invNo;
+    if(attempt) await client.query("UPDATE checkout_attempts SET order_id=$2,payment_id=$3,status='completed',error=NULL WHERE id=$1",[attempt.id,order.id,body.razorpayPaymentId]);
     await client.query('COMMIT');
 
     const notifyEmail = req.user?.email || guestEmail;
@@ -490,7 +508,7 @@ router.post('/', checkoutLimiter, async (req, res) => {
       sendMail({
         to: notifyEmail,
         subject: `Salem Book House order ${onum}`,
-        text: `Thank you. Order ${onum} total ₹${total}. Invoice ${invNo}. Track with this order number and phone ${shippingPhone}.${giftLine}`,
+        text: `Thank you. Order ${onum} total ₹${total}. Invoice ${invNo}. View your order at ${String(process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0]}/${req.user ? 'account/orders' : 'guest-order'}.${giftLine}`,
       }).catch(() => {});
     }
 
@@ -522,7 +540,8 @@ router.post('/', checkoutLimiter, async (req, res) => {
   } finally {
     client.release();
   }
-});
+}
+router.post('/', checkoutLimiter, placeOrder);
 
 router.get('/', requireAuth, async (req, res) => {
   try {
@@ -642,36 +661,9 @@ router.patch('/:id/cancel', requireAuth, async (req, res) => {
         error: 'This order can no longer be cancelled. It has already been dispatched or cancelled.',
       });
     }
-    const giftBlock = await voidOrderGiftCards(client, current.id);
-    if (giftBlock) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({
-        success: false,
-        error: 'This order issued a gift card that has already been used, so it cannot be cancelled online. Please contact support.',
-      });
-    }
-    if (!current.stock_restored) await restockOrder(client, current.id);
-    const paymentStatus = nextPaymentStatus(current, 'cancel');
-    const { rows } = await client.query(
-      `UPDATE orders SET status = 'cancelled', payment_status = $1, stock_restored = TRUE, updated_at = NOW()
-       WHERE id = $2 RETURNING *`,
-      [paymentStatus, current.id]
-    );
-    await client.query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,'cancelled',$2)`, [
-      order.id,
-      reason ? `Cancelled by customer: ${reason}` : 'Cancelled by customer before dispatch. Stock restored.',
-    ]);
+    await transitionOrder(client,current,'cancelled',{actor:req.user,note:reason || 'Cancelled by customer'});
+    const {rows}=await client.query('SELECT * FROM orders WHERE id=$1',[order.id]);
     await client.query('COMMIT');
-    if (paymentStatus === 'refunded' && order.razorpay_payment_id) {
-      refundRazorpayPayment(order.razorpay_payment_id, order.total)
-        .then((r) =>
-          query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,'cancelled',$2)`, [
-            order.id,
-            r.skipped ? 'Refund marked (Razorpay not configured).' : `Razorpay refund ${r.refundId}`,
-          ])
-        )
-        .catch((err) => console.warn('refund:', err.message));
-    }
     notifyOrderEvent({
       order: { ...rows[0], orderNumber: rows[0].order_number, guestEmail: rows[0].guest_email, shippingPhone: rows[0].shipping_phone },
       event: 'Cancelled',
@@ -727,15 +719,10 @@ router.patch('/:id/return', requireAuth, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Tell us why you want to return this order' });
     }
     await client.query('BEGIN');
-    // The shop owner reviews the request; approving it (status "returned") restocks and refunds.
-    const { rows } = await client.query(
-      `UPDATE orders SET status = 'return_requested', updated_at = NOW() WHERE id = $1 RETURNING *`,
-      [order.id]
-    );
-    await client.query(`INSERT INTO order_events (order_id, status, note) VALUES ($1,'return_requested',$2)`, [
-      order.id,
-      `Return requested: ${reason}`,
-    ]);
+    const locked = await client.query('SELECT * FROM orders WHERE id=$1 FOR UPDATE',[order.id]);
+    if (!customerActions(locked.rows[0]).canReturn) throw new Error('This order is no longer eligible for return');
+    await transitionOrder(client,locked.rows[0],'return_requested',{actor:req.user,note:reason});
+    const {rows}=await client.query('SELECT * FROM orders WHERE id=$1',[order.id]);
     await client.query('COMMIT');
     notifyOrderEvent({
       order: {

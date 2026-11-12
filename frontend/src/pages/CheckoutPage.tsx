@@ -19,7 +19,7 @@ function loadRazorpay() {
 
 export default function CheckoutPage() {
   const { user, isAuthenticated } = useAuth();
-  const { items, subtotal, loading, refresh, clear } = useCart();
+  const { items, subtotal, loading, refresh } = useCart();
   const navigate = useNavigate();
   const [addresses, setAddresses] = useState([]);
   const [addressId, setAddressId] = useState('');
@@ -43,6 +43,8 @@ export default function CheckoutPage() {
     couponCode: '',
     giftCardCode: '',
   });
+  const [serverQuote,setServerQuote]=useState<{shipping:number;total:number;discount:number;giftCredit:number}|null>(null);
+  const [recoveryId,setRecoveryId]=useState(()=>sessionStorage.getItem('sbh_payment_attempt')||'');
   const [couponOff, setCouponOff] = useState(0);
   const [giftOff, setGiftOff] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -75,6 +77,7 @@ export default function CheckoutPage() {
   }, [isAuthenticated]);
 
   function onChange(e) {
+    setServerQuote(null);setCouponOff(0);setGiftOff(0);
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   }
 
@@ -99,14 +102,13 @@ export default function CheckoutPage() {
   }
 
   async function applyCoupon() {
-    const { data } = await api.post('/coupons/preview', { code: form.couponCode, subtotal });
-    setCouponOff(data.discount || 0);
+    const {data}=await api.post('/payments/quote',buildPayload());
+    setServerQuote(data);setCouponOff(data.discount);setGiftOff(data.giftCredit);
   }
 
   async function applyGift() {
-    const due = Math.max(0, subtotal - couponOff + (subtotal - couponOff >= 499 ? 0 : 40));
-    const { data } = await api.post('/coupons/gift-preview', { code: form.giftCardCode, amount: due });
-    setGiftOff(data.credit || 0);
+    const {data}=await api.post('/payments/quote',buildPayload());
+    setServerQuote(data);setGiftOff(data.giftCredit);setCouponOff(data.discount);
   }
 
   function buildPayload(extra: Record<string, unknown> = {}) {
@@ -134,10 +136,18 @@ export default function CheckoutPage() {
     return payload;
   }
 
+  useEffect(()=>{
+    let active=true;
+    setServerQuote(null);
+    if(!addressId && !/^[1-9]\d{5}$/.test(form.pincode))return;
+    const timer=setTimeout(()=>api.post('/payments/quote',buildPayload()).then(({data})=>{if(active){setServerQuote(data);setCouponOff(data.discount);setGiftOff(data.giftCredit);}}).catch(e=>{if(active)setError(e.message);}),300);
+    return ()=>{active=false;clearTimeout(timer);};
+  },[form,addressId,subtotal,isAuthenticated]);
+
   async function place(extra: Record<string, unknown> = {}) {
     const { data } = await api.post('/orders', buildPayload(extra));
-    await clear();
     await refresh();
+    sessionStorage.removeItem('sbh_payment_attempt');setRecoveryId('');
     const orderNumber = data.order?.orderNumber;
     if (isAuthenticated) {
       navigate('/account/orders', {
@@ -156,11 +166,13 @@ export default function CheckoutPage() {
     setError('');
     try {
       if (!pinOk) throw new Error('We cannot deliver to this pincode');
-      const shippingFee =
-        Math.max(0, subtotal - couponOff) >= 499 ? 0 : pinFee != null ? pinFee : 40;
-      const due = Math.max(0, subtotal - couponOff + shippingFee - giftOff);
+      if(recoveryId) throw new Error('Check your previous payment below before starting another payment.');
+      const {data:quote}=await api.post('/payments/quote',buildPayload());
+      setServerQuote(quote);setCouponOff(quote.discount);setGiftOff(quote.giftCredit);
+      const due=quote.total;
       if (form.paymentMethod !== 'cod' && due > 0 && payMode === 'razorpay') {
-        const { data: intent } = await api.post('/payments/create-order', { amount: due });
+        const { data: intent } = await api.post('/payments/create-order', buildPayload());
+        setRecoveryId(intent.attemptId);sessionStorage.setItem('sbh_payment_attempt',intent.attemptId);
         await loadRazorpay();
         await new Promise<void>((resolve, reject) => {
           const Rzp = window.Razorpay;
@@ -217,9 +229,8 @@ export default function CheckoutPage() {
     );
   }
 
-  const shipping =
-    Math.max(0, subtotal - couponOff) >= 499 ? 0 : pinFee != null ? pinFee : 40;
-  const total = Math.max(0, subtotal - couponOff + shipping - giftOff);
+  const shipping = serverQuote?.shipping ?? (Math.max(0, subtotal - couponOff) >= 499 ? 0 : pinFee != null ? pinFee : 40);
+  const total = serverQuote?.total ?? Math.max(0, subtotal - couponOff + shipping - giftOff);
   // Simulated card/UPI forms are for local development only; never collect card data in production.
   const onlineAvailable = payMode === 'razorpay' || !import.meta.env.PROD;
   const payOptions = [
@@ -312,6 +323,8 @@ export default function CheckoutPage() {
             Apply gift card
           </button>
           <h2>Payment</h2>
+          {recoveryId && <div role="status"><p>A previous payment needs checking. Do not pay again if money was deducted.</p><button type="button" className="btn btn-outline" onClick={async()=>{try{const {data}=await api.post('/payments/attempts/'+recoveryId+'/check');if(data.status==='completed'){sessionStorage.removeItem('sbh_payment_attempt');setRecoveryId('');await refresh();navigate(isAuthenticated?'/account/orders':'/order-placed',{state:{orderNumber:data.orderNumber}});}else if(data.status==='unpaid'){sessionStorage.removeItem('sbh_payment_attempt');setRecoveryId('');setError('No captured payment found. You can retry checkout.');}else setError(data.message || 'Payment is recorded and awaiting recovery. Contact support with reference '+data.id);}catch(e){setError(e.message);}}}>Check previous payment</button></div>}
+          <button type="button" className="btn btn-outline" onClick={async()=>{try{const {data}=await api.post('/payments/quote',buildPayload());setServerQuote(data);setCouponOff(data.discount);setGiftOff(data.giftCredit);}catch(e){setError(e.message);}}}>Refresh final total</button>
           <p className="muted">
             {payMode === 'razorpay'
               ? 'Online methods open secure Razorpay Checkout.'
@@ -354,8 +367,8 @@ export default function CheckoutPage() {
             </>
           ) : null}
           {error ? <p className="form-error">{error}</p> : null}
-          <button type="submit" className="btn btn-gold" disabled={busy}>
-            {busy ? 'Placing order…' : `Place Order · ${formatPrice(total)}`}
+          <button type="submit" className="btn btn-gold" disabled={busy || !serverQuote}>
+            {busy ? 'Placing order…' : serverQuote ? `Place Order · ${formatPrice(total)}` : 'Enter delivery details to calculate total'}
           </button>
         </form>
         <aside className="cart-summary">

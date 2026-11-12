@@ -20,14 +20,14 @@ export function renderInvoiceHtml(order, items = []) {
     .map(
       (it) => `<tr>
       <td>${escapeHtml(it.title)}</td>
-      <td>${hsn}</td>
+      <td>${escapeHtml(hsn)}</td>
       <td>${it.quantity}</td>
       <td>${money(it.unit_price)}</td>
       <td>${money(it.line_total)}</td>
     </tr>`
     )
     .join('');
-  return `<!doctype html><html><head><meta charset="utf-8"/><title>${inv}</title>
+  return `<!doctype html><html><head><meta charset="utf-8"/><title>${escapeHtml(inv)}</title>
   <style>
     body{font-family:Georgia,serif;margin:32px;color:#1a1a1a}
     h1{font-size:22px;margin:0} table{width:100%;border-collapse:collapse;margin-top:16px}

@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { welcomeEmail } from '../notify/accountMail.js';
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { query } from '../db/pool.js';
@@ -152,9 +153,19 @@ async function findOrCreateUser(providerName, profile) {
     if (byEmail.rows[0].role !== 'customer') {
       throw Object.assign(new Error('portal account'), { code: 'portal_account' });
     }
-    // Provider-verified email belongs to this account: link it for next time.
-    await query(`UPDATE users SET ${idColumn} = $1 WHERE id = $2`, [profile.id, byEmail.rows[0].id]);
-    return byEmail.rows[0];
+    // Provider-verified email belongs to this account: link it for next time. If the local account was
+    // never email-verified, someone else may have registered it first, so drop its password and sessions.
+    const prior = await query('SELECT email_verified_at FROM users WHERE id = $1', [byEmail.rows[0].id]);
+    if (prior.rows[0]?.email_verified_at) {
+      await query(`UPDATE users SET ${idColumn} = $1 WHERE id = $2`, [profile.id, byEmail.rows[0].id]);
+      return byEmail.rows[0];
+    }
+    const unusable = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+    const upd = await query(
+      `UPDATE users SET ${idColumn} = $1, password_hash = $3, email_verified_at = NOW(), token_version = token_version + 1 WHERE id = $2 RETURNING token_version`,
+      [profile.id, byEmail.rows[0].id, unusable]
+    );
+    return { ...byEmail.rows[0], token_version: upd.rows[0].token_version };
   }
 
   const reservedAdmin = (process.env.ADMIN_EMAIL || 'admin@salembookhouse.com').toLowerCase();
@@ -164,10 +175,10 @@ async function findOrCreateUser(providerName, profile) {
   const hash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
   const name = String(profile.name || profile.email.split('@')[0]).trim().slice(0, 120);
   const created = await query(
-    `INSERT INTO users (name, email, password_hash, ${idColumn}) VALUES ($1,$2,$3,$4) RETURNING id, role, token_version`,
+    `INSERT INTO users (name, email, password_hash, ${idColumn}, email_verified_at) VALUES ($1,$2,$3,$4, NOW()) RETURNING id, name, email, role, token_version`,
     [name, profile.email, hash, profile.id]
   );
-  return created.rows[0];
+  return { ...created.rows[0], isNew: true };
 }
 
 router.get('/:provider/callback', async (req, res, next) => {
@@ -202,6 +213,7 @@ router.get('/:provider/callback', async (req, res, next) => {
     // Admin portal accounts must sign in with their password.
     if (user.role !== 'customer') return fail(res, 'portal_account');
     setAuthCookie(res, signToken(user.id, user.token_version));
+    if (user.isNew) welcomeEmail(user);
     return res.redirect(`${publicBase()}${safeNext(saved.next)}`);
   } catch (err) {
     if (err.code === 'email_required' || err.code === 'portal_account') return fail(res, err.code);

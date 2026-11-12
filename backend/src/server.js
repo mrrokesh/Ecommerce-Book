@@ -31,6 +31,12 @@ const PORT = Number(process.env.PORT) || 5000;
 
 async function setupDatabase() {
   await initSchema();
+  const {notifyStockAlerts}=await import('./routes/customerTools.js');
+  setInterval(()=>notifyStockAlerts().catch(console.error),60000).unref();
+  const {retryEmails}=await import('./mailer.js');
+  setInterval(()=>retryEmails().catch(console.error),60000).unref();
+  const {recoverOperations}=await import('./domain/recovery.js');
+  setInterval(()=>recoverOperations().catch(console.error),60000).unref();
   const { rows } = await query(`SELECT COUNT(*)::int AS c FROM books`);
   if (rows[0].c === 0) {
     console.log('Books table empty — seeding from scrape data...');

@@ -14,7 +14,7 @@ type AuthValue = {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<unknown>;
+  login: (email: string, password: string, code?: string) => Promise<unknown>;
   register: (payload: Record<string, unknown>) => Promise<unknown>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -43,9 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refresh();
   }, [refresh]);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, code?: string) => {
     clearAuthToken();
-    const { data } = await api.post('/auth/login', { email, password });
+    const { data } = await api.post('/auth/login', { email, password, code });
     setUser((data.user || data) as User);
     return data;
   }, []);

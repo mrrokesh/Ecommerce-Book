@@ -3,7 +3,7 @@ import type { Book } from '../types';
 import { coverCandidates } from '../utils/format';
 
 type Props = {
-  book?: Book | null;
+  book?: (Omit<Book,'id'> & {id?:number|string}) | null;
   alt?: string;
   className?: string;
   loading?: 'lazy' | 'eager';

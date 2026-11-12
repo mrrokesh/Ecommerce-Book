@@ -1,3 +1,7 @@
+import returnRoutes from './routes/returns.js';
+import securityRoutes from './routes/security.js';
+import customerTools from './routes/customerTools.js';
+import operationsRoutes from './routes/operations.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -38,7 +42,9 @@ const origins = String(process.env.CLIENT_URL || 'http://localhost:5173')
   .map((s) => s.trim())
   .filter(Boolean);
 
-app.set('trust proxy', 1);
+// Hops of trusted proxies in front of the API. Render alone = 1. Behind Vercel rewrites -> Render the real
+// visitor is one hop further out; check GET /api/security/network as admin, then set TRUST_PROXY_HOPS=2.
+app.set('trust proxy', Math.max(0, Number(process.env.TRUST_PROXY_HOPS ?? 1)));
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -164,13 +170,16 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+app.use('/api/security',securityRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', oauthRoutes);
 app.use('/api/books', booksRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/home', homeRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/returns',returnRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/customer-tools',customerTools);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/authors', authorsRoutes);
@@ -181,6 +190,7 @@ app.use('/api/exams', examsRoutes);
 app.use('/api/addresses', addressesRoutes);
 app.use('/api/pages', pagesRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/operations',operationsRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/coupons', couponsRoutes);
 app.use('/api/shipping', shippingRoutes);

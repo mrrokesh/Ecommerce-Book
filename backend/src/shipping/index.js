@@ -1,3 +1,11 @@
+import { encryptSecret, decryptSecret } from '../domain/totp.js';
+
+// Carrier API secrets are encrypted at rest (AES-256-GCM, key derived from JWT_SECRET). Plaintext values from
+// before this change still work and are sealed the next time the partner is saved.
+const SEALED = 'enc:v1:';
+const seal = (v) => (v && typeof v === 'string' && !v.startsWith(SEALED) ? SEALED + encryptSecret(v) : v);
+const unseal = (v) => (typeof v === 'string' && v.startsWith(SEALED) ? decryptSecret(v.slice(SEALED.length)) : v);
+const unsealAll = (o) => Object.fromEntries(Object.entries(o || {}).map(([k, v]) => [k, unseal(v)]));
 import { query } from '../db/pool.js';
 import { PARTNER_DEFS, partnerDef } from './partners.js';
 import * as manual from './adapters/manual.js';
@@ -113,7 +121,7 @@ export async function listShippingConfig() {
     },
     partners: PARTNER_DEFS.map((def) => {
       const row = rows.find((r) => r.code === def.code) || {};
-      const dbCreds = row.credentials || {};
+      const dbCreds = unsealAll(row.credentials);
       const merged = { ...envCreds(def.code), ...dbCreds };
       return {
         code: def.code,
@@ -164,6 +172,11 @@ export async function updatePartner(code, body = {}) {
       if (f.secret && (val === '••••••••' || val === '')) continue;
       next[f.key] = val;
     }
+  }
+  for (const f of def.fields) {
+    if (f.secret && next[f.key]) next[f.key] = seal(next[f.key]);
+  }
+  if (body.credentials && typeof body.credentials === 'object') {
     // Only the carrier endpoint may be a custom key, and it must be a safe public https URL.
     const customEndpoint = body.credentials.endpoint;
     if (
@@ -199,7 +212,7 @@ async function resolvePartner(code) {
   const row = (
     await query(`SELECT * FROM shipping_partners WHERE code = $1`, [partnerCode])
   ).rows[0];
-  const creds = { ...envCreds(partnerCode), ...(row?.credentials || {}) };
+  const creds = { ...envCreds(partnerCode), ...unsealAll(row?.credentials) };
   if (settings.pickup_pincode) creds.pickupPincode = settings.pickup_pincode;
   const adapter = ADAPTERS[partnerCode] || manual;
   return { partnerCode, creds, adapter, settings, enabled: row?.enabled !== false };

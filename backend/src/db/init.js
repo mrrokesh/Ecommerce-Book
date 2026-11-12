@@ -1,3 +1,4 @@
+import { migrateOperations } from './operationsMigration.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -188,6 +189,7 @@ export async function initSchema() {
   for (const stmt of MIGRATIONS) {
     await query(stmt);
   }
+  await migrateOperations(query);
   // One Razorpay payment may back at most one order. Skipped (with a warning) if existing
   // duplicate rows would make the index impossible to build; resolve them, then restart.
   try {
