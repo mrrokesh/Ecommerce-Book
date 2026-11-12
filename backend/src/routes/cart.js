@@ -38,7 +38,7 @@ async function loadCartPayload(cart) {
   const { rows } = await query(
     `SELECT ci.id AS cart_item_id, ci.quantity, ci.book_id,
             b.id, b.title, b.slug, b.author_name, b.image_url,
-            b.mrp, b.sale_price, b.discount_percent, b.language, b.stock
+            b.mrp, b.sale_price, b.discount_percent, b.language, b.stock, b.cod_allowed
      FROM cart_items ci
      JOIN books b ON b.id = ci.book_id
      WHERE ci.cart_id = $1 AND b.is_active = TRUE

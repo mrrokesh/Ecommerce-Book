@@ -22,6 +22,7 @@ const empty = {
   isActive: true,
   isFeatured: false,
   isBestseller: false,
+  codAllowed: true,
   categoryIds: [],
 };
 
@@ -62,6 +63,7 @@ export default function AdminProductForm() {
           isActive: b.isActive !== false,
           isFeatured: Boolean(b.isFeatured),
           isBestseller: Boolean(b.isBestseller),
+          codAllowed: b.codAllowed !== false,
           categoryIds: (b.categories || []).map((c) => c.id).filter(Boolean),
         });
       })
@@ -135,11 +137,11 @@ export default function AdminProductForm() {
         <div className="form-row">
           <label>
             SKU / ISBN-13 (barcode)
-            <input data-validate="isbn" value={form.isbn13} onChange={(e) => set('isbn13', e.target.value)} />
+            <input value={form.isbn13} onChange={(e) => set('isbn13', e.target.value)} />
           </label>
           <label>
             ISBN-10
-            <input data-validate="isbn" value={form.isbn10} onChange={(e) => set('isbn10', e.target.value)} />
+            <input pattern="[0-9]{9}[0-9Xx]" title="An ISBN-10 has 10 characters: nine digits and a digit or X" value={form.isbn10} onChange={(e) => set('isbn10', e.target.value)} />
           </label>
         </div>
         <div className="form-row">
@@ -229,6 +231,9 @@ export default function AdminProductForm() {
               onChange={(e) => set('isBestseller', e.target.checked)}
             />{' '}
             Bestseller
+          </label>
+          <label title="Untick for products that must be paid for online, such as fragile, high-value or made-to-order items">
+            <input type="checkbox" checked={form.codAllowed} onChange={(e) => set('codAllowed', e.target.checked)} /> Cash on delivery available
           </label>
         </div>
         <button className="erp-btn primary" disabled={busy} type="submit">

@@ -1,3 +1,4 @@
+import { playSuccess } from '../lib/alertSound';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api, { getSessionId } from '../api/client';
@@ -43,7 +44,7 @@ export default function CheckoutPage() {
     couponCode: '',
     giftCardCode: '',
   });
-  const [serverQuote,setServerQuote]=useState<{shipping:number;total:number;discount:number;giftCredit:number}|null>(null);
+  const [serverQuote,setServerQuote]=useState<{shipping:number;total:number;discount:number;giftCredit:number;codAvailable?:boolean;codBlockedItems?:string[]}|null>(null);
   const [recoveryId,setRecoveryId]=useState(()=>sessionStorage.getItem('sbh_payment_attempt')||'');
   const [couponOff, setCouponOff] = useState(0);
   const [giftOff, setGiftOff] = useState(0);
@@ -136,6 +137,15 @@ export default function CheckoutPage() {
     return payload;
   }
 
+  // Products marked online-payment-only cannot be bought with Cash on Delivery
+  const noCodTitles: string[] = serverQuote?.codBlockedItems ?? items.filter((i: any) => i.codAllowed === false).map((i: any) => i.title);
+  const codBlocked = serverQuote ? serverQuote.codAvailable === false : noCodTitles.length > 0;
+  const codMessage = codBlocked ? `Cash on Delivery is not available for: ${noCodTitles.slice(0, 3).join(', ')}${noCodTitles.length > 3 ? ' and more' : ''}. Please pay online.` : '';
+  useEffect(() => {
+    const canPayOnline = payMode === 'razorpay' || !import.meta.env.PROD;
+    if (codBlocked && form.paymentMethod === 'cod' && canPayOnline) setForm((f) => ({ ...f, paymentMethod: 'upi' }));
+  }, [codBlocked, payMode]);
+
   useEffect(()=>{
     let active=true;
     setServerQuote(null);
@@ -146,6 +156,7 @@ export default function CheckoutPage() {
 
   async function place(extra: Record<string, unknown> = {}) {
     const { data } = await api.post('/orders', buildPayload(extra));
+    playSuccess(); // a happy little sound once the order is in
     await refresh();
     sessionStorage.removeItem('sbh_payment_attempt');setRecoveryId('');
     const orderNumber = data.order?.orderNumber;
@@ -166,6 +177,7 @@ export default function CheckoutPage() {
     setError('');
     try {
       if (!pinOk) throw new Error('We cannot deliver to this pincode');
+      if (form.paymentMethod === 'cod' && codBlocked) throw new Error(codMessage);
       if(recoveryId) throw new Error('Check your previous payment below before starting another payment.');
       const {data:quote}=await api.post('/payments/quote',buildPayload());
       setServerQuote(quote);setCouponOff(quote.discount);setGiftOff(quote.giftCredit);
@@ -234,7 +246,7 @@ export default function CheckoutPage() {
   // Simulated card/UPI forms are for local development only; never collect card data in production.
   const onlineAvailable = payMode === 'razorpay' || !import.meta.env.PROD;
   const payOptions = [
-    { id: 'cod', label: 'Cash on Delivery' },
+    ...(codBlocked ? [] : [{ id: 'cod', label: 'Cash on Delivery' }]),
     ...(onlineAvailable
       ? [
           { id: 'upi', label: payMode === 'razorpay' ? 'UPI' : 'UPI (test mode)' },
@@ -332,6 +344,8 @@ export default function CheckoutPage() {
                 ? 'Test mode: online payments are simulated (set RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET on the API to go live).'
                 : 'Online payment is temporarily unavailable. Please choose Cash on Delivery.'}
           </p>
+          {codBlocked ? <p className="cod-note">{codMessage.replace('Please pay online.', 'Online payment only for this order.')}</p> : null}
+          {codBlocked && !payOptions.length ? <p className="form-error">Online payment is temporarily unavailable, and your cart has items that cannot be paid for on delivery. Please try again shortly.</p> : null}
           {payOptions.map((p) => (
             <label key={p.id} className="radio-line">
               <input type="radio" name="paymentMethod" value={p.id} checked={form.paymentMethod === p.id} onChange={onChange} />

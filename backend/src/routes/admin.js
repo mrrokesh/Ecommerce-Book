@@ -431,8 +431,8 @@ router.post('/books', async (req, res) => {
       `INSERT INTO books (
          title, slug, author_id, author_name, description, image_url,
          mrp, sale_price, discount_percent, stock, language, publisher, product_type,
-         isbn13, isbn10, binding, edition, publishing_date, is_active, is_featured, is_bestseller, sku
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+         isbn13, isbn10, binding, edition, publishing_date, is_active, is_featured, is_bestseller, sku, cod_allowed
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
        RETURNING *`,
       [
         title,
@@ -457,6 +457,7 @@ router.post('/books', async (req, res) => {
         Boolean(body.isFeatured),
         Boolean(body.isBestseller),
         sku,
+        body.codAllowed !== false,
       ]
     );
     await setBookCategories(rows[0].id, body.categoryIds);
@@ -516,7 +517,8 @@ router.patch('/books/:id', async (req, res) => {
          publishing_date = $18,
          is_featured = COALESCE($19, is_featured),
          is_bestseller = COALESCE($20, is_bestseller),
-         sku = $21
+         sku = $21,
+         cod_allowed = COALESCE($23, cod_allowed)
        WHERE id = $22 RETURNING *`,
       [
         title || b.title,
@@ -541,6 +543,7 @@ router.patch('/books/:id', async (req, res) => {
         typeof body.isBestseller === 'boolean' ? body.isBestseller : null,
         clearable(body.sku ?? body.isbn13, b.sku),
         req.params.id,
+        typeof body.codAllowed === 'boolean' ? body.codAllowed : null,
       ]
     );
     if (body.categoryIds) await setBookCategories(upd.rows[0].id, body.categoryIds);

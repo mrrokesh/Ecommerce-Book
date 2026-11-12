@@ -4,7 +4,7 @@ export type Book = {
   description?: string; imageUrl?: string; image_url?: string; image?: string; images?: string[];
   mrp?: number; salePrice?: number; sale_price?: number; price?: number; discountPercent?: number; discount_percent?: number;
   language?: string; stock?: number; publisher?: string; binding?: string; publishingDate?: string;
-  edition?: string; isFeatured?: boolean; isBestseller?: boolean; isActive?: boolean;
+  edition?: string; codAllowed?: boolean; isFeatured?: boolean; isBestseller?: boolean; isActive?: boolean;
   product_type?: string; average_rating?: number; review_count?: number; is_bestseller?: boolean;
   sku?: string; erpId?: string; productType?: string; averageRating?: number; reviewCount?: number;
   categories?: (string | {id?: number;name?: string;slug?: string})[];

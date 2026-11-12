@@ -43,6 +43,32 @@ export function playChime() {
   }
 }
 
+/** Happy rising arpeggio (C, E, G, high C) for the customer when an order goes through. Quiet failure if audio is blocked. */
+export function playSuccess() {
+  try {
+    const c = audio();
+    if (!c) return;
+    if (c.state === 'suspended') void c.resume();
+    const t0 = c.currentTime;
+    [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const start = t0 + i * 0.11;
+      const hold = i === 3 ? 0.7 : 0.35;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.14, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + hold);
+      osc.connect(gain).connect(c.destination);
+      osc.start(start);
+      osc.stop(start + hold + 0.05);
+    });
+  } catch {
+    /* autoplay policy or no audio device */
+  }
+}
+
 export function notificationsSupported() {
   return typeof window !== 'undefined' && 'Notification' in window;
 }

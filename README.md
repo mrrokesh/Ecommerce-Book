@@ -6,7 +6,7 @@ Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeS
 
 - Catalogue with nested categories (Books → Tamil, Fiction, …), multi-select category and language filters, search, author and publisher pages
 - Cart (guest and signed-in), wishlist, saved addresses, coupons and gift cards, pincode delivery check
-- Guest and signed-in checkout: Cash on Delivery, or UPI / cards / net banking through Razorpay
+- Guest and signed-in checkout: Cash on Delivery, or UPI / cards / net banking through Razorpay. Any product can be marked "Cash on delivery available" off in the admin; such products show an "Online payment only" notice on the product page, and checkout then offers only the online methods (the server refuses COD for them too). A short success chime plays when an order is placed
 - Sign in / sign up with email, Google or Facebook; email verification on sign-up, welcome, new sign-in and password-changed emails
 - Order tracking and GST invoice download for signed-in customers (own orders only), cancellations, item-level returns with refunds, and a secure emailed link for guest orders
 - Reviews, store locator, exam-prep section, CMS pages (About, Contact, FAQ, Terms, Privacy)

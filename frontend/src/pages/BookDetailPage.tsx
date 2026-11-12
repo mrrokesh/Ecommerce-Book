@@ -196,6 +196,11 @@ export default function BookDetailPage() {
               {off ? <span className="discount-badge green">{off}</span> : null}
             </div>
             <p className="tax-note">Inclusive of all taxes.</p>
+            {book.codAllowed === false ? (
+              <p className="cod-note" role="note">
+                <strong>Online payment only.</strong> Cash on delivery is not available for this product.
+              </p>
+            ) : null}
 
             <div className="qty-row">
               <label>
@@ -226,6 +231,12 @@ export default function BookDetailPage() {
                 <strong>In Stock</strong>
                 <span>{Number(book.stock) > 0 ? `${book.stock} available` : 'Out of stock'}</span>
               </div>
+              {book.codAllowed === false ? (
+                <div>
+                  <strong>Online payment only</strong>
+                  <span>Cash on delivery is not available</span>
+                </div>
+              ) : null}
               <div>
                 <strong>Guaranteed Service</strong>
                 <span>Genuine products</span>

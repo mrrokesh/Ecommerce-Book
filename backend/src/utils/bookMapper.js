@@ -12,6 +12,7 @@ export function mapBook(row, categories = [], rating = null) {
     id: row.id,
     title: row.title,
     slug: row.slug,
+    codAllowed: row.cod_allowed !== false,
     authorName: row.author_name,
     authorId: row.author_id ?? undefined,
     isbn13: row.isbn13 ?? undefined,

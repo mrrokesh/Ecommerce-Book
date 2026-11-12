@@ -3332,3 +3332,6 @@ textarea:focus {
 
 .check-row{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:.6rem;font-size:.88rem;line-height:1.35;cursor:pointer}
 .check-row input[type=checkbox]{width:auto!important;margin-top:.2rem;flex:none}
+
+.cod-note { margin: .5rem 0 .75rem; padding: .55rem .8rem; border-radius: 8px; background: #fff6e0; border: 1px solid #f0d58a; color: #6b4a00; font-size: .9rem; line-height: 1.4; }
+.cod-note strong { color: #4f3600; }

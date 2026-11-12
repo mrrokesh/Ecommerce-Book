@@ -201,5 +201,23 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       const later=await request('/admin/order-alerts?since='+encodeURIComponent(new Date(Date.now()+60000).toISOString()));assert.deepEqual(later.data.orders,[]);
       assert.equal((await request('/admin/order-alerts?since=2000-01-01T00:00:00Z',{user})).status,403,'customers are refused');
     });
+    await t.test('products can be online-payment-only: quote flags it, COD is refused, online works, admin can toggle',async()=>{
+      await request('/operations/settings',{method:'PUT',body:{shippingFee:49,freeShippingThreshold:499,returnDays:7,lowStockThreshold:5,restrictedCoverage:false}});
+      const nocod=(await query("INSERT INTO books(title,slug,author_name,mrp,sale_price,stock,cod_allowed) VALUES('No COD book','no-cod-book','Author',300,300,5,FALSE) RETURNING *")).rows[0];
+      await query('DELETE FROM cart_items WHERE cart_id=$1',[cart.id]);
+      await query('INSERT INTO cart_items(cart_id,book_id,quantity) VALUES($1,$2,1)',[cart.id,nocod.id]);
+      const q=await request('/payments/quote',{method:'POST',body:payload,user});
+      assert.equal(q.status,200,JSON.stringify(q));assert.equal(q.data.codAvailable,false);assert.deepEqual(q.data.codBlockedItems,['No COD book']);
+      const cod=await request('/orders',{method:'POST',body:{...payload,paymentMethod:'cod'},user});
+      assert.equal(cod.status,400);assert.match(cod.error,/Cash on delivery is not available/);
+      assert.equal((await query('SELECT stock FROM books WHERE id=$1',[nocod.id])).rows[0].stock,5,'a refused order must not touch stock');
+      const online=await request('/orders',{method:'POST',body:{...payload,paymentMethod:'upi'},user});assert.equal(online.status,201,JSON.stringify(online));
+      const flip=await request('/admin/books/'+book.id,{method:'PATCH',body:{codAllowed:false}});assert.equal(flip.status,200,JSON.stringify(flip));
+      assert.equal((await query('SELECT cod_allowed FROM books WHERE id=$1',[book.id])).rows[0].cod_allowed,false);
+      assert.equal((await request('/admin/books/'+book.id,{method:'PATCH',body:{title:'Test book'}})).status,200);
+      assert.equal((await query('SELECT cod_allowed FROM books WHERE id=$1',[book.id])).rows[0].cod_allowed,false,'editing other fields keeps the COD setting');
+      await request('/admin/books/'+book.id,{method:'PATCH',body:{codAllowed:true}});
+      assert.equal((await query('SELECT cod_allowed FROM books WHERE id=$1',[book.id])).rows[0].cod_allowed,true);
+    });
   }finally{console.log('Integration assertions complete');}
 });

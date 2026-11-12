@@ -292,7 +292,7 @@ export async function placeOrder(req, res) {
     const itemsRes = attempt ? await client.query(
       'SELECT b.id AS book_id,b.title,b.author_name,b.image_url,b.stock,b.product_type,q.quantity,q.price AS sale_price FROM jsonb_to_recordset($1::jsonb) AS q(id int,quantity int,price numeric) JOIN books b ON b.id=q.id ORDER BY b.id',[JSON.stringify(attempt.quote.items)]
     ) : await client.query(
-      `SELECT ci.quantity, b.id AS book_id, b.title, b.author_name, b.image_url, b.sale_price, b.stock, b.product_type
+      `SELECT ci.quantity, b.id AS book_id, b.title, b.author_name, b.image_url, b.sale_price, b.stock, b.product_type, b.cod_allowed
        FROM cart_items ci
        JOIN books b ON b.id = ci.book_id
        WHERE ci.cart_id = $1 AND b.is_active = TRUE`,
@@ -405,6 +405,18 @@ export async function placeOrder(req, res) {
     const paymentStatus = online || fullyCovered ? 'paid' : 'pending';
     const status = online || fullyCovered ? 'confirmed' : 'placed';
     const storeMethod = fullyCovered && paymentMethod === 'cod' ? 'gift_card' : paymentMethod;
+
+    // Some products are sold online-payment-only. Cash on delivery is refused for them unless a gift card covers everything.
+    if (paymentMethod === 'cod' && !fullyCovered) {
+      const noCod = itemsRes.rows.filter((i) => i.cod_allowed === false).map((i) => i.title);
+      if (noCod.length) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          error: `Cash on delivery is not available for: ${noCod.slice(0, 3).join(', ')}${noCod.length > 3 ? ' and more' : ''}. Please pay online.`,
+        });
+      }
+    }
 
     // Gift-card value must only be issued against settled money, never on unpaid cash-on-delivery.
     if (itemsRes.rows.some((it) => it.product_type === 'gift-card') && paymentStatus !== 'paid') {
