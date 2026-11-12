@@ -1243,7 +1243,7 @@ router.delete('/roles/:id', async (req, res) => {
 
 router.get('/emails', async (_req, res) => {
   const { rows } = await query(
-    `SELECT id, to_email, subject, body, sent, error, created_at FROM email_outbox ORDER BY created_at DESC LIMIT 50`
+    `SELECT id, to_email, subject, sent, error, created_at FROM email_outbox ORDER BY created_at DESC LIMIT 50`
   );
   return res.json({
     success: true,
@@ -1252,7 +1252,6 @@ router.get('/emails', async (_req, res) => {
         id: e.id,
         to: e.to_email,
         subject: e.subject,
-        body: e.body,
         sent: e.sent,
         error: e.error,
         createdAt: e.created_at,

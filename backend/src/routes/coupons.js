@@ -41,7 +41,7 @@ export async function findActiveCoupon(code) {
  * otherwise null. Cancelled/returned orders don't count. Pass a transaction client to
  * lock the coupon row so concurrent checkouts can't both take the last use.
  */
-export async function couponLimitError(coupon, { userId = null, email = '' } = {}, client = null) {
+export async function couponLimitError(coupon, { userId = null, email = '', phone = '' } = {}, client = null) {
   if (!coupon) return null;
   const run = (text, params) => (client ? client.query(text, params) : query(text, params));
   if (client) await client.query(`SELECT 1 FROM coupons WHERE id = $1 FOR UPDATE`, [coupon.id]);
@@ -50,11 +50,13 @@ export async function couponLimitError(coupon, { userId = null, email = '' } = {
     const { rows } = await run(`SELECT COUNT(*)::int AS c FROM orders WHERE ${live}`, [coupon.code]);
     if (rows[0].c >= Number(coupon.usage_limit)) return 'This coupon has been fully redeemed';
   }
-  if (coupon.per_customer_limit != null && (userId || email)) {
+  const phoneKey = String(phone || '').replace(/\D/g, '').slice(-10);
+  if (coupon.per_customer_limit != null && (userId || email || phoneKey.length === 10)) {
     const { rows } = await run(
       `SELECT COUNT(*)::int AS c FROM orders
-       WHERE ${live} AND (($2::uuid IS NOT NULL AND user_id = $2::uuid) OR ($3 <> '' AND lower(guest_email) = $3))`,
-      [coupon.code, userId, String(email || '').toLowerCase()]
+       WHERE ${live} AND (($2::uuid IS NOT NULL AND user_id = $2::uuid) OR ($3 <> '' AND lower(guest_email) = $3)
+              OR ($4 <> '' AND right(regexp_replace(COALESCE(shipping_phone, ''), '[^0-9]', '', 'g'), 10) = $4))`,
+      [coupon.code, userId, String(email || '').toLowerCase(), phoneKey.length === 10 ? phoneKey : '']
     );
     if (rows[0].c >= Number(coupon.per_customer_limit)) return 'You have already used this coupon';
   }

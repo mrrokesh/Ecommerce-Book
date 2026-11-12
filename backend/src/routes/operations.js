@@ -83,7 +83,8 @@ router.post('/returns/:id',wrap(req=>transaction(async c=>{
   if(req.user.role!=='admin'&&req.body.status==='returned'&&!req.permissions.includes('refunds'))throw new Error('Refund permission is required');
   await transitionOrder(c,o,req.body.status,{actor:req.user,note:req.body.note});return {saved:true};
 })));
-router.get('/gifts',wrap(async req=>({rows:(await query('SELECT * FROM gift_cards WHERE code ILIKE $1 ORDER BY id DESC LIMIT 100',['%'+(req.query.q||'')+'%'])).rows,transactions:(await query('SELECT * FROM gift_transactions ORDER BY id DESC LIMIT 100')).rows})));
+const maskCode=(c)=>String(c||'').length>4?'****'+String(c).slice(-4):'****';
+router.get('/gifts',wrap(async req=>({rows:(await query('SELECT * FROM gift_cards WHERE code ILIKE $1 ORDER BY id DESC LIMIT 100',['%'+(req.query.q||'')+'%'])).rows.map(g=>req.user.role==='admin'?g:{...g,code:maskCode(g.code)}),transactions:(await query('SELECT * FROM gift_transactions ORDER BY id DESC LIMIT 100')).rows.map(x=>req.user.role==='admin'?x:{...x,code:maskCode(x.code)})})));
 router.get('/customers',wrap(async req=>({rows:(await query(`SELECT u.id,u.name,u.email,u.phone,COUNT(o.id)::int AS orders FROM users u LEFT JOIN orders o ON o.user_id=u.id WHERE u.name ILIKE $1 OR u.email ILIKE $1 GROUP BY u.id ORDER BY u.created_at DESC LIMIT 50 OFFSET $2`,['%'+(req.query.q||'')+'%',(pageOf(req)-1)*50])).rows,page:pageOf(req)})));
 router.get('/customers/:id',wrap(async req=>({customer:(await query('SELECT id,name,email,phone FROM users WHERE id=$1',[req.params.id])).rows[0],orders:(await query('SELECT id,order_number,status,total,payment_status,created_at FROM orders WHERE user_id=$1 ORDER BY created_at DESC',[req.params.id])).rows,notes:(await query('SELECT n.*,u.name AS actor FROM customer_notes n LEFT JOIN users u ON u.id=n.actor_id WHERE n.user_id=$1 ORDER BY n.id DESC',[req.params.id])).rows})));
 router.post('/customers/:id/notes',wrap(async req=>{

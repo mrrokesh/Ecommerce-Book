@@ -151,6 +151,8 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
     await t.test('promotional campaigns reach only opted-in customers and honour unsubscribe',async()=>{
       const post=async(url,body)=>{const r=await fetch(base+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:r.status,...await r.json()};};
       const yes=await post('/auth/register',{name:'Promo Yes',email:'promo-yes@test.invalid',password:'Promo#2026ok',marketingOptIn:true});assert.equal(yes.status,201);assert.equal(yes.data.user.marketingOptIn,true);
+      const unverified=await post('/auth/register',{name:'Promo Unverified',email:'promo-unverified@test.invalid',password:'Promo#2026ok',marketingOptIn:true});assert.equal(unverified.status,201);
+      await query("UPDATE users SET email_verified_at=NOW() WHERE email='promo-yes@test.invalid'");
       const no=await post('/auth/register',{name:'Promo No',email:'promo-no@test.invalid',password:'Promo#2026ok'});assert.equal(no.data.user.marketingOptIn,false,'consent box is off unless ticked');
       assert.equal((await request('/campaigns',{user})).status,403,'customers cannot open campaigns');
       await query("INSERT INTO coupons(code,description,percent_off,min_order) VALUES('DIWALI20','Diwali',20,300) ON CONFLICT (code) DO NOTHING");
@@ -158,7 +160,7 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       assert.equal((await request('/campaigns',{method:'POST',body:{...draft,ctaUrl:'javascript:alert(1)'}})).status,400,'unsafe button link rejected');
       const c=await request('/campaigns',{method:'POST',body:draft});assert.equal(c.status,200,JSON.stringify(c));
       const pv=await request('/campaigns/'+c.data.id+'/preview',{method:'POST',body:{}});assert.match(pv.data.html,/DIWALI20/);assert.match(pv.data.html,/Unsubscribe/);
-      const list=await request('/campaigns');assert.equal(list.data.subscribers,1);
+      const list=await request('/campaigns');assert.equal(list.data.subscribers,1,'an opt-in from an unverified address is not mailed');
       assert.equal((await request('/campaigns/'+c.data.id+'/send',{method:'POST',body:{}})).status,400,'needs explicit confirmation');
       const sent=await request('/campaigns/'+c.data.id+'/send',{method:'POST',body:{confirm:true}});assert.equal(sent.data.queued,1);
       const rows=(await query("SELECT to_email,html_body FROM email_outbox WHERE campaign_id=$1",[c.data.id])).rows;
@@ -218,6 +220,42 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       assert.equal((await query('SELECT cod_allowed FROM books WHERE id=$1',[book.id])).rows[0].cod_allowed,false,'editing other fields keeps the COD setting');
       await request('/admin/books/'+book.id,{method:'PATCH',body:{codAllowed:true}});
       assert.equal((await query('SELECT cod_allowed FROM books WHERE id=$1',[book.id])).rows[0].cod_allowed,true);
+    });
+    await t.test('run-3 audit fixes: no mail bodies for staff, masked gift codes, no coupon on gift cards, pincode bound to address, coupon limit by phone',async()=>{
+      // 1. the admin email list never returns message bodies (they hold reset / verification / guest links)
+      await query("INSERT INTO email_outbox(to_email,subject,body) VALUES('leak@test.invalid','Reset your Salem Book House password','Open https://x.example/reset-password?token=SECRET')");
+      const mails=await request('/admin/emails');assert.equal(mails.status,200,'emails '+JSON.stringify(mails));assert.ok(mails.data.emails.length>0);
+      assert.ok(mails.data.emails.every(e=>!('body' in e)),'body must not be listed');
+      // 2. gift-card codes are masked for staff, full for admin
+      await query("INSERT INTO gift_cards(code,amount,remaining,buyer_email) VALUES('SBH-ABCD-1234-ZZZZ',500,500,'g@test.invalid') ON CONFLICT DO NOTHING");
+      const mrole=(await query("INSERT INTO staff_roles(name,permissions) VALUES('Marketer',ARRAY['marketing']) RETURNING id")).rows[0];
+      const marketer=(await query("INSERT INTO users(name,email,password_hash,role,staff_role_id) VALUES('Marketer','marketer@test.invalid','x','staff',$1) RETURNING *",[mrole.id])).rows[0];
+      const asStaff=await request('/operations/gifts',{user:marketer});assert.equal(asStaff.status,200,'gifts '+JSON.stringify(asStaff));
+      assert.ok(asStaff.data.rows.length>0&&asStaff.data.rows.every(g=>String(g.code).startsWith('****')),'staff see masked codes');
+      assert.ok((await request('/operations/gifts')).data.rows.some(g=>g.code==='SBH-ABCD-1234-ZZZZ'),'admin sees full codes');
+      // 3. a coupon never discounts a gift-card line
+      await request('/operations/settings',{method:'PUT',body:{shippingFee:49,freeShippingThreshold:499,returnDays:7,lowStockThreshold:5,restrictedCoverage:false}});
+      await query("INSERT INTO coupons(code,description,percent_off,min_order) VALUES('GC10','Ten percent',10,0) ON CONFLICT (code) DO NOTHING");
+      const gift=(await query("INSERT INTO books(title,slug,author_name,mrp,sale_price,stock,product_type) VALUES('Gift card 500','gift-card-500','Salem',500,500,50,'gift-card') RETURNING *")).rows[0];
+      await query('DELETE FROM cart_items WHERE cart_id=$1',[cart.id]);
+      await query('INSERT INTO cart_items(cart_id,book_id,quantity) VALUES($1,$2,1)',[cart.id,gift.id]);
+      const q1=await request('/payments/quote',{method:'POST',body:{...payload,couponCode:'GC10'},user});
+      assert.equal(q1.status,400,JSON.stringify(q1));assert.match(q1.error,/cannot be used on gift cards/,'a coupon is refused for a gift-card-only cart');
+      await query('INSERT INTO cart_items(cart_id,book_id,quantity) VALUES($1,$2,1)',[cart.id,book.id]);
+      const q2=await request('/payments/quote',{method:'POST',body:{...payload,couponCode:'GC10'},user});
+      assert.equal(q2.data.discount,10,'only the book (100) is discounted');
+      // 4. the pincode must agree with the address text
+      await query('DELETE FROM cart_items WHERE cart_id=$1',[cart.id]);
+      await query('INSERT INTO cart_items(cart_id,book_id,quantity) VALUES($1,$2,1)',[cart.id,book.id]);
+      const mism=await request('/orders',{method:'POST',body:{...payload,paymentMethod:'upi',shippingName:'Buyer',shippingPhone:'9876543210',shippingAddress:'12 Street, Chennai 600001'},user});
+      assert.equal(mism.status,400);assert.match(mism.error,/pincode does not match/i);
+      // 5. per-customer coupon limit also counts the delivery phone
+      const {couponLimitError}=await import('../src/routes/coupons.js');
+      await query("UPDATE orders SET coupon_code='PHONE1',guest_email='first@test.invalid',shipping_phone='9876543210',status='placed' WHERE id=$1",[order.id]);
+      const msg=await couponLimitError({id:0,code:'PHONE1',per_customer_limit:1,usage_limit:null},{email:'someone-else@test.invalid',phone:'+91 98765 43210'});
+      assert.equal(msg,'You have already used this coupon');
+      assert.equal(await couponLimitError({id:0,code:'PHONE1',per_customer_limit:1,usage_limit:null},{email:'someone-else@test.invalid',phone:'9123456780'}),null,'a different phone is a different customer');
+      await query("UPDATE orders SET coupon_code=NULL WHERE id=$1",[order.id]);
     });
   }finally{console.log('Integration assertions complete');}
 });

@@ -324,20 +324,27 @@ export async function placeOrder(req, res) {
       const coupon = await findActiveCoupon(body.couponCode);
       const limitErr = await couponLimitError(
         coupon,
-        { userId: req.user?.id || null, email: req.user?.email || guestEmail },
+        { userId: req.user?.id || null, email: req.user?.email || guestEmail, phone: shippingPhone },
         client
       );
       if (limitErr) {
         await client.query('ROLLBACK');
         return res.status(400).json({ success: false, error: limitErr });
       }
-      discount = couponDiscount(coupon, subtotal);
+      // Gift cards are cash equivalents: a coupon must not make them cheaper than their face value.
+      const discountable = itemsRes.rows.filter((it) => it.product_type !== 'gift-card').reduce((s, it) => s + Number(it.sale_price) * Number(it.quantity), 0);
+      discount = couponDiscount(coupon, discountable);
       if (coupon && discount > 0) couponCode = coupon.code;
     }
     let giftApply = 0;
     let giftCardCode = null;
     const pinMatch = shippingAddress.match(/\b(\d{6})\b/);
-    const delivery = await deliveryQuote(pinMatch?.[1],subtotal-discount,(sql,params)=>client.query(sql,params));
+    const enteredPin = String(shipping.pincode || '').trim();
+    if (enteredPin && pinMatch && pinMatch[1] !== enteredPin) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, error: 'The pincode does not match the delivery address' });
+    }
+    const delivery = await deliveryQuote(enteredPin || pinMatch?.[1], subtotal - discount, (sql, params) => client.query(sql, params));
     const shippingFee = delivery.shipping;
     let total = Math.max(0, subtotal - discount + shippingFee);
     if (body.giftCardCode) {

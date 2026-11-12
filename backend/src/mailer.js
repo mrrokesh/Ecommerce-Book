@@ -24,7 +24,7 @@ export async function deliverEmail(id){
         const transport=nodemailer.createTransport({host:process.env.SMTP_HOST,port:Number(process.env.SMTP_PORT||587),secure:process.env.SMTP_SECURE==='true',auth:{user:process.env.SMTP_USER,pass:process.env.SMTP_PASS},connectionTimeout:10000,socketTimeout:15000});
         await transport.sendMail({from:fromHeader(),to:m.to_email,subject:m.subject,text:m.body,html:m.html_body||undefined,messageId:'<'+m.id+'@salembookhouse.local>'});
       }
-      await c.query('UPDATE email_outbox SET sent=TRUE,error=NULL,attempts=attempts+1 WHERE id=$1',[id]);
+      await c.query("UPDATE email_outbox SET sent=TRUE,error=NULL,attempts=attempts+1,body=CASE WHEN subject ~* '^(reset your|verify your|your secure order access link)' THEN '[sensitive link removed after delivery]' ELSE body END,html_body=CASE WHEN subject ~* '^(reset your|verify your|your secure order access link)' THEN NULL ELSE html_body END WHERE id=$1",[id]);
       await c.query('COMMIT');return {sent:true};
     }catch(e){await c.query("UPDATE email_outbox SET error=$2,attempts=attempts+1,next_attempt_at=NOW()+INTERVAL '5 minutes' WHERE id=$1",[id,e.message]);await c.query('COMMIT');return {sent:false,error:e.message};}
   }catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}

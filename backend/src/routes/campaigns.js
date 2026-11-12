@@ -75,7 +75,7 @@ const AUDIENCE_SQL = `
   SELECT d.email, d.name, d.token FROM (
     SELECT DISTINCT ON (lower(a.email)) a.email, a.name, a.token FROM (
       SELECT u.email, u.name, u.unsubscribe_token AS token, 1 AS pri FROM users u
-       WHERE u.role = 'customer' AND u.marketing_opt_in = TRUE AND u.email IS NOT NULL
+       WHERE u.role = 'customer' AND u.marketing_opt_in = TRUE AND u.email IS NOT NULL AND u.email_verified_at IS NOT NULL
       UNION ALL
       SELECT s.email, s.name, s.unsubscribe_token AS token, 2 AS pri FROM marketing_subscribers s WHERE s.active = TRUE
     ) a ORDER BY lower(a.email), a.pri
@@ -112,7 +112,7 @@ router.get('/', wrap(async () => {
 router.get('/subscribers', wrap(async () => {
   const rows = (await query(`
     SELECT 'account' AS source, u.id::text AS ref, u.email, u.name, COALESCE(u.marketing_consent_at, u.created_at) AS consent_at, TRUE AS active
-      FROM users u WHERE u.role = 'customer' AND u.marketing_opt_in = TRUE
+      FROM users u WHERE u.role = 'customer' AND u.marketing_opt_in = TRUE AND u.email_verified_at IS NOT NULL
     UNION ALL
     SELECT s.source, s.id::text, s.email, s.name, s.consent_at, s.active FROM marketing_subscribers s
     ORDER BY consent_at DESC LIMIT 2000`)).rows;
