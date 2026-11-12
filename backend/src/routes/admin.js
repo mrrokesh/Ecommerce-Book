@@ -31,6 +31,7 @@ const MODULE_ROUTES = [
   [/^\/upload(\/|$)/, ['products', 'marketing']],
   [/^\/customers(\/|$)/, ['customers']],
   [/^\/(banners|coupons)(\/|$)/, ['marketing']],
+  [/^\/order-alerts(\/|$)/, ['orders']],
   [/^\/pages(\/|$)/, ['pages']],
   [/^\/emails(\/|$)/, ['emails']],
 ];
@@ -595,6 +596,29 @@ function mapAdminOrder(o) {
     updatedAt: o.updated_at,
   };
 }
+
+/** Orders placed since a timestamp, for the admin's new-order chime. The reply's asOf is the next `since`. */
+router.get('/order-alerts', async (req, res) => {
+  try {
+    const asOf = new Date();
+    const since = req.query.since ? new Date(String(req.query.since)) : null;
+    if (!since || Number.isNaN(since.getTime())) return res.json({ success: true, data: { asOf: asOf.toISOString(), orders: [] } });
+    const { rows } = await query(
+      `SELECT id, order_number, total, payment_method, shipping_name, created_at FROM orders
+        WHERE created_at > $1 AND created_at <= $2 ORDER BY created_at ASC LIMIT 20`,
+      [since, asOf]
+    );
+    return res.json({
+      success: true,
+      data: {
+        asOf: asOf.toISOString(),
+        orders: rows.map((o) => ({ id: o.id, orderNumber: o.order_number, total: Number(o.total), paymentMethod: o.payment_method, customer: o.shipping_name || '' })),
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: 'Could not check for new orders' });
+  }
+});
 
 router.get('/orders', async (req, res) => {
   try {

@@ -225,3 +225,10 @@
 .audience-list li { padding: 8px 12px; border-bottom: 1px solid var(--a-border); }
 .audience-list li:last-child { border-bottom: 0; }
 .audience-list em { font-style: normal; color: var(--a-text-2); }
+
+/* order-alert bell */
+.erp-bell { position: relative; border: 0; background: transparent; cursor: pointer; }
+.erp-bell .erp-bell-dot { position: absolute; top: 6px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: #1e9e5a; border: 2px solid #fff; }
+.erp-bell:not(.on) { color: #9aa3b8; }
+.erp-bell:not(.on) .erp-bell-dot { background: #c2c8d4; }
+.erp-shell .toast-host { position: fixed; top: 64px; right: 16px; left: auto; bottom: auto; z-index: 90; }

@@ -5,6 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { LoadingState } from '../components/States';
 import { firstAllowedPath, moduleForPath, NAV_GROUPS } from './modules';
 import AdminIcon from './AdminIcon';
+import ToastHost from '../components/Toast';
+import { useOrderAlerts } from './useOrderAlerts';
+import { askNotificationPermission, playChime, unlockAudio } from '../lib/alertSound';
 import './admin.css';
 import './admin-v2.css';
 
@@ -32,6 +35,10 @@ export default function AdminLayout() {
   const [permissions, setPermissions] = useState<string[] | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [badges, setBadges] = useState<Record<string, number>>({});
+  const [refreshTick, setRefreshTick] = useState(0);
+  const [soundOn, setSoundOn] = useState(() => {
+    try { return localStorage.getItem('sbh_admin_order_sound') !== 'off'; } catch { return true; }
+  });
   const [usage, setUsage] = useState<{ used: number; cap: number } | null>(null);
   useEffect(() => setMenuOpen(false), [loc.pathname]);
   const role = user?.role;
@@ -67,7 +74,22 @@ export default function AdminLayout() {
       api.get('/campaigns').then(({ data }) => alive && setUsage({ used: Number(data.sentToday || 0), cap: Number(data.dailyCap || 0) })).catch(() => undefined);
     }
     return () => { alive = false; };
-  }, [inPortal, permissions, loc.pathname, role]);
+  }, [inPortal, permissions, loc.pathname, role, refreshTick]);
+
+  const canSeeOrders = role === 'admin' || Boolean(permissions?.includes('orders'));
+  // New-order chime, toast and desktop notification while the admin is open
+  useOrderAlerts(inPortal && canSeeOrders, soundOn, () => setRefreshTick((n) => n + 1));
+
+  async function toggleSound() {
+    const next = !soundOn;
+    setSoundOn(next);
+    try { localStorage.setItem('sbh_admin_order_sound', next ? 'on' : 'off'); } catch { /* storage unavailable */ }
+    if (next) {
+      unlockAudio();
+      playChime(); // lets you hear what an order sounds like
+      void askNotificationPermission();
+    }
+  }
 
   const title = loc.pathname.startsWith('/admin/products/') && loc.pathname !== '/admin/products/new'
     ? 'Edit product'
@@ -94,6 +116,7 @@ export default function AdminLayout() {
 
   return (
     <div className="erp-shell">
+      <ToastHost />
       {menuOpen ? <div className="erp-scrim" onClick={() => setMenuOpen(false)} /> : null}
       <aside className={`erp-side${menuOpen ? ' open' : ''}`} aria-label="Admin navigation">
         <Link to="/admin" className="erp-brand">
@@ -134,6 +157,13 @@ export default function AdminLayout() {
           </button>
           <PageSearch groups={groups} />
           <div className="erp-top-right">
+            {canSeeOrders ? (
+              <button type="button" className={`erp-icon-btn erp-bell${soundOn ? ' on' : ''}`} onClick={toggleSound} aria-pressed={soundOn}
+                title={soundOn ? 'New-order sound is on (click to mute)' : 'New-order sound is off (click to turn on)'}>
+                <AdminIcon name="bell" />
+                <span className="erp-bell-dot" aria-hidden="true" />
+              </button>
+            ) : null}
             <Link to="/" className="erp-icon-btn" title="View storefront"><AdminIcon name="store" /></Link>
             <Link to="/admin/security" className="erp-icon-btn" title="Account security"><AdminIcon name="shield" /></Link>
             <span className="erp-user">{String(user.name || user.email).split(/[\s@]/)[0]}</span>

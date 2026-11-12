@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 const EVENT = 'sbh:toast';
 
 /** Show a short confirmation message from anywhere (no provider needed). */
-export function showToast(message: string) {
-  window.dispatchEvent(new CustomEvent(EVENT, { detail: message }));
+export function showToast(message: string, ms = 2600) {
+  window.dispatchEvent(new CustomEvent(EVENT, { detail: { message, ms } }));
 }
 
 export default function ToastHost() {
@@ -13,9 +13,11 @@ export default function ToastHost() {
   useEffect(() => {
     let timer: number | undefined;
     function onToast(e: Event) {
-      setMsg(String((e as CustomEvent).detail || ''));
+      const d = (e as CustomEvent).detail;
+      const text = typeof d === 'string' ? d : String(d?.message || '');
+      setMsg(text);
       window.clearTimeout(timer);
-      timer = window.setTimeout(() => setMsg(''), 2600);
+      timer = window.setTimeout(() => setMsg(''), typeof d === 'object' && d?.ms ? d.ms : 2600);
     }
     window.addEventListener(EVENT, onToast);
     return () => {

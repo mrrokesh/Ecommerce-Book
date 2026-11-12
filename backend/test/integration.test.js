@@ -194,5 +194,12 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       const ok=await request('/campaigns/'+c.data.id+'/send',{method:'POST',body:{confirm:true,emails:['PICK-A@test.invalid','stranger@test.invalid']}});assert.equal(ok.data.queued,1);
       const rows=(await query('SELECT to_email FROM email_outbox WHERE campaign_id=$1',[c.data.id])).rows;assert.deepEqual(rows.map(r=>r.to_email),['pick-a@test.invalid']);
     });
+    await t.test('new-order feed reports only orders after the given time and needs the orders permission',async()=>{
+      const none=await request('/admin/order-alerts');assert.equal(none.status,200);assert.deepEqual(none.data.orders,[],'first call only returns a starting point');
+      assert.ok(none.data.asOf);
+      const all=await request('/admin/order-alerts?since=2000-01-01T00:00:00Z');assert.equal(all.status,200);assert.ok(all.data.orders.length>0&&all.data.orders[0].orderNumber);
+      const later=await request('/admin/order-alerts?since='+encodeURIComponent(new Date(Date.now()+60000).toISOString()));assert.deepEqual(later.data.orders,[]);
+      assert.equal((await request('/admin/order-alerts?since=2000-01-01T00:00:00Z',{user})).status,403,'customers are refused');
+    });
   }finally{console.log('Integration assertions complete');}
 });
