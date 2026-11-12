@@ -186,5 +186,13 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       assert.equal((await query("SELECT active FROM marketing_subscribers WHERE email='listed@test.invalid'")).rows[0].active,false);
       assert.equal((await request('/campaigns/subscribers',{method:'POST',body:{email:'listed@test.invalid',consent:true}})).status,400,'an unsubscribed person is not re-added by an admin');
     });
+    await t.test('a campaign can be sent to chosen subscribers only',async()=>{
+      for(const e of ['pick-a@test.invalid','pick-b@test.invalid'])assert.equal((await request('/campaigns/subscribers',{method:'POST',body:{email:e,consent:true}})).status,200);
+      const draft={name:'Pick test',subject:'Chosen recipients only',headline:'Just for you',body:'This goes to chosen people only.',ctaLabel:'Shop',ctaUrl:'/shop/books'};
+      const c=await request('/campaigns',{method:'POST',body:draft});
+      const bad=await request('/campaigns/'+c.data.id+'/send',{method:'POST',body:{confirm:true,emails:['stranger@test.invalid']}});assert.equal(bad.status,400,'people who are not subscribed are never emailed');
+      const ok=await request('/campaigns/'+c.data.id+'/send',{method:'POST',body:{confirm:true,emails:['PICK-A@test.invalid','stranger@test.invalid']}});assert.equal(ok.data.queued,1);
+      const rows=(await query('SELECT to_email FROM email_outbox WHERE campaign_id=$1',[c.data.id])).rows;assert.deepEqual(rows.map(r=>r.to_email),['pick-a@test.invalid']);
+    });
   }finally{console.log('Integration assertions complete');}
 });

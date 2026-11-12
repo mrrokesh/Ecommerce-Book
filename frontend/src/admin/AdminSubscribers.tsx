@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { confirmAction } from '../components/Dialogs';
 
@@ -21,6 +21,9 @@ export default function AdminSubscribers() {
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const togglePick = (email: string) => setPicked((s) => { const n = new Set(s); if (n.has(email)) n.delete(email); else n.add(email); return n; });
 
   async function load() {
     try {
@@ -97,15 +100,17 @@ export default function AdminSubscribers() {
         <div className="erp-toolbar" style={{ gap: 8, flexWrap: 'wrap' }}>
           <input aria-label="Search subscribers" placeholder="Search email or name" value={q} onChange={(e) => setQ(e.target.value)} data-no-validate />
           <span className="erp-grow" />
+          <button type="button" className="erp-btn primary" disabled={!picked.size} onClick={() => navigate('/admin/campaigns', { state: { emails: [...picked] } })}>Email selected ({picked.size})</button>
           <button type="button" className="erp-btn" onClick={exportCsv} disabled={!rows.length}>Export CSV</button>
         </div>
         {!shown.length ? <p className="muted">No subscribers yet.</p> : (
           <div className="ops-table">
             <table className="erp-table">
-              <thead><tr><th>Email</th><th>Name</th><th>How they joined</th><th>Agreed on</th><th>Status</th><th>Actions</th></tr></thead>
+              <thead><tr><th style={{ width: 36 }}><input type="checkbox" aria-label="Select all shown" data-no-validate checked={shown.filter((s) => s.active).length > 0 && shown.filter((s) => s.active).every((s) => picked.has(s.email))} onChange={(e) => setPicked(e.target.checked ? new Set(shown.filter((s) => s.active).map((s) => s.email)) : new Set())} /></th><th>Email</th><th>Name</th><th>How they joined</th><th>Agreed on</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
                 {shown.map((s) => (
                   <tr key={s.source + s.ref}>
+                    <td>{s.active ? <input type="checkbox" aria-label={`Select ${s.email}`} data-no-validate checked={picked.has(s.email)} onChange={() => togglePick(s.email)} /> : null}</td>
                     <td title={s.email}>{s.email}</td>
                     <td>{s.name || '-'}</td>
                     <td>{SOURCE_LABEL[s.source] || s.source}</td>

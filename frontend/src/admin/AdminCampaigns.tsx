@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../api/client';
 import { confirmAction } from '../components/Dialogs';
 
@@ -8,6 +9,8 @@ type Campaign = {
   queued: number; delivered: number; failed: number; created_at: string; sent_at?: string;
 };
 type Overview = { campaigns: Campaign[]; subscribers: number; coupons: { code: string; description?: string }[]; dailyCap: number; sentToday: number };
+
+type Person = { email: string; name?: string; active: boolean };
 
 const blank = { id: 0, name: '', subject: '', preheader: '', headline: '', body: '', couponCode: '', ctaLabel: 'Shop the sale', ctaUrl: '/shop/books' };
 
@@ -28,6 +31,22 @@ export default function AdminCampaigns() {
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const location = useLocation();
+  const preselected = (location.state as { emails?: string[] } | null)?.emails;
+  const [people, setPeople] = useState<Person[]>([]);
+  const [mode, setMode] = useState<'all' | 'selected'>(preselected?.length ? 'selected' : 'all');
+  const [chosen, setChosen] = useState<Set<string>>(new Set(preselected || []));
+  const [pickQ, setPickQ] = useState('');
+
+  useEffect(() => {
+    api.get('/campaigns/subscribers').then(({ data }) => setPeople((data.subscribers as Person[]).filter((p) => p.active))).catch(() => undefined);
+  }, []);
+  const visiblePeople = useMemo(
+    () => people.filter((p) => !pickQ.trim() || `${p.email} ${p.name || ''}`.toLowerCase().includes(pickQ.trim().toLowerCase())),
+    [people, pickQ]
+  );
+  const recipientCount = mode === 'all' ? data?.subscribers ?? 0 : [...chosen].filter((e) => people.some((p) => p.email.toLowerCase() === e.toLowerCase())).length;
+  const toggle = (email: string) => setChosen((s) => { const n = new Set(s); if (n.has(email)) n.delete(email); else n.add(email); return n; });
 
   async function load() {
     try {
@@ -72,12 +91,14 @@ export default function AdminCampaigns() {
 
   const sendAll = () => run(async () => {
     const saved = (await api.post('/campaigns', form)).data;
-    const n = data?.subscribers || 0;
+    const n = recipientCount;
     if (!(await confirmAction(`Send "${form.subject}" to ${n} subscriber${n === 1 ? '' : 's'} now? This cannot be undone.`))) return;
-    const { data: r } = await api.post(`/campaigns/${saved.id}/send`, { confirm: true });
+    const { data: r } = await api.post(`/campaigns/${saved.id}/send`, { confirm: true, emails: mode === 'selected' ? [...chosen] : undefined });
     setMsg(`Queued for ${r.queued} customers. Delivery runs in the background, about 150 a minute.`);
     setForm({ ...blank });
     setPreview('');
+    setChosen(new Set());
+    setMode('all');
     await load();
   });
 
@@ -148,9 +169,38 @@ export default function AdminCampaigns() {
             <input type="email" placeholder="your@email.com (blank = your login email)" value={testTo} onChange={(e) => setTestTo(e.target.value)} />
           </label>
           <button type="button" className="erp-btn" disabled={busy || locked} onClick={sendTest}>Send test email</button>
-          <button type="button" className="erp-btn primary" disabled={busy || locked || !data?.subscribers} onClick={sendAll}>
-            Send to {data?.subscribers ?? 0} subscribers
+          <button type="button" className="erp-btn primary" disabled={busy || locked || !recipientCount} onClick={sendAll}>
+            Send to {recipientCount} {recipientCount === 1 ? 'subscriber' : 'subscribers'}
           </button>
+        </div>
+
+        <div className="audience-box">
+          <p style={{ margin: '0 0 8px' }}><strong>Who should get this?</strong></p>
+          <div className="audience-modes">
+            <label className="check-row"><input type="radio" name="audience" checked={mode === 'all'} onChange={() => setMode('all')} /><span>Everyone subscribed ({data?.subscribers ?? 0})</span></label>
+            <label className="check-row"><input type="radio" name="audience" checked={mode === 'selected'} onChange={() => setMode('selected')} /><span>Only the people I choose ({chosen.size} chosen)</span></label>
+          </div>
+          {mode === 'selected' ? (
+            <div className="audience-picker">
+              <div className="erp-toolbar" style={{ gap: 8, flexWrap: 'wrap' }}>
+                <input aria-label="Search people" data-no-validate placeholder="Search email or name" value={pickQ} onChange={(e) => setPickQ(e.target.value)} />
+                <button type="button" className="erp-btn" onClick={() => setChosen(new Set(visiblePeople.map((p) => p.email)))}>Select shown</button>
+                <button type="button" className="erp-btn" onClick={() => setChosen(new Set())}>Clear</button>
+              </div>
+              {!visiblePeople.length ? <p className="muted">No subscribers match.</p> : (
+                <ul className="audience-list">
+                  {visiblePeople.map((p) => (
+                    <li key={p.email}>
+                      <label className="check-row">
+                        <input type="checkbox" checked={chosen.has(p.email)} onChange={() => toggle(p.email)} />
+                        <span>{p.name ? `${p.name} ` : ''}<em>{p.email}</em></span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : null}
         </div>
 
         {preview ? (

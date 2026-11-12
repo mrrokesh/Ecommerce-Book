@@ -189,7 +189,13 @@ router.post('/:id/send', wrap(async (req) => {
     if (!c) throw fail('Campaign not found', 404);
     if (c.status !== 'draft') throw fail('This campaign was already sent');
     await ensureTokens(client);
-    const people = (await client.query(AUDIENCE_SQL)).rows;
+    let people = (await client.query(AUDIENCE_SQL)).rows;
+    if (Array.isArray(req.body?.emails)) {
+      // Send to a chosen subset; anything that is not on the subscribed list is ignored.
+      const wanted = new Set(req.body.emails.map((e) => String(e).trim().toLowerCase()));
+      people = people.filter((p) => wanted.has(String(p.email).toLowerCase()));
+      if (!people.length) throw fail('None of the chosen people are currently subscribed');
+    }
     if (!people.length) throw fail('Nobody has opted in to offers yet');
     const sent = (await client.query(`SELECT COUNT(*)::int AS n FROM email_outbox WHERE created_at > NOW() - INTERVAL '1 day'`)).rows[0].n;
     if (sent + people.length > DAILY_CAP) throw fail(`This would exceed the daily email limit (${DAILY_CAP}). ${Math.max(0, DAILY_CAP - sent)} more can be sent in the next 24 hours`);
