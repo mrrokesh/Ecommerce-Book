@@ -43,44 +43,47 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="erp-login">
-      <form className="erp-login-card" onSubmit={onSubmit}>
-        <div className="erp-login-brand">
-          <img src="/sbh-logo.jpg" alt="" width={44} height={44} />
-          <div>
-            <strong>Salem Book House</strong>
-            <span>Store admin</span>
-          </div>
+    <div className="adm-login">
+      <aside className="adm-login-brand" aria-hidden="true">
+        <img className="adm-login-logo" src="/sbh-logo.jpg" alt="" width={72} height={72} />
+        <div className="adm-login-pitch">
+          <h2>Run Salem Book House<br />with confidence.</h2>
+          <ul>
+            <li><span>&#10003;</span> Orders, returns and refunds in one place</li>
+            <li><span>&#10003;</span> Send seasonal offers and track delivery</li>
+            <li><span>&#10003;</span> Protected with optional two-factor sign-in</li>
+          </ul>
         </div>
-        <h1>Sign in</h1>
-        <p className="erp-login-sub">Use your admin or staff account.</p>
-        <label>
-          Email
-          <input
-            type="email"
-            autoComplete="username"
-            required
-            autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-        <label>Authenticator code (if enabled)<input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e=>setCode(e.target.value)} /></label>
-        {error ? <p className="erp-error">{error}</p> : null}
-        <button type="submit" className="erp-btn primary erp-login-submit" disabled={busy}>
-          {busy ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
+        <p className="adm-login-foot">Store admin and staff portal</p>
+      </aside>
+
+      <main className="adm-login-main">
+        <form className="adm-login-form" onSubmit={onSubmit}>
+          <div className="adm-login-mini">
+            <img src="/sbh-logo.jpg" alt="" width={40} height={40} />
+            <strong>Salem Book House</strong>
+          </div>
+          <h1>Sign in</h1>
+          <p className="adm-login-sub">Use your admin or staff account.</p>
+          <label>
+            Email
+            <input type="email" autoComplete="username" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} />
+          </label>
+          <label>
+            Password
+            <input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          </label>
+          <label>
+            Authenticator code <span className="adm-login-hint">(only if two-factor is on)</span>
+            <input inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit code" value={code} onChange={(e) => setCode(e.target.value)} />
+          </label>
+          {error ? <p className="erp-error">{error}</p> : null}
+          <button type="submit" className="adm-login-submit" disabled={busy}>
+            {busy ? 'Signing in…' : 'Sign in'}
+          </button>
+          <p className="adm-login-links"><a href="/">Back to the store</a></p>
+        </form>
+      </main>
     </div>
   );
 }
