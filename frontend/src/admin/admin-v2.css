@@ -2,6 +2,7 @@
  * Admin look: dark sidebar with collapsible groups, light top bar, white rounded cards.
  * Loaded after admin.css so these rules refine every admin page without touching each one.
  */
+:root,
 .erp-shell {
   --a-bg: #f7f8fa;
   --a-surface: #ffffff;
@@ -20,6 +21,8 @@
   --a-orange: #d97a06;
   --a-red: #d83b3b;
   --a-shadow: 0 1px 2px rgba(20, 24, 40, .06), 0 2px 8px rgba(20, 24, 40, .05);
+}
+.erp-shell {
   background: var(--a-bg);
   color: var(--a-text);
   font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
