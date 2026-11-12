@@ -13,7 +13,7 @@ import {
 import { sendMail, mailConfigured, mailBudgetOk } from '../mailer.js';
 import { welcomeEmail, signInAlert, passwordChangedEmail, verifyEmailMail, passwordResetEmail } from '../notify/accountMail.js';
 import rateLimit from 'express-rate-limit';
-import { loginLocked, recordLoginFailure, clearLoginFailures, signupCapReached } from '../utils/abuseGuard.js';
+import { loginLocked, recordLoginFailure, clearLoginFailures, signupCapReached, phoneTaken, PHONE_TAKEN_MESSAGE } from '../utils/abuseGuard.js';
 
 const router = Router();
 
@@ -54,6 +54,9 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ success: false, error: 'Email already registered' });
     }
 
+    if (phone && (await phoneTaken(phone))) {
+      return res.status(409).json({ success: false, error: PHONE_TAKEN_MESSAGE });
+    }
     if (await signupCapReached()) {
       return res.status(429).json({ success: false, error: 'Sign-ups are busy right now. Please try again later.' });
     }
@@ -178,6 +181,9 @@ router.patch('/me', requireAuth, async (req, res) => {
     {
       const bad = firstError([['name', name, 'Name', { skipEmpty: true }], ['phone', phone, 'Phone', { skipEmpty: true }]]);
       if (bad) return res.status(400).json({ success: false, error: bad });
+    }
+    if (phone?.trim() && (await phoneTaken(phone, req.user.id))) {
+      return res.status(409).json({ success: false, error: PHONE_TAKEN_MESSAGE });
     }
     const { rows } = await query(
       `UPDATE users SET name = COALESCE($1, name), phone = COALESCE($2, phone),

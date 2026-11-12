@@ -5,6 +5,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import Razorpay from 'razorpay';
 import { optionalAuth } from '../middleware/auth.js';
+import { emailVerificationRequired, VERIFY_BEFORE_ORDER_MESSAGE } from '../utils/abuseGuard.js';
 
 const router = Router();
 const payLimiter = rateLimit({
@@ -89,6 +90,9 @@ router.post('/quote',payLimiter,optionalAuth,async(req,res)=>{
   catch(e){return res.status(400).json({success:false,error:e.message});}
 });
 router.post('/create-order', payLimiter, optionalAuth, async (req, res) => {
+  if (emailVerificationRequired(req.user)) {
+    return res.status(403).json({ success: false, code: 'EMAIL_NOT_VERIFIED', error: VERIFY_BEFORE_ORDER_MESSAGE });
+  }
   try {
     const payload={sessionId:req.body?.sessionId || req.get('x-session-id'),shipping:req.body.shipping,addressId:req.body.addressId,guestEmail:req.body.guestEmail,couponCode:req.body.couponCode,giftCardCode:req.body.giftCardCode};
     if(payload.addressId && req.user){

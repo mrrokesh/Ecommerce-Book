@@ -23,7 +23,7 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
   const base=`http://127.0.0.1:${server.address().port}/api`;
   const {signToken}=await import('../src/middleware/auth.js');
   const admin=(await query("INSERT INTO users(name,email,password_hash,role) VALUES('Admin','admin@test.invalid','x','admin') RETURNING *")).rows[0];
-  const user=(await query("INSERT INTO users(name,email,password_hash) VALUES('Buyer','buyer@test.invalid','x') RETURNING *")).rows[0];
+  const user=(await query("INSERT INTO users(name,email,password_hash,email_verified_at) VALUES('Buyer','buyer@test.invalid','x',NOW()) RETURNING *")).rows[0];
   const headers=u=>({'Content-Type':'application/json',Authorization:'Bearer '+signToken(u.id),'x-session-id':'test-session'});
   async function request(url,{method='GET',body,user:who=admin}={}){const r=await fetch(base+url,{method,headers:headers(who),body:body?JSON.stringify(body):undefined});const data=await r.json();return {status:r.status,...data};}
   const book=(await query("INSERT INTO books(title,slug,author_name,mrp,sale_price,stock) VALUES('Test book','test-book','Author',200,100,20) RETURNING *")).rows[0];
@@ -247,6 +247,19 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       try{assert.equal(await codOrderCapReached(),true,'COD cap reached at 0');}
       finally{delete process.env.COD_DAILY_CAP;}
       assert.equal(await codOrderCapReached(),false,'COD cap not reached by default');
+    });
+    await t.test('one account per phone number; unverified customers cannot order',async()=>{
+      const post=async(url,body)=>{const r=await fetch(base+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:r.status,...await r.json()};};
+      await query("INSERT INTO users(name,email,password_hash,phone) VALUES('Phone One','phone-one@test.invalid','x','9876501234')"); // inserted directly: the shared per-IP auth limiter is nearly used up by earlier tests
+      const dup=await post('/auth/register',{name:'Phone Two',email:'phone-two@test.invalid',phone:'+91 98765-01234',password:'Phone#2026ok'});
+      assert.equal(dup.status,409,'same phone (different formatting) is refused');
+      assert.match(dup.error,/phone number/i);
+      const u=(await query("SELECT * FROM users WHERE email='phone-one@test.invalid'")).rows[0];
+      const mine=await request('/auth/me',{method:'PATCH',body:{phone:'9876501234'},user:u});assert.equal(mine.status,200,'own phone can be re-saved');
+      const blocked=await request('/orders',{method:'POST',body:{paymentMethod:'cod'},user:u});
+      assert.equal(blocked.status,403);assert.equal(blocked.code,'EMAIL_NOT_VERIFIED');
+      const blockedPay=await request('/payments/create-order',{method:'POST',body:{},user:u});
+      assert.equal(blockedPay.status,403);assert.equal(blockedPay.code,'EMAIL_NOT_VERIFIED');
     });
     await t.test('run-3 audit fixes: no mail bodies for staff, masked gift codes, no coupon on gift cards, pincode bound to address, coupon limit by phone',async()=>{
       // 1. the admin email list never returns message bodies (they hold reset / verification / guest links)

@@ -53,3 +53,28 @@ export async function codOrderCapReached() {
   const { rows } = await query("SELECT COUNT(*)::int AS n FROM orders WHERE payment_method = 'cod' AND created_at > NOW() - INTERVAL '24 hours'");
   return rows[0].n >= cap;
 }
+
+// ---- One account per phone number; verified email before ordering ----
+const digits10 = (p) => String(p || '').replace(/\D/g, '').slice(-10);
+
+/** True when another account already uses this phone number (compared on the last 10 digits). */
+export async function phoneTaken(phone, exceptUserId = null) {
+  const d = digits10(phone);
+  if (d.length < 10) return false;
+  const { rows } = await query(
+    `SELECT 1 FROM users
+      WHERE right(regexp_replace(COALESCE(phone,''), '\\D', '', 'g'), 10) = $1
+        AND ($2::uuid IS NULL OR id <> $2::uuid) LIMIT 1`,
+    [d, exceptUserId]
+  );
+  return rows.length > 0;
+}
+
+export const PHONE_TAKEN_MESSAGE = 'This phone number is already linked to another account. Sign in to that account or use a different number.';
+
+/** Customers must verify their email before placing an order or paying. Staff and guests are not affected. */
+export function emailVerificationRequired(user) {
+  return Boolean(user && user.role === 'customer' && !user.email_verified_at);
+}
+
+export const VERIFY_BEFORE_ORDER_MESSAGE = 'Please verify your email address before placing an order. We sent you a verification link; use "Resend" on the banner if you need a new one.';

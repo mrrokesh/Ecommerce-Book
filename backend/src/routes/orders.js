@@ -16,7 +16,7 @@ import {
   refundRazorpayPayment,
 } from './payments.js';
 import { sendMail } from '../mailer.js';
-import { codOrderCapReached } from '../utils/abuseGuard.js';
+import { emailVerificationRequired, VERIFY_BEFORE_ORDER_MESSAGE, codOrderCapReached } from '../utils/abuseGuard.js';
 import { notifyOrderEvent } from '../notify/index.js';
 
 const router = Router();
@@ -142,6 +142,9 @@ function orderNumber() {
 }
 
 export async function placeOrder(req, res) {
+  if (emailVerificationRequired(req.user)) {
+    return res.status(403).json({ success: false, code: 'EMAIL_NOT_VERIFIED', error: VERIFY_BEFORE_ORDER_MESSAGE });
+  }
   if (String(req.body?.paymentMethod || 'cod').toLowerCase() === 'cod' && !req.body?.razorpayOrderId && (await codOrderCapReached())) {
     return res.status(429).json({ success: false, error: 'We are receiving a very high number of cash-on-delivery orders. Please pay online or try again later.' });
   }
