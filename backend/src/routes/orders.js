@@ -260,7 +260,7 @@ export async function placeOrder(req, res) {
     }
 
     if (sessionId) {
-      const guestRes = await client.query(`SELECT * FROM carts WHERE session_id = $1`, [sessionId]);
+      const guestRes = await client.query(`SELECT * FROM carts WHERE session_id = $1 AND user_id IS NULL FOR UPDATE`, [sessionId]);
       const guest = guestRes.rows[0];
       if (guest) {
         if (!cart) {

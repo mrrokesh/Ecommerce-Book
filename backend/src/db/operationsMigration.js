@@ -4,6 +4,7 @@ export async function migrateOperations(query) {
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS gift_credit NUMERIC(12,2) NOT NULL DEFAULT 0;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS gift_credit_restored BOOLEAN NOT NULL DEFAULT FALSE;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS guest_token_hash TEXT;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS guest_token_expires_at TIMESTAMPTZ;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_days INT NOT NULL DEFAULT 7;
     UPDATE orders SET delivered_at = updated_at WHERE status = 'delivered' AND delivered_at IS NULL;
     CREATE TABLE IF NOT EXISTS refund_requests (

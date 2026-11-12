@@ -32,7 +32,6 @@ const MODULE_ROUTES = [
   [/^\/customers(\/|$)/, ['customers']],
   [/^\/(banners|coupons)(\/|$)/, ['marketing']],
   [/^\/order-alerts(\/|$)/, ['orders']],
-  [/^\/pages(\/|$)/, ['pages']],
   [/^\/emails(\/|$)/, ['emails']],
 ];
 
@@ -822,35 +821,6 @@ router.delete('/banners/:id', async (req, res) => {
   return res.json({ success: true, data: { id: Number(req.params.id) } });
 });
 
-router.get('/pages', async (_req, res) => {
-  const { rows } = await query(`SELECT slug, title, body, updated_at FROM cms_pages ORDER BY slug`);
-  return res.json({
-    success: true,
-    data: {
-      pages: rows.map((p) => ({
-        slug: p.slug,
-        title: p.title,
-        body: p.body,
-        updatedAt: p.updated_at,
-      })),
-    },
-  });
-});
-
-router.put('/pages/:slug', async (req, res) => {
-  const { title, body } = req.body || {};
-  if (!/^[a-z0-9-]{1,80}$/.test(req.params.slug)) {
-    return res.status(400).json({ success: false, error: 'Slug may contain only a-z, 0-9 and dashes' });
-  }
-  if (!title || !body) return res.status(400).json({ success: false, error: 'Title and body are required' });
-  await query(
-    `INSERT INTO cms_pages (slug, title, body, updated_at) VALUES ($1,$2,$3,NOW())
-     ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, body = EXCLUDED.body, updated_at = NOW()`,
-    [req.params.slug, title, body]
-  );
-  return res.json({ success: true, data: { slug: req.params.slug } });
-});
-
 function limitOrNull(v) {
   const n = Math.floor(Number(v));
   return v === '' || v == null || !Number.isFinite(n) || n < 1 ? null : n;
@@ -1111,7 +1081,7 @@ router.patch('/staff/:id/password', async (req, res) => {
     }
     const hash = await bcrypt.hash(password, 10);
     const { rowCount } = await query(
-      `UPDATE users SET password_hash = $1 WHERE id = $2 AND role = ANY($3)`,
+      `UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE id = $2 AND role = ANY($3)`,
       [hash, req.params.id, STAFF_ROLES]
     );
     if (!rowCount) return res.status(404).json({ success: false, error: 'Staff member not found' });

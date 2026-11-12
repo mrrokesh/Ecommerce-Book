@@ -17,7 +17,7 @@ import RegisterPage from './pages/RegisterPage';
 import AccountPage from './pages/AccountPage';
 import OrdersPage from './pages/OrdersPage';
 import WishlistPage from './pages/WishlistPage';
-import CmsPage from './pages/CmsPage';
+import StoreHelp from './pages/StoreHelp';
 import AuthorPage from './pages/AuthorPage';
 import PublisherPage from './pages/PublisherPage';
 import StoresPage from './pages/StoresPage';
@@ -43,7 +43,7 @@ import AdminLogin from './admin/AdminLogin';
 import AdminStaff from './admin/AdminStaff';
 import AdminOrders from './admin/AdminOrders';
 import AdminMarketing from './admin/AdminMarketing';
-import AdminCms from './admin/AdminCms';
+import AdminHelp from './admin/AdminHelp';
 import AdminEmails from './admin/AdminEmails';
 import AdminCustomers from './admin/AdminCustomers';
 import AdminShipping from './admin/AdminShipping';
@@ -76,7 +76,7 @@ export default function App() {
               <Route path="marketing" element={<AdminMarketing />} />
               <Route path="campaigns" element={<AdminCampaigns />} />
               <Route path="subscribers" element={<AdminSubscribers />} />
-              <Route path="pages" element={<AdminCms />} />
+              <Route path="help" element={<AdminHelp />} />
               <Route path="emails" element={<AdminOperations section="emails" />} />
             </Route>
             <Route element={<Layout />}>
@@ -92,11 +92,14 @@ export default function App() {
               <Route path="account" element={<AccountPage />} />
               <Route path="account/orders" element={<OrdersPage />} />
               <Route path="wishlist" element={<WishlistPage />} />
-              <Route path="about" element={<CmsPage />} />
-              <Route path="contact" element={<CmsPage />} />
-              <Route path="terms" element={<CmsPage />} />
-              <Route path="privacy" element={<CmsPage />} />
-              <Route path="faq" element={<CmsPage />} />
+              <Route path="help" element={<StoreHelp page="help" />} />
+              <Route path="faq" element={<StoreHelp page="help" />} />
+              <Route path="shipping" element={<StoreHelp page="shipping" />} />
+              <Route path="returns" element={<StoreHelp page="returns" />} />
+              <Route path="about" element={<StoreHelp page="about" />} />
+              <Route path="contact" element={<StoreHelp page="contact" />} />
+              <Route path="terms" element={<StoreHelp page="terms" />} />
+              <Route path="privacy" element={<StoreHelp page="privacy" />} />
               <Route path="authors/:id" element={<AuthorPage />} />
               <Route path="publishers" element={<PublisherPage />} />
               <Route path="publishers/:slug" element={<PublisherPage />} />

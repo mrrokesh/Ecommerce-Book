@@ -22,7 +22,9 @@ const HELP_LINKS = [
   { label: 'Cart', to: '/cart' },
   { label: 'About Us', to: '/about' },
   { label: 'Contact Us', to: '/contact' },
-  { label: 'FAQs', to: '/faq' },
+  { label: 'Help Centre', to: '/help' },
+  { label: 'Shipping & Delivery', to: '/shipping' },
+  { label: 'Returns & Refunds', to: '/returns' },
   { label: 'Terms & Conditions', to: '/terms' },
   { label: 'Privacy Policy', to: '/privacy' },
 ];

@@ -29,6 +29,11 @@ router.get('/sitemap.xml', async (req, res) => {
       '/publishers',
       '/about',
       '/contact',
+      '/help',
+      '/shipping',
+      '/returns',
+      '/terms',
+      '/privacy',
     ].map((p) => `  <url><loc>${origin}${p || '/'}</loc><changefreq>daily</changefreq></url>`);
     for (const b of rows) {
       const last = new Date(b.updated_at || b.created_at || Date.now()).toISOString();

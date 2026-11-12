@@ -14,7 +14,7 @@ const hash=s=>crypto.createHash('sha256').update(String(s)).digest('hex');
 router.post('/guest-link',limit,async(req,res)=>{
   if(!mailConfigured())return res.status(503).json({success:false,error:'Email delivery is unavailable. Please contact the store for order assistance.'});
   const o=(await query('SELECT id FROM orders WHERE order_number=$1 AND lower(guest_email)=lower($2) AND user_id IS NULL',[String(req.body.orderNumber||''),String(req.body.email||'')])).rows[0];
-  if(o&&await mailBudgetOk(req.body.email,'Your secure order access link')){const token=crypto.randomBytes(32).toString('hex');await query('UPDATE orders SET guest_token_hash=$2 WHERE id=$1',[o.id,hash(token)]);
+  if(o&&await mailBudgetOk(req.body.email,'Your secure order access link')){const token=crypto.randomBytes(32).toString('hex');await query("UPDATE orders SET guest_token_hash=$2, guest_token_expires_at=NOW()+INTERVAL '24 hours' WHERE id=$1",[o.id,hash(token)]);
     const base=String(process.env.CLIENT_URL||'http://localhost:5173').split(',')[0];
     {const {html,text}=renderEmail({badge:'Secure link',title:'View your order',preheader:'Your private link to see this order.',greeting:'Hi,',paragraphs:['Use the button below to view your order, track it and request a cancellation or return. This link is private to you, so please do not share it.'],cta:{label:'View my order',url:`${base}/guest-order#${token}`}});await sendMail({to:req.body.email,subject:'Your secure order access link',text,html});}}
   res.json({success:true,data:{message:'If those details match a guest order, an access link has been emailed.'}});
@@ -22,8 +22,9 @@ router.post('/guest-link',limit,async(req,res)=>{
 async function guest(req,res,next){
   const token=String(req.get('x-order-token')||'');
   if(!/^[a-f0-9]{64}$/.test(token))return res.status(401).json({success:false,error:'Open the secure link from your order email'});
-  const o=(await query('SELECT * FROM orders WHERE guest_token_hash=$1 AND user_id IS NULL',[hash(token)])).rows[0];
-  if(!o)return res.status(404).json({success:false,error:'Order link is invalid. Request a new link.'});req.guestOrder=o;next();
+  const tokenHash=hash(token);
+  const o=(await query('SELECT * FROM orders WHERE guest_token_hash=$1 AND user_id IS NULL AND guest_token_expires_at>NOW()',[tokenHash])).rows[0];
+  if(!o)return res.status(404).json({success:false,error:'Order link is invalid or expired. Request a new link.'});req.guestOrder=o;req.guestTokenHash=tokenHash;res.set('Cache-Control','no-store');next();
 }
 router.get('/guest-order',limit,guest,async(req,res)=>{
   const o=req.guestOrder;
@@ -34,7 +35,8 @@ router.get('/guest-order',limit,guest,async(req,res)=>{
 router.get('/guest-order/invoice',limit,guest,async(req,res)=>{const items=await query('SELECT * FROM order_items WHERE order_id=$1',[req.guestOrder.id]);res.type('html').send(renderInvoiceHtml(req.guestOrder,items.rows));});
 router.post('/guest-order/:action',limit,guest,async(req,res)=>{
   const c=await(await getPool()).connect();try{
-    await c.query('BEGIN');const o=(await c.query('SELECT * FROM orders WHERE id=$1 FOR UPDATE',[req.guestOrder.id])).rows[0];
+    await c.query('BEGIN');const o=(await c.query('SELECT * FROM orders WHERE id=$1 AND guest_token_hash=$2 AND user_id IS NULL AND guest_token_expires_at>clock_timestamp() FOR UPDATE',[req.guestOrder.id,req.guestTokenHash])).rows[0];
+    if(!o)throw new Error('Order link is invalid or expired. Request a new link.');
     const next=req.params.action==='cancel'?'cancelled':req.params.action==='return'?'return_requested':null;
     if(!next)throw new Error('Unknown action');
     if(next==='return_requested'&&!canReturn(o,o.return_days))throw new Error('The return window has closed');

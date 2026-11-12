@@ -77,8 +77,10 @@ router.post('/webhooks/:carrier', async (req, res) => {
       b.status ||
       b.current_status ||
       b.shipment_status ||
-      b.data?.status ||
-      'shipped';
+      b.data?.status;
+    if (typeof status !== 'string' || !status.trim()) {
+      return res.status(400).json({ success: false, error: 'Shipment status is required' });
+    }
     const trackingUrl = safeLink(b.tracking_url || b.trackingUrl, { allowRelative: false });
     const data = await applyTrackingWebhook({
       carrier,

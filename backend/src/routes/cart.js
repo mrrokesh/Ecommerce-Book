@@ -24,7 +24,7 @@ async function getOrCreateCart(req) {
   }
   sessionId = sessionId.slice(0, 80);
 
-  let { rows } = await query(`SELECT * FROM carts WHERE session_id = $1`, [sessionId]);
+  let { rows } = await query(`SELECT * FROM carts WHERE session_id = $1 AND user_id IS NULL`, [sessionId]);
   if (!rows[0]) {
     ({ rows } = await query(
       `INSERT INTO carts (session_id) VALUES ($1) RETURNING *`,
@@ -79,7 +79,7 @@ router.use(async (req, res, next) => {
   try {
     const sid = String(req.headers['x-session-id'] || '').slice(0, 80);
     if (sid) {
-      const existing = await query(`SELECT 1 FROM carts WHERE session_id = $1`, [sid]);
+      const existing = await query(`SELECT 1 FROM carts WHERE session_id = $1 AND user_id IS NULL`, [sid]);
       if (existing.rowCount) return next();
     }
     const recent = await query(

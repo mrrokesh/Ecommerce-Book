@@ -9,10 +9,10 @@ Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeS
 - Guest and signed-in checkout: Cash on Delivery, or UPI / cards / net banking through Razorpay. Any product can be marked "Cash on delivery available" off in the admin; such products show an "Online payment only" notice on the product page, and checkout then offers only the online methods (the server refuses COD for them too). A short success chime plays when an order is placed
 - Sign in / sign up with email, Google or Facebook; email verification on sign-up, welcome, new sign-in and password-changed emails
 - Order tracking and GST invoice download for signed-in customers (own orders only), cancellations, item-level returns with refunds, and a secure emailed link for guest orders
-- Reviews, store locator, exam-prep section, CMS pages (About, Contact, FAQ, Terms, Privacy)
+- Reviews, store locator, exam-prep section and static storefront help and policy pages
 - New-order alerts in the admin: a chime, a toast and a desktop notification when a customer places an order while the admin is open (checked every 15 seconds by a background worker, so it keeps working while the tab is behind other tabs or apps; the bell in the top bar mutes it and your choice is remembered; leave the admin tab open, and click the page once so the browser allows sound and notifications)
 - Admin sign-in at `/admin/login` with a brand panel and centred form (collapses to a single card on phones)
-- Admin panel at `/admin` with a dark sidebar of collapsible groups with live count badges (orders to action, open returns, pending refunds, low stock) and a daily email usage meter, a jump-to-page search, a dashboard of pending actions, low stock and recent orders, and a layout that works on phones (separate sign-in, no storefront chrome): products, categories, orders, customers, reviews, coupons and banners, CMS pages, email outbox, staff accounts, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), ERP product sync
+- Admin panel at `/admin` with a dark sidebar of collapsible groups with live count badges (orders to action, open returns, pending refunds, low stock) and a daily email usage meter, a jump-to-page search, a dashboard of pending actions, low stock and recent orders, and a layout that works on phones (separate sign-in, no storefront chrome): products, categories, orders, customers, reviews, coupons and banners, email outbox, staff accounts, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), ERP product sync
 - Back-office operations in the admin: inventory and stock history, CSV import and bulk edits, payments and refunds, returns, sales reports, gift cards, store settings and delivery coverage, audit history, and optional authenticator-app two-factor sign-in
 - Branded HTML emails for every message (welcome with a real coupon, order receipt, shipping status tracker, returns, refunds, password reset, security alerts) and an admin **Promotional emails** section for seasonal sales (Diwali, Pongal, flash sales): templates, coupon attachment, preview, test send, send to opted-in customers, unsubscribe link and delivery stats, plus a **Subscribers** page (who agreed and when, add a person with a consent confirmation, remove, export CSV); a campaign goes to everyone subscribed or only the people you tick
 - All store email (orders, shipping, returns, refunds, account) is sent through Rokesh Notify from `noreply@salembookhouse.com`, with SMTP as a fallback and an admin outbox with automatic retries
@@ -61,12 +61,14 @@ All settings live in `backend/.env` (see `backend/.env.example`, which lists eve
 
 ## Admin portal and staff
 
+Open **Settings → Help & guide** (`/admin/help`) for searchable staff documentation. See the [repository admin guide](ADMIN_GUIDE.md) for the feature backlog.
+
 The admin portal lives at `/admin` with its own sign-in page (`/admin/login`). The storefront does not link to it, and the storefront `/login` is for customers only.
 
 Access is managed in **Admin → Store → Staff & roles**:
 
 - **Admins** have full access, including staff and role management.
-- **Staff** get a **role**. A role is a name plus the sections it can open: Dashboard, Orders, Products, Categories, Customers, Reviews, Shipping partners, Banners & coupons, CMS pages, Email outbox. Staff only see those sections in the menu.
+- **Staff** get a **role**. A role is a name plus the sections it can open: Dashboard, Orders, Products, Categories, Customers, Reviews, Shipping partners, Banners & coupons, Email outbox. Staff only see those sections in the menu.
 - A starter role, **Order manager** (Orders only), is created on first run. Edit it or create your own (for example "Catalogue editor" with Products and Categories).
 - Changing a role's sections applies to everyone with that role on their next request. A role cannot be deleted while staff have it.
 - Admins add staff with a name, email, password (shared with them directly; no email is sent) and role, change a member's role, reset passwords, and remove access.
@@ -154,11 +156,12 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 - Order totals are always computed on the server; Razorpay payments are verified by signature and amount, one payment can back only one order (unique index plus a cart lock), and gift cards must be paid online and are voided when their order is cancelled.
 - Customer cancellation locks the order row, so overlapping cancels cannot restock twice.
 - A password reset ends every login session issued before it (`users.token_version` in the signed token).
-- Only origins listed in `CLIENT_URL`, or the site's own host, may make state-changing requests; shared domains such as `*.vercel.app` are not trusted by name. The storefront always calls `/api` on its own origin.
+- List every browser origin in `CLIENT_URL`, including any custom domain and local preview origin. State-changing browser requests use this exact allowlist. Proxy host headers do not grant access. The storefront calls `/api` on its own origin.
 - Carrier endpoints set in the admin must be public `https` URLs (internal and cloud-metadata addresses are refused when saved and again before every call).
 - The public ISBN cover route is capped at 40 new upstream lookups a minute with a response-size limit, and guest-cart creation is capped at 600 a minute; guest carts untouched for 30 days are deleted daily.
 - Helmet CSP/HSTS headers on the API and security headers in `frontend/vercel.json`.
 - Admin uploads accept raster images only; admin-entered links (banners, tracking URLs) must be `http(s)` or same-site paths.
+- Guest order links now expire (`orders.guest_token_expires_at`); older links must be requested again. A staff password reset ends that account's existing sessions. Carrier webhooks must name a shipment status and match one order by AWB (and courier when given), otherwise they are refused. Guest carts are never matched to a signed-in user's cart. CSV import and bulk price changes validate every field (length, range, missing values) and keep the stored discount percentage in step with MRP and price. `/api/pages` and the admin CMS page editor were removed; the Help Centre, Terms and Privacy pages are static (see `StoreHelp.tsx`).
 - Mail that visitors can trigger (password reset, verification, guest order link) is capped per recipient and overall each hour; reset and verification tokens are single-use and stored hashed; unverified accounts lose their password if the same address later signs in with Google or Facebook.
 - Promotional email goes only to customers who ticked the unticked-by-default offers box (sign-up or account page); every promotion has an unsubscribe link that works without signing in.
 - Gift-card codes carry 64 bits of randomness; carrier API secrets are encrypted at rest.
@@ -174,9 +177,9 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 
 One-off data scripts live in `backend/src/scripts` (cover backfill, category cleanup and nav sync, Kannada → Tamil migration, …). Read the header comment before running any of them; `replaceKannadaWithTamil.js` is a dry run unless you pass `--apply`.
 
-### CMS pages
+### Storefront help and policies
 
-About, Contact, FAQ, Terms and Privacy are edited in **Admin → CMS pages**. The startup seed only creates pages that are missing and never overwrites edited content. To reset all five to the full default text, run `node src/scripts/ensureCmsAndFooterPages.js` in `backend`.
+The Help Centre (`/help` and `/faq`), Shipping, Returns, About, Contact, Terms and Privacy are maintained in `frontend/src/pages/StoreHelp.tsx` and linked in the storefront footer. Existing CMS rows are retained for historical reference. The storefront renders these pages from source and no longer reads the CMS table.
 
 ## Credits
 

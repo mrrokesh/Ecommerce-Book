@@ -30,4 +30,13 @@ Continue the defensive security review and responsive QA of the redesigned store
 
 ## 5. Immediate next step
 
-Open `backend/src/routes/operations.js` and review the `router.post('/products/import', ...)` handler first. Compare its field and stock validation with single-product writes in `backend/src/routes/admin.js`. Fix any confirmed mismatch at the write boundary and add a focused regression if needed. Then run the origin regression in the required sandbox. For additional responsive coverage, use `npm run preview:qa` from `backend` after building `frontend` and check populated admin tables and the admin sign-in page, including Safari and Android if available.
+Run `backend/test/integration.test.js` in a qualifying offline sandbox. Start with the browser-origin and CSV pricing cases, then validate the guest link and staff reset lifecycle with dummy accounts. Review `backend/src/routes/shipping.js` webhook handler against each configured carrier's expected event format before release. Use the separate browser QA fixture to check Safari and Android if available. The owner asked to leave social sign-in alone.
+
+## Follow-up changes
+
+- The staff guide is now a searchable webpage under Settings → Help & guide (`/admin/help`). The public Help Centre and static policies live in `frontend/src/pages/StoreHelp.tsx`. Removed the CMS editor, its permission, and the CMS API routes. Existing CMS database records are retained.
+
+- Added `ADMIN_GUIDE.md` with staff workflows, permission explanations, and prioritized gaps. The README links to it.
+- Hardened guest link expiry and revalidation, staff password reset revocation, carrier and AWB matching, and guest cart ownership. Older guest links need to be requested again. CSV and bulk pricing now keep the displayed discount synchronized. The new integration assertions still need execution in the audit sandbox.
+- The admin sign-in and populated Orders table passed Chromium checks at 320, 390, 667, 768, 1024 and 1440 px. Fixed clipping of the table's Manage action at 1024 px and opened sample order details after rebuilding. Physical devices and other browser engines remain unverified.
+- The populated QA preview checks its PostgreSQL host, port, and database before schema or sample-data writes. Use `QA_PREVIEW_PORT` to avoid an existing preview listener.

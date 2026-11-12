@@ -99,12 +99,19 @@ router.post('/products/import',wrap(req=>transaction(async c=>{
   const rows=parseCsv(String(req.body.csv||''));if(!rows.length||rows.length>1000)throw new Error('Import between 1 and 1000 rows');
   for(const [i,r] of rows.entries()){
     const stock=Number(r.stock),mrp=Number(r.mrp),price=Number(r.sale_price);
-    if(!r.title?.trim()||!r.author_name?.trim()||!Number.isInteger(stock)||stock<0||!Number.isFinite(mrp)||!Number.isFinite(price)||price<0||mrp<price||!['true','false'].includes(r.is_active))throw new Error('Invalid product on row '+(i+2));
+    const title=r.title?.trim(), author=r.author_name?.trim(), sku=r.sku?.trim() || null;
+    if(!title||title.length>300||!author||author.length>200||(sku&&sku.length>80)||
+       !r.stock?.trim()||!Number.isInteger(stock)||stock<0||stock>2147483647||
+       !r.mrp?.trim()||!r.sale_price?.trim()||!Number.isFinite(mrp)||!Number.isFinite(price)||
+       price<0||mrp<price||mrp>99999999.99||!['true','false'].includes(r.is_active))throw new Error('Invalid product on row '+(i+2));
+    const discount=mrp>0 ? Math.round((1-price/mrp)*100) : 0;
     let id=r.id;
     if(id){const old=(await c.query('SELECT stock FROM books WHERE id=$1 FOR UPDATE',[id])).rows[0];if(!old)throw new Error('Unknown product '+id);
-      await c.query('UPDATE books SET title=$2,author_name=$3,sku=$4,mrp=$5,sale_price=$6,stock=$7,is_active=$8 WHERE id=$1',[id,r.title,r.author_name,r.sku||null,mrp,price,stock,r.is_active==='true']);
+      await c.query(`UPDATE books SET title=$2,author_id=CASE WHEN author_name=$3 THEN author_id ELSE NULL END,
+        author_name=$3,sku=$4,mrp=$5,sale_price=$6,stock=$7,is_active=$8,discount_percent=$9 WHERE id=$1`,
+        [id,title,author,sku,mrp,price,stock,r.is_active==='true',discount]);
       await c.query('INSERT INTO stock_movements(book_id,delta,reason,actor_id) VALUES($1,$2,$3,$4)',[id,stock-old.stock,'CSV import',req.user.id]);
-    }else {id=(await c.query("INSERT INTO books(title,slug,author_name,sku,mrp,sale_price,stock,is_active) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",[r.title,'import-'+crypto.randomUUID(),r.author_name,r.sku||null,mrp,price,stock,r.is_active==='true'])).rows[0].id;}
+    }else {id=(await c.query("INSERT INTO books(title,slug,author_name,sku,mrp,sale_price,stock,is_active,discount_percent) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id",[title,'import-'+crypto.randomUUID(),author,sku,mrp,price,stock,r.is_active==='true',discount])).rows[0].id;}
     await audit(c,req.user,'product.imported',id,{stock,price});
   }return {imported:rows.length};
 })));
@@ -113,7 +120,7 @@ router.post('/products/bulk',wrap(req=>transaction(async c=>{
   const action=req.body.action,value=req.body.value;
   if(!['publish','hide','price','category'].includes(action))throw new Error('Unknown bulk action');
   for(const id of [...new Set(ids)].sort((a,b)=>a-b)){
-    if(action==='price'){if(!Number.isFinite(Number(value))||Number(value)<0)throw new Error('Invalid price');const r=await c.query('UPDATE books SET sale_price=$2 WHERE id=$1 AND mrp>=$2 RETURNING id',[id,value]);if(!r.rowCount)throw new Error('Price exceeds MRP or product is missing: '+id);}
+    if(action==='price'){if(value==null||!String(value).trim()||!Number.isFinite(Number(value))||Number(value)<0)throw new Error('Invalid price');const r=await c.query('UPDATE books SET sale_price=$2, discount_percent=CASE WHEN mrp>0 THEN ROUND((1-$2::numeric/mrp)*100) ELSE 0 END WHERE id=$1 AND mrp>=$2 RETURNING id',[id,value]);if(!r.rowCount)throw new Error('Price exceeds MRP or product is missing: '+id);}
     else if(action==='category')await c.query('INSERT INTO book_categories(book_id,category_id) VALUES($1,$2) ON CONFLICT DO NOTHING',[id,value]);
     else await c.query('UPDATE books SET is_active=$2 WHERE id=$1',[id,action==='publish']);
     await audit(c,req.user,'product.bulk.'+action,id,{value});

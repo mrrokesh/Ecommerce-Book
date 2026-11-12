@@ -182,7 +182,7 @@ function OrderDetail({ id, onChanged, onClose }) {
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. AWB 12345 via DTDC" />
         </label>
       </div>
-      <p className="muted">Cancelling or returning puts the items back in stock. Re-opening reserves them again.</p>
+      <p className="muted">Cancelling or completing a return puts eligible items back in stock. Cancelled and returned orders are closed.</p>
       <h3>Timeline</h3>
       <ul className="erp-timeline">
         {order.events.map((e, i) => (
@@ -265,6 +265,7 @@ export default function AdminOrders() {
           </button>
         </form>
         {error ? <p className="erp-error" style={{ padding: '0.75rem' }}>{error}</p> : null}
+        <div className="ops-table" role="region" aria-label="Orders table" tabIndex={0}>
         <table className="erp-table">
           <thead>
             <tr>
@@ -311,6 +312,7 @@ export default function AdminOrders() {
             ) : null}
           </tbody>
         </table>
+        </div>
         <div className="erp-pager">
           <span>
             {total} orders · page {page} of {totalPages}

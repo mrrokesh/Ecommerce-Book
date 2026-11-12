@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -20,7 +20,7 @@ const TITLES = {
   '/admin/orders': 'Orders',
   '/admin/customers': 'Customers',
   '/admin/marketing': 'Banners & coupons',
-  '/admin/pages': 'CMS pages',
+  '/admin/help': 'Help & guide',
   '/admin/emails': 'Email outbox',
   '/admin/shipping': 'Shipping partners',
   '/admin/reviews': 'Reviews',
@@ -34,6 +34,8 @@ export default function AdminLayout() {
   const loc = useLocation();
   const [permissions, setPermissions] = useState<string[] | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const menuPanel = useRef<HTMLElement>(null);
   const [badges, setBadges] = useState<Record<string, number>>({});
   const [refreshTick, setRefreshTick] = useState(0);
   const [soundOn, setSoundOn] = useState(() => {
@@ -41,6 +43,17 @@ export default function AdminLayout() {
   });
   const [usage, setUsage] = useState<{ used: number; cap: number } | null>(null);
   useEffect(() => setMenuOpen(false), [loc.pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    menuPanel.current?.focus();
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return;
+      setMenuOpen(false);
+      menuButton.current?.focus();
+    }
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [menuOpen]);
   const role = user?.role;
   const inPortal = isAuthenticated && (role === 'admin' || role === 'staff');
 
@@ -102,7 +115,7 @@ export default function AdminLayout() {
   const isAdmin = role === 'admin';
   const allowed = (module: string) => isAdmin || permissions.includes(module);
   const current = moduleForPath(loc.pathname);
-  const pageAllowed = loc.pathname === '/admin/security' || (current === 'staff' ? isAdmin : allowed(current));
+  const pageAllowed = current === 'any' || (current === 'staff' ? isAdmin : allowed(current));
 
   if (!pageAllowed) {
     const fallback = firstAllowedPath(allowed);
@@ -118,7 +131,7 @@ export default function AdminLayout() {
     <div className="erp-shell">
       <ToastHost />
       {menuOpen ? <div className="erp-scrim" onClick={() => setMenuOpen(false)} /> : null}
-      <aside className={`erp-side${menuOpen ? ' open' : ''}`} aria-label="Admin navigation">
+      <aside id="admin-navigation" ref={menuPanel} tabIndex={-1} className={`erp-side${menuOpen ? ' open' : ''}`} aria-label="Admin navigation">
         <Link to="/admin" className="erp-brand">
           <img className="erp-brand-mark" src="/sbh-logo.jpg" alt="" width={36} height={36} />
           <div>
@@ -152,7 +165,7 @@ export default function AdminLayout() {
       </aside>
       <div className="erp-main">
         <header className="erp-top">
-          <button type="button" className="erp-menu-btn" aria-label="Open menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((o) => !o)}>
+          <button ref={menuButton} type="button" className="erp-menu-btn" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-controls="admin-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen((o) => !o)}>
             <AdminIcon name="menu" />
           </button>
           <PageSearch groups={groups} />
@@ -173,7 +186,7 @@ export default function AdminLayout() {
         <div className="erp-body">
           <div className="erp-pagehead">
             <p className="erp-crumb">{isAdmin ? 'Admin' : 'Staff'} / {title}</p>
-            <h1>{title}</h1>
+            {current !== 'any' || !/^\/admin\/help\/?$/i.test(loc.pathname) ? <h1>{title}</h1> : null}
           </div>
           {pageAllowed ? (
             <Outlet />

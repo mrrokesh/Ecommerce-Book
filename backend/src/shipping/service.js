@@ -121,8 +121,8 @@ export async function maybeAutoShip(orderId) {
 
 export async function applyTrackingWebhook({ carrier, awb, status, note, trackingUrl }) {
   if (!awb) throw new Error('AWB required');
-  const { rows } = await query(`SELECT * FROM orders WHERE awb = $1`, [awb]);
-  if (!rows[0]) throw new Error('Order not found for AWB');
+  const { rows } = await query(`SELECT * FROM orders WHERE awb = $1 AND ($2::text IS NULL OR courier = $2) LIMIT 2`, [awb, carrier || null]);
+  if (rows.length !== 1) throw new Error('Shipment could not be matched uniquely');
   const map = {
     shipped: 'shipped',
     in_transit: 'shipped',
@@ -132,13 +132,15 @@ export async function applyTrackingWebhook({ carrier, awb, status, note, trackin
     rto: 'returned',
     cancelled: 'cancelled',
   };
-  const next = map[String(status || '').toLowerCase()];
+  const statusKey = String(status || '').trim().toLowerCase();
+  const next = Object.hasOwn(map, statusKey) ? map[statusKey] : null;
   if(!next) return {orderId:rows[0].id,status:rows[0].status,ignored:true};
   const client=await (await getPool()).connect();
   try {
     await client.query('BEGIN');
     const locked=await client.query('SELECT * FROM orders WHERE id=$1 FOR UPDATE',[rows[0].id]);
     const current=locked.rows[0];
+    if (!current || current.awb !== awb || (carrier && current.courier !== carrier)) throw new Error('Shipment changed while processing the update');
     if(current.status===next){await client.query('COMMIT');return {orderId:current.id,status:next,duplicate:true};}
     try { await transitionOrder(client,current,next,{note:note || 'Carrier update: '+status}); }
     catch(e){ if(e.message.startsWith('Cannot change')) {await client.query('ROLLBACK');return {orderId:current.id,status:current.status,ignored:true};} throw e; }

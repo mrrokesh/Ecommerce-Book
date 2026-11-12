@@ -87,6 +87,7 @@
 .erp-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--a-text-3); background: #fafbfc; font-weight: 600; }
 .erp-table td, .erp-table th { padding: 10px 14px; border-bottom: 1px solid var(--a-border); }
 .erp-table tbody tr:hover td { background: #f6f9ff; }
+.erp-card:has(> .erp-table) { overflow-x: auto; }
 .erp-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .erp-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: #eef0f4; color: var(--a-text-2); text-transform: capitalize; }
 .erp-pill.ok { background: #e5f6ed; color: #17784a; }
@@ -140,10 +141,18 @@
 }
 @media (max-width: 860px) {
   .erp-shell { display: block; }
+  .erp-side { height: 100dvh; visibility: hidden; }
+  .erp-side.open { visibility: visible; }
   .erp-top { padding: 0 12px; gap: 8px; }
   .erp-user { display: none; }
   .erp-body { padding: 14px 12px 32px; }
-  .erp-search { max-width: none; }
+  .erp-search { min-width: 0; max-width: none; }
+  .erp-search input { width: 0; }
+  .erp-top-right { flex: none; }
+}
+@media (max-width: 420px) {
+  .erp-top-right { gap: 2px; }
+  .erp-top-right .erp-avatar { display: none; }
 }
 
 /* ---------- sign-in page: brand panel on the left, centred form on the right ---------- */

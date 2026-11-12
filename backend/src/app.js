@@ -26,7 +26,6 @@ import storesRoutes from './routes/stores.js';
 import pincodeRoutes from './routes/pincode.js';
 import examsRoutes from './routes/exams.js';
 import addressesRoutes from './routes/addresses.js';
-import pagesRoutes from './routes/pages.js';
 import adminRoutes from './routes/admin.js';
 import paymentsRoutes from './routes/payments.js';
 import couponsRoutes from './routes/coupons.js';
@@ -73,34 +72,18 @@ app.use(
   })
 );
 
-// Only origins listed in CLIENT_URL may use credentialed cross-origin requests. The storefront
-// calls /api on its own origin (Vercel rewrite), which sameSiteOrigin() covers, so shared
-// hosting domains such as *.vercel.app are deliberately NOT trusted by name.
+// Browser origins come from deployment configuration, independent of proxy headers.
 function originAllowed(origin) {
-  return !origin || origins.includes(origin);
+  return origins.includes(origin);
 }
 
 app.use(
   cors({
-    origin: (origin, cb) => cb(null, originAllowed(origin)),
+    origin: (origin, cb) => cb(null, Boolean(origin && originAllowed(origin))),
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-session-id'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-session-id', 'x-order-token'],
   })
 );
-/**
- * True when the browser's Origin is the very site that served the request (the public host the
- * user typed, forwarded by Vercel or the proxy). A foreign page cannot forge this: browsers set
- * Origin themselves, and a cross-site request carries the attacker's origin, never ours.
- * This lets any custom domain pointed at the app work without listing it in CLIENT_URL.
- */
-function sameSiteOrigin(origin, req) {
-  try {
-    return new URL(origin).hostname === req.hostname;
-  } catch {
-    return false;
-  }
-}
-
 // CSRF guard: state-changing requests from a foreign browser origin are refused.
 app.use((req, res, next) => {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
@@ -108,7 +91,6 @@ app.use((req, res, next) => {
   if (
     origin &&
     !originAllowed(origin) &&
-    !sameSiteOrigin(origin, req) &&
     !req.path.startsWith('/api/shipping/webhooks/')
   ) {
     return res.status(403).json({ success: false, error: 'Origin not allowed' });
@@ -190,7 +172,6 @@ app.use('/api/stores', storesRoutes);
 app.use('/api/pincode', pincodeRoutes);
 app.use('/api/exams', examsRoutes);
 app.use('/api/addresses', addressesRoutes);
-app.use('/api/pages', pagesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/operations',operationsRoutes);
 app.use('/api/campaigns', campaignRoutes);

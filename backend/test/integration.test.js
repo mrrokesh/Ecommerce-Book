@@ -15,6 +15,9 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
   t.after(async()=>{if(testServer){testServer.closeAllConnections();await new Promise(r=>testServer.close(r));}if(testPool)await testPool.end();await pg.stop();try{fs.rmSync(directory,{recursive:true,force:true});}catch{}});
   process.env.DATABASE_URL=`postgresql://postgres:test-only@127.0.0.1:${port}/postgres?sslmode=disable`;
   process.env.JWT_SECRET='local-test-secret-not-for-production-123';process.env.NODE_ENV='test';process.env.RAZORPAY_KEY_ID='';process.env.RAZORPAY_KEY_SECRET='';process.env.SMTP_HOST='';process.env.MSG91_AUTH_KEY='';
+  process.env.ROKESH_NOTIFY_API_URL='';
+  process.env.ROKESH_NOTIFY_API_KEY='';
+  process.env.CLIENT_URL='http://store.test.invalid';
   const {getPool,query}=await import('../src/db/pool.js');
   // The isolated cluster is dedicated to this suite. Each run gets its own schema.
   const pool=await getPool();testPool=pool;const schema='test_'+Date.now();await query(`CREATE SCHEMA ${schema}`);pool.on('connect',c=>c.query(`SET search_path TO ${schema},public`));await query(`SET search_path TO ${schema},public`);
@@ -31,6 +34,12 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
   const payload={shipping:{fullName:'Buyer',phone:'9876543210',line1:'123 Street',city:'Salem',state:'Tamil Nadu',pincode:'636001'},paymentMethod:'cod'};
   let order;
   try{
+    await t.test('browser writes accept only configured origins', async () => {
+      for (const [origin, status] of [['http://store.test.invalid', 200], ['http://other.test.invalid', 403]]) {
+        const response = await fetch(base + '/auth/logout', { method: 'POST', headers: { Origin: origin } });
+        assert.equal(response.status, status);
+      }
+    });
     await t.test('settings and quote use identical shipping rules',async()=>{
       assert.equal((await request('/operations/settings',{method:'PUT',body:{shippingFee:49,freeShippingThreshold:499,returnDays:7,lowStockThreshold:5,restrictedCoverage:false}})).status,200);
       await query('INSERT INTO cart_items(cart_id,book_id,quantity) VALUES($1,$2,2)',[cart.id,book.id]);
@@ -102,6 +111,13 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       const data='id,title,author_name,sku,mrp,sale_price,stock,is_active\n'+book.id+',Changed,Author,,200,100,20,true\n,Invalid,Author,,50,100,1,true';
       assert.equal((await request('/operations/products/import',{method:'POST',body:{csv:data}})).status,400);
       assert.equal((await query('SELECT title FROM books WHERE id=$1',[book.id])).rows[0].title,'Test book');
+    });
+    await t.test('CSV and bulk prices keep the catalogue discount in sync', async () => {
+      const csv = `id,title,author_name,sku,mrp,sale_price,stock,is_active\n${book.id},Test book,Author,,200,150,20,true`;
+      assert.equal((await request('/operations/products/import', { method:'POST', body:{csv} })).status, 200);
+      assert.equal((await query('SELECT discount_percent FROM books WHERE id=$1', [book.id])).rows[0].discount_percent, 25);
+      assert.equal((await request('/operations/products/bulk', { method:'POST', body:{ids:[book.id],action:'price',value:100} })).status, 200);
+      assert.equal((await query('SELECT discount_percent FROM books WHERE id=$1', [book.id])).rows[0].discount_percent, 50);
     });
     await t.test('guest access requires an unguessable order token',async()=>{assert.equal((await request('/customer-tools/guest-order',{user})).status,401);});
     await t.test('restricted delivery coverage is enforced at checkout',async()=>{await request('/operations/settings',{method:'PUT',body:{shippingFee:40,freeShippingThreshold:499,returnDays:7,lowStockThreshold:5,restrictedCoverage:true}});const r=await request('/payments/quote',{method:'POST',body:payload,user});assert.equal(r.status,400);});

@@ -11,7 +11,6 @@ export const MODULES: { key: string; label: string; hint: string }[] = [
   { key: 'reviews', label: 'Reviews', hint: 'Show or hide product reviews' },
   { key: 'shipping', label: 'Shipping partners', hint: 'Courier settings and credentials' },
   { key: 'marketing', label: 'Banners & coupons', hint: 'Homepage banners and discount codes' },
-  { key: 'pages', label: 'CMS pages', hint: 'About, Contact, FAQ, Terms, Privacy' },
   { key: 'emails', label: 'Email outbox', hint: 'Emails sent by the store' },
 ];
 
@@ -60,7 +59,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: '/admin/emails', label: 'Email outbox', module: 'emails' },
     ],
   },
-  { key: 'content', title: 'Content', icon: 'file', links: [{ to: '/admin/pages', label: 'CMS pages', module: 'pages' }] },
   {
     key: 'settings', title: 'Settings', icon: 'settings',
     links: [
@@ -68,6 +66,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: '/admin/staff', label: 'Staff & roles', module: 'staff' },
       { to: '/admin/audit', label: 'Audit history', module: 'staff' },
       { to: '/admin/security', label: 'Account security', module: 'any' },
+      { to: '/admin/help', label: 'Help & guide', module: 'any' },
     ],
   },
 ];
@@ -93,7 +92,8 @@ export function moduleForPath(pathname: string) {
     marketing: 'marketing',
     campaigns: 'marketing',
     subscribers: 'marketing',
-    pages: 'pages',
+    help: 'any',
+    security: 'any',
     emails: 'emails',
     staff: 'staff',
   };
