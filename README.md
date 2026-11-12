@@ -51,7 +51,7 @@ All settings live in `backend/.env` (see `backend/.env.example`, which lists eve
 | `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | "Continue with Facebook". The button hides when unset |
 | `OAUTH_REDIRECT_BASE` | Public site origin for social sign-in callbacks (e.g. `https://www.salembookhouse.com`); defaults to the first `CLIENT_URL` |
 | `WELCOME_COUPON` / `MAIL_DAILY_CAP` | Coupon code shown in the welcome email (default `WELCOME10`) and the most emails sent in 24 hours (default 1500; Rokesh Notify Pro allows 2000) |
-| `TRUST_PROXY_HOPS` | Proxy hops before the API (default 1). If rate limits seem shared between visitors, sign in as admin, open `/api/security/network` and set 2 when `ip` is not your own address |
+| `TRUST_PROXY_HOPS` | Proxy hops before the API (default 1; **4 on Vercel + Render**, measured on the live site: Vercel, Cloudflare and two Render hops sit in front of the API). Without the right value every visitor shares one rate-limit address. Sign in as admin, open `/api/security/network`: `ip` must equal your own public address, and the page tells you the number to use |
 | `ROKESH_NOTIFY_API_URL`, `ROKESH_NOTIFY_API_KEY` | Outgoing email through Rokesh Notify (preferred). Needs `salembookhouse.com` verified in Notify (SPF + DKIM DNS records). Mail is sent from `MAIL_FROM`, default `Salem Book House <noreply@salembookhouse.com>` |
 | `SMTP_*` | Fallback email via SMTP, used only if Rokesh Notify is not set. With neither, mail stays in Admin → Email outbox (password-reset emails will not be delivered) |
 | `SHIPPING_WEBHOOK_SECRET` | Shared secret for carrier tracking webhooks |

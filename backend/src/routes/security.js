@@ -6,7 +6,13 @@ import {query} from '../db/pool.js';
 import {requireBackOffice,signToken,setAuthCookie} from '../middleware/auth.js';
 import {base32,encryptSecret,decryptSecret,verifyTotp} from '../domain/totp.js';
 const router=Router();router.use(requireBackOffice,rateLimit({windowMs:900000,limit:20}));
-router.get('/network',(req,res)=>res.json({success:true,data:{ip:req.ip,forwardedFor:req.get('x-forwarded-for')||null,trustProxyHops:Number(req.app.get('trust proxy')),hint:'ip should be YOUR public address. If it is a Vercel/Render address, set TRUST_PROXY_HOPS to 2.'}}));
+router.get('/network',(req,res)=>{
+  const xff=String(req.get('x-forwarded-for')||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const hops=Number(req.app.get('trust proxy'));
+  // XFF lists client first, then each proxy that forwarded it. The client is the first entry, so trusting that many hops makes req.ip the visitor.
+  const suggested=xff.length||null;
+  res.json({success:true,data:{ip:req.ip,forwardedFor:xff.join(', ')||null,trustProxyHops:hops,suggestedTrustProxyHops:suggested,clientAddressGuess:xff[0]||null,ok:suggested?req.ip===xff[0]:null,hint:suggested&&req.ip!==xff[0]?`Rate limits currently see ${req.ip} for every visitor. Set TRUST_PROXY_HOPS to ${suggested}; then ip should equal ${xff[0]}.`:'ip matches the visitor address; per-visitor rate limits are working.'}});
+});
 router.get('/',async(req,res)=>{const u=(await query('SELECT mfa_secret FROM users WHERE id=$1',[req.user.id])).rows[0];res.json({success:true,data:{enabled:!!u.mfa_secret}});});
 router.post('/:action',async(req,res)=>{try{
   const u=(await query('SELECT * FROM users WHERE id=$1',[req.user.id])).rows[0];

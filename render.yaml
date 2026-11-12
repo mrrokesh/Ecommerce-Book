@@ -9,6 +9,10 @@ services:
         value: production
       - key: CLIENT_URL
         value: https://ecommerce-book-one.vercel.app
+      # Vercel rewrite -> Cloudflare -> Render load balancers: the visitor is the 4th address from the right in X-Forwarded-For.
+      # Check /api/security/network as admin: ip must equal your public address.
+      - key: TRUST_PROXY_HOPS
+        value: "4"
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET

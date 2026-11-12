@@ -137,6 +137,8 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       const ad=(await query("INSERT INTO users(name,email,password_hash,role,email_verified_at) VALUES('Sec Admin','sec-admin@test.invalid',$1,'admin',NOW()) RETURNING *",[await bcrypt.hash(pw,4)])).rows[0];
       const sec=(url,body)=>request(url,{method:'POST',body,user:ad});
       const net=await request('/security/network',{user:ad});assert.equal(net.status,200);assert.ok(net.data.ip&&net.data.trustProxyHops>=0);
+      const viaProxy=await fetch(base+'/security/network',{headers:{'Content-Type':'application/json',Authorization:'Bearer '+signToken(ad.id,ad.token_version),'X-Forwarded-For':'203.0.113.7, 198.51.100.2, 10.0.0.5'}}).then(r=>r.json());
+      assert.equal(viaProxy.data.suggestedTrustProxyHops,3,'suggests one hop per forwarded address');assert.equal(viaProxy.data.clientAddressGuess,'203.0.113.7');assert.equal(viaProxy.data.ok,false);assert.match(viaProxy.data.hint,/Set TRUST_PROXY_HOPS to 3/);
       assert.equal((await sec('/security/setup',{password:'wrong'})).status,400,'password required');
       const setup=await sec('/security/setup',{password:pw});assert.equal(setup.status,200);assert.ok(setup.data.secret);
       assert.equal((await sec('/security/enable',{password:pw,code:'000000'})).status,400,'bad code rejected');
