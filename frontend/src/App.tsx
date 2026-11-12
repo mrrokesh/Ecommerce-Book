@@ -29,6 +29,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import DialogHost from './components/Dialogs';
 import AdminCampaigns from './admin/AdminCampaigns';
+import AdminSubscribers from './admin/AdminSubscribers';
 import UnsubscribePage from './pages/UnsubscribePage';
 import FormGuard from './components/FormGuard';
 import NotFoundPage from './pages/NotFoundPage';
@@ -74,6 +75,7 @@ export default function App() {
               <Route path="shipping" element={<AdminShipping />} />
               <Route path="marketing" element={<AdminMarketing />} />
               <Route path="campaigns" element={<AdminCampaigns />} />
+              <Route path="subscribers" element={<AdminSubscribers />} />
               <Route path="pages" element={<AdminCms />} />
               <Route path="emails" element={<AdminOperations section="emails" />} />
             </Route>

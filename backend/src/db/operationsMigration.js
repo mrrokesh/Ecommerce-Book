@@ -76,6 +76,12 @@ export async function migrateOperations(query) {
       status TEXT NOT NULL DEFAULT 'draft', recipients INT NOT NULL DEFAULT 0, created_by UUID,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), sent_at TIMESTAMPTZ
     );
+    CREATE TABLE IF NOT EXISTS marketing_subscribers (
+      id SERIAL PRIMARY KEY, email TEXT NOT NULL, name TEXT, source TEXT NOT NULL DEFAULT 'admin', consent_note TEXT,
+      consent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), unsubscribe_token TEXT UNIQUE, active BOOLEAN NOT NULL DEFAULT TRUE,
+      unsubscribed_at TIMESTAMPTZ, created_by UUID, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_marketing_subscribers_email ON marketing_subscribers (lower(email));
     CREATE INDEX IF NOT EXISTS idx_refund_order ON refund_requests(order_id);
     CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_log(created_at DESC);
   `);

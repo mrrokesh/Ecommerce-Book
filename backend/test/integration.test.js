@@ -169,5 +169,22 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       assert.equal((await query("SELECT marketing_opt_in FROM users WHERE email='promo-yes@test.invalid'")).rows[0].marketing_opt_in,false);
       assert.equal((await request('/campaigns')).data.subscribers,0);
     });
+    await t.test('admin-added subscribers need consent, join campaigns once and can unsubscribe',async()=>{
+      const post=async(url,body)=>{const r=await fetch(base+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:r.status,...await r.json()};};
+      assert.equal((await request('/campaigns/subscribers',{method:'POST',body:{email:'listed@test.invalid'}})).status,400,'consent is required');
+      assert.equal((await request('/campaigns/subscribers',{method:'POST',body:{email:'not-an-email',consent:true}})).status,400,'valid email required');
+      assert.equal((await request('/campaigns/subscribers',{method:'POST',body:{email:'listed@test.invalid',name:'Listed Person',consent:true}})).status,200);
+      assert.equal((await request('/campaigns/subscribers',{method:'POST',body:{email:'LISTED@test.invalid',consent:true}})).data.already,true,'duplicates are not added twice');
+      assert.equal((await request('/campaigns/subscribers',{user})).status,403,'customers cannot read the list');
+      const list=await request('/campaigns/subscribers');assert.ok(list.data.subscribers.some(s=>s.email==='listed@test.invalid'&&s.source==='admin'));
+      const draft={name:'List test',subject:'List test subject line',headline:'Hello there',body:'A short message for the list.',ctaLabel:'Shop',ctaUrl:'/shop/books'};
+      const c=await request('/campaigns',{method:'POST',body:draft});
+      const sent=await request('/campaigns/'+c.data.id+'/send',{method:'POST',body:{confirm:true}});assert.equal(sent.data.queued,1);
+      const row=(await query('SELECT to_email,html_body FROM email_outbox WHERE campaign_id=$1',[c.data.id])).rows[0];assert.equal(row.to_email,'listed@test.invalid');
+      const tok=row.html_body.match(/unsubscribe\?token=([0-9a-f]{32})/)[1];
+      assert.equal((await post('/auth/unsubscribe',{token:tok})).status,200);
+      assert.equal((await query("SELECT active FROM marketing_subscribers WHERE email='listed@test.invalid'")).rows[0].active,false);
+      assert.equal((await request('/campaigns/subscribers',{method:'POST',body:{email:'listed@test.invalid',consent:true}})).status,400,'an unsubscribed person is not re-added by an admin');
+    });
   }finally{console.log('Integration assertions complete');}
 });

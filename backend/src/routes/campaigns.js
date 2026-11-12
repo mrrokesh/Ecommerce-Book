@@ -66,6 +66,28 @@ async function build(c, { firstName = 'there', unsubscribeUrl } = {}) {
   });
 }
 
+
+/**
+ * Everyone who may receive promotions: customers who ticked the opt-in box plus subscribers added by an admin,
+ * one row per email address, minus anyone who unsubscribed.
+ */
+const AUDIENCE_SQL = `
+  SELECT d.email, d.name, d.token FROM (
+    SELECT DISTINCT ON (lower(a.email)) a.email, a.name, a.token FROM (
+      SELECT u.email, u.name, u.unsubscribe_token AS token, 1 AS pri FROM users u
+       WHERE u.role = 'customer' AND u.marketing_opt_in = TRUE AND u.email IS NOT NULL
+      UNION ALL
+      SELECT s.email, s.name, s.unsubscribe_token AS token, 2 AS pri FROM marketing_subscribers s WHERE s.active = TRUE
+    ) a ORDER BY lower(a.email), a.pri
+  ) d
+  WHERE NOT EXISTS (SELECT 1 FROM marketing_subscribers x WHERE lower(x.email) = lower(d.email) AND x.active = FALSE)`;
+
+/** Give every audience member a stable unsubscribe token. */
+async function ensureTokens(client) {
+  await client.query(`UPDATE users SET unsubscribe_token = md5(random()::text || clock_timestamp()::text || id::text) WHERE unsubscribe_token IS NULL AND marketing_opt_in = TRUE`);
+  await client.query(`UPDATE marketing_subscribers SET unsubscribe_token = md5(random()::text || clock_timestamp()::text || id::text) WHERE unsubscribe_token IS NULL`);
+}
+
 const getCampaign = async (id) => {
   const c = (await query('SELECT * FROM campaigns WHERE id = $1', [Number(id)])).rows[0];
   if (!c) throw fail('Campaign not found', 404);
@@ -80,10 +102,48 @@ router.get('/', wrap(async () => {
                          COUNT(*) FILTER (WHERE NOT sent AND attempts >= 5) AS failed
                     FROM email_outbox WHERE campaign_id IS NOT NULL GROUP BY campaign_id) s ON s.campaign_id = c.id
       ORDER BY c.created_at DESC LIMIT 100`)).rows;
-  const subscribers = (await query(`SELECT COUNT(*)::int AS n FROM users WHERE role = 'customer' AND marketing_opt_in = TRUE`)).rows[0].n;
+  const subscribers = (await query(`SELECT COUNT(*)::int AS n FROM (${AUDIENCE_SQL}) q`)).rows[0].n;
   const coupons = (await query(`SELECT code, description FROM coupons WHERE active = TRUE AND (expires_at IS NULL OR expires_at > NOW()) ORDER BY code`)).rows;
   const sentToday = (await query(`SELECT COUNT(*)::int AS n FROM email_outbox WHERE sent AND created_at > NOW() - INTERVAL '1 day'`)).rows[0].n;
   return { campaigns: rows, subscribers, coupons, dailyCap: DAILY_CAP, sentToday };
+}));
+
+/* ---------- subscriber list ---------- */
+router.get('/subscribers', wrap(async () => {
+  const rows = (await query(`
+    SELECT 'account' AS source, u.id::text AS ref, u.email, u.name, COALESCE(u.marketing_consent_at, u.created_at) AS consent_at, TRUE AS active
+      FROM users u WHERE u.role = 'customer' AND u.marketing_opt_in = TRUE
+    UNION ALL
+    SELECT s.source, s.id::text, s.email, s.name, s.consent_at, s.active FROM marketing_subscribers s
+    ORDER BY consent_at DESC LIMIT 2000`)).rows;
+  const unsubscribed = rows.filter((r) => !r.active).length;
+  return { subscribers: rows, active: rows.length - unsubscribed, unsubscribed };
+}));
+
+router.post('/subscribers', wrap(async (req) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const name = String(req.body?.name || '').trim();
+  if (checks.email(email)) throw fail('Enter a valid email address');
+  if (name && checks.name(name)) throw fail('Enter a valid name (letters only) or leave it blank');
+  if (req.body?.consent !== true) throw fail('Confirm that this person agreed to receive offers by email');
+  const existing = (await query('SELECT id, active FROM marketing_subscribers WHERE lower(email) = $1', [email])).rows[0];
+  if (existing && !existing.active) throw fail('This person unsubscribed. They can opt in again from their own account, or by signing up again');
+  if (existing) return { id: existing.id, already: true };
+  const { rows } = await query(
+    `INSERT INTO marketing_subscribers (email, name, source, consent_note, unsubscribe_token, created_by)
+     VALUES ($1, $2, 'admin', $3, md5(random()::text || clock_timestamp()::text || $1), $4) RETURNING id`,
+    [email, name || null, String(req.body?.note || 'Added by an admin who confirmed consent').slice(0, 200), req.user.id]);
+  return { id: rows[0].id, already: false };
+}));
+
+router.delete('/subscribers/:id', wrap(async (req) => {
+  const id = String(req.params.id);
+  if (/^[0-9a-f-]{36}$/i.test(id)) {
+    await query(`UPDATE users SET marketing_opt_in = FALSE WHERE id = $1 AND role = 'customer'`, [id]);
+  } else {
+    await query('UPDATE marketing_subscribers SET active = FALSE, unsubscribed_at = NOW() WHERE id = $1', [Number(id) || 0]);
+  }
+  return { removed: true };
 }));
 
 router.post('/', wrap(async (req) => {
@@ -128,16 +188,14 @@ router.post('/:id/send', wrap(async (req) => {
     const c = (await client.query('SELECT * FROM campaigns WHERE id = $1 FOR UPDATE', [Number(req.params.id)])).rows[0];
     if (!c) throw fail('Campaign not found', 404);
     if (c.status !== 'draft') throw fail('This campaign was already sent');
-    // Give every subscriber a stable unsubscribe token
-    await client.query(`UPDATE users SET unsubscribe_token = md5(random()::text || clock_timestamp()::text || id::text) WHERE unsubscribe_token IS NULL AND marketing_opt_in = TRUE`);
-    const people = (await client.query(
-      `SELECT name, email, unsubscribe_token FROM users WHERE role = 'customer' AND marketing_opt_in = TRUE AND email IS NOT NULL ORDER BY created_at`)).rows;
-    if (!people.length) throw fail('No customers have opted in to offers yet');
+    await ensureTokens(client);
+    const people = (await client.query(AUDIENCE_SQL)).rows;
+    if (!people.length) throw fail('Nobody has opted in to offers yet');
     const sent = (await client.query(`SELECT COUNT(*)::int AS n FROM email_outbox WHERE created_at > NOW() - INTERVAL '1 day'`)).rows[0].n;
     if (sent + people.length > DAILY_CAP) throw fail(`This would exceed the daily email limit (${DAILY_CAP}). ${Math.max(0, DAILY_CAP - sent)} more can be sent in the next 24 hours`);
     let i = 0;
     for (const p of people) {
-      const { html, text } = await build(c, { firstName: String(p.name || 'there').split(/\s+/)[0], unsubscribeUrl: `${siteBase()}/unsubscribe?token=${p.unsubscribe_token}` });
+      const { html, text } = await build(c, { firstName: String(p.name || 'there').split(/\s+/)[0], unsubscribeUrl: `${siteBase()}/unsubscribe?token=${p.token}` });
       // Stagger delivery (about 150 a minute) so the provider's rate limit is respected
       await client.query(
         `INSERT INTO email_outbox (to_email, subject, body, html_body, campaign_id, next_attempt_at) VALUES ($1,$2,$3,$4,$5, NOW() + ($6 || ' seconds')::interval)`,

@@ -23,6 +23,7 @@ const TITLES = {
   '/admin/reviews': 'Reviews',
   '/admin/staff': 'Staff & roles',
   '/admin/campaigns': 'Promotional emails',
+  '/admin/subscribers': 'Subscribers',
 };
 
 export default function AdminLayout() {

@@ -56,6 +56,7 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { to: '/admin/marketing', label: 'Banners & coupons', module: 'marketing' },
       { to: '/admin/campaigns', label: 'Promotional emails', module: 'marketing' },
+      { to: '/admin/subscribers', label: 'Subscribers', module: 'marketing' },
       { to: '/admin/emails', label: 'Email outbox', module: 'emails' },
     ],
   },
@@ -91,6 +92,7 @@ export function moduleForPath(pathname: string) {
     shipping: 'shipping',
     marketing: 'marketing',
     campaigns: 'marketing',
+    subscribers: 'marketing',
     pages: 'pages',
     emails: 'emails',
     staff: 'staff',

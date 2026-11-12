@@ -118,7 +118,12 @@ router.post('/resend-verification', verifyLimiter, requireAuth, async (req, res)
 router.post('/unsubscribe', verifyLimiter, async (req, res) => {
   const token = String(req.body?.token || '');
   if (!/^[0-9a-f]{32}$/.test(token)) return res.status(400).json({ success: false, error: 'This unsubscribe link is not valid' });
-  await query('UPDATE users SET marketing_opt_in = FALSE WHERE unsubscribe_token = $1', [token]);
+  const fromUsers = await query('UPDATE users SET marketing_opt_in = FALSE WHERE unsubscribe_token = $1 RETURNING lower(email) AS email', [token]);
+  const fromList = await query(
+    `UPDATE marketing_subscribers SET active = FALSE, unsubscribed_at = NOW()
+      WHERE unsubscribe_token = $1 OR lower(email) = ANY($2::text[]) RETURNING lower(email) AS email`,
+    [token, fromUsers.rows.map((r) => r.email)]);
+  if (fromList.rows.length) await query('UPDATE users SET marketing_opt_in = FALSE WHERE lower(email) = ANY($1::text[])', [fromList.rows.map((r) => r.email)]);
   return res.json({ success: true, data: { unsubscribed: true } });
 });
 
