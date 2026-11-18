@@ -381,10 +381,20 @@ router.delete('/categories/:id', async (req, res) => {
   }
 });
 
+/** Catalogue kinds — Books, Stationery, Toys, Gift cards (matches admin selects). */
+const PRODUCT_TYPES = ['book', 'stationery', 'toy', 'gift-card'];
+function readProductType(value, { required = false } = {}) {
+  if (value == null || value === '') return required ? 'book' : null;
+  const v = String(value).trim().toLowerCase();
+  if (!PRODUCT_TYPES.includes(v)) return { error: 'Type must be Books, Stationery, Toys or Gift cards' };
+  return v;
+}
+
 router.get('/books', async (req, res) => {
   try {
     const q = String(req.query.q || '').trim();
-    const productType = String(req.query.productType || '').trim();
+    const productTypeRaw = String(req.query.productType || '').trim();
+    const productType = productTypeRaw && PRODUCT_TYPES.includes(productTypeRaw) ? productTypeRaw : '';
     const stock = String(req.query.stock || '').trim();
     const status = String(req.query.status || '').trim();
     const categoryId = Number(req.query.categoryId) || 0;
@@ -458,6 +468,8 @@ router.post('/books', async (req, res) => {
     if (!title || !authorName) {
       return res.status(400).json({ success: false, error: 'Title and author are required' });
     }
+    const productType = readProductType(body.productType, { required: true });
+    if (productType?.error) return res.status(400).json({ success: false, error: productType.error });
     const m = Number(body.mrp) || 0;
     const s = Number(body.salePrice) || m;
     if (m < 0 || s < 0 || (m > 0 && s > m)) {
@@ -496,7 +508,7 @@ router.post('/books', async (req, res) => {
         Number(body.stock) || 0,
         body.language || 'English',
         body.publisher || 'Salem Book House',
-        body.productType || 'book',
+        productType,
         optText(body.isbn13) || sku,
         optText(body.isbn10) || null,
         body.binding || 'Paper Back',
@@ -549,6 +561,11 @@ router.patch('/books/:id', async (req, res) => {
     if (body.stock != null && !(Number(body.stock) >= 0)) {
       return res.status(400).json({ success: false, error: 'Stock cannot be negative' });
     }
+    let nextProductType = null;
+    if (body.productType != null && body.productType !== '') {
+      nextProductType = readProductType(body.productType);
+      if (nextProductType?.error) return res.status(400).json({ success: false, error: nextProductType.error });
+    }
     // Fields the form can blank out: undefined = leave alone, '' = clear.
     const clearable = (v, cur) => (v === undefined ? cur : optText(v) || null);
     const discount = nextMrp > nextSale && nextMrp > 0 ? Math.round(((nextMrp - nextSale) / nextMrp) * 100) : 0;
@@ -598,7 +615,7 @@ router.patch('/books/:id', async (req, res) => {
         typeof body.isActive === 'boolean' ? body.isActive : null,
         body.language || null,
         body.publisher || null,
-        body.productType || null,
+        nextProductType,
         clearable(body.isbn13 ?? body.sku, b.isbn13),
         clearable(body.isbn10, b.isbn10),
         body.binding || null,

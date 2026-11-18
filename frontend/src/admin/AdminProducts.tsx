@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import api from '../api/client';
 import CoverImage from '../components/CoverImage';
 import { formatPrice } from '../utils/format';
+import { PRODUCT_TYPES, productTypeLabel } from './productTypes';
 
 export default function AdminProducts() {
   const [rows, setRows] = useState([]);
@@ -129,10 +130,11 @@ export default function AdminProducts() {
           />
           <select value={productType} onChange={(e) => setProductType(e.target.value)}>
             <option value="">All types</option>
-            <option value="book">Books</option>
-            <option value="stationery">Stationery</option>
-            <option value="toy">Toys</option>
-            <option value="gift-card">Gift cards</option>
+            {PRODUCT_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
           </select>
           <select value={stock} onChange={(e) => setStock(e.target.value)}>
             <option value="">All stock</option>
@@ -148,19 +150,21 @@ export default function AdminProducts() {
             Search
           </button>
         </form>
-        <button
-          className="erp-btn ghost"
-          type="button"
-          disabled={syncing || !erp.configured}
-          onClick={syncErp}
-          title={
-            erp.lastSync
-              ? `Last sync ${new Date(erp.lastSync.at).toLocaleString('en-IN')}: ${erp.lastSync.ok ? 'ok' : erp.lastSync.error}`
-              : 'Not synced yet'
-          }
-        >
-          {syncing ? 'Syncing ERP…' : erp.configured ? 'Sync from ERP' : 'ERP key missing'}
-        </button>
+        {erp.configured ? (
+          <button
+            className="erp-btn ghost"
+            type="button"
+            disabled={syncing}
+            onClick={syncErp}
+            title={
+              erp.lastSync
+                ? `Last sync ${new Date(erp.lastSync.at).toLocaleString('en-IN')}: ${erp.lastSync.ok ? 'ok' : erp.lastSync.error}`
+                : 'Not synced yet'
+            }
+          >
+            {syncing ? 'Syncing ERP…' : 'Sync from ERP'}
+          </button>
+        ) : null}
         <button
           className="erp-btn ghost"
           type="button"
@@ -170,9 +174,6 @@ export default function AdminProducts() {
         >
           {fillingCovers ? 'Refreshing covers…' : 'Refresh covers'}
         </button>
-        <Link className="erp-btn primary" to="/admin/products/new">
-          Add product
-        </Link>
       </div>
       {error ? <p className="erp-error" style={{ padding: '0 0.85rem' }}>{error}</p> : null}
       {notice ? <p className="erp-ok" style={{ padding: '0 0.85rem' }}>{notice}</p> : null}
@@ -227,7 +228,7 @@ export default function AdminProducts() {
                   ) : null}
                 </div>
               </td>
-              <td>{b.productType}</td>
+              <td>{productTypeLabel(b.productType)}</td>
               <td>{(b.categories || []).map((c) => c.name || c).join(', ') || '—'}</td>
               <td>{formatPrice(b.mrp)}</td>
               <td>{formatPrice(b.salePrice)}</td>

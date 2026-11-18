@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { bookImage } from '../utils/format';
+import { PRODUCT_TYPES } from './productTypes';
 
 const empty = {
   title: '',
@@ -272,10 +273,11 @@ export default function AdminProductForm() {
           <label>
             Type
             <select value={form.productType} onChange={(e) => set('productType', e.target.value)}>
-              <option value="book">Book</option>
-              <option value="stationery">Stationery</option>
-              <option value="toy">Toy</option>
-              <option value="gift-card">Gift card</option>
+              {PRODUCT_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
             </select>
           </label>
           <label>
