@@ -14,8 +14,9 @@ Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeS
 - New-order alerts in the admin: a chime, a toast and a desktop notification when a customer places an order while the admin is open (checked every 15 seconds by a background worker, so it keeps working while the tab is behind other tabs or apps; the bell in the top bar mutes it and your choice is remembered; leave the admin tab open, and click the page once so the browser allows sound and notifications)
 - Admin sign-in at `/admin/login` with a brand panel and centred form (collapses to a single card on phones)
 - Admin panel at `/admin` with a dark sidebar of collapsible groups with live count badges (orders to action, open returns, pending refunds, low stock) and a daily email usage meter, a jump-to-page search, a dashboard of pending actions, low stock and recent orders, and a layout that works on phones (separate sign-in, no storefront chrome): products (multi-image gallery, provenance), categories, orders, customers (profile, orders and internal notes), reviews, coupons and banners (image upload), email outbox, staff accounts, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), Rokesh ERP product sync
-- Product provenance on every catalogue item: who added it (admin or staff), who last edited it, and for ERP rows a Rokesh source line with the API host and a masked key tip (never the secret); list pills show Admin / Staff / ERP at a glance
+- Product provenance on every catalogue item: who added it (admin or staff), who last edited it, and for ERP rows a Rokesh source line with the API host and a masked key tip (never the secret); shown at the bottom of the product form; list pills show Admin / Staff / ERP at a glance
 - Product images: drag-and-drop or URL gallery on add/edit (first image is the shop cover; extras show on the product page); admin product-list thumbs stay fixed-size so covers do not collapse
+- Product categories on add/edit use cascading Category → Subcategory dropdowns (same idea as Rokesh ERP), with chips for multiple assignments
 - Customers under **Sales → Customers**: search, view profile, order history and staff-only internal notes
 - Homepage banners under **Marketing**: title, link and image (URL or upload); empty banner images show a yellow fallback stack until a cover is set
 - Back-office operations in the admin: inventory and stock history, CSV import and bulk edits, payments and refunds, returns, sales reports, gift cards, store settings and delivery coverage, audit history, and optional authenticator-app two-factor sign-in
@@ -107,6 +108,7 @@ Customers who joined with Google or Facebook can set a password later with "Forg
 Categories are managed in **Admin → Catalogue → Categories** and the storefront reads them straight from the database, so admin changes appear on the next page load with no redeploy.
 
 - Two levels: top-level categories and subcategories (a parent must be top-level).
+- On **Add / Edit product**, staff pick **Category** then **Subcategory** (cascading selects), then **Add category**; assigned paths show as removable chips (`Parent → Child`). A product can belong to more than one category.
 - **Sort order** sets the order everywhere. The first 7 shown top-level categories appear in the header nav; the rest go under **MORE**.
 - **Badge** (for example `NEW`) shows next to the header tab.
 - **Hide** removes a category (and its subcategories) from the header, mega menus, Browse Categories, shop filters and footer. Its `/shop/<slug>` page still works.
@@ -193,7 +195,7 @@ One-off data scripts live in `backend/src/scripts` (cover backfill, category cle
 ## Product images and provenance
 
 - Gallery rows live in `book_images`; `books.image_url` is always the cover (first gallery image).
-- Create/edit in **Admin → Products** records `source` (`admin` / `staff` / `erp`), `created_by_name`, `updated_by_name` and timestamps. ERP sync sets `source=erp` and `source_label` like `Rokesh ERP · host · mrerp_….xxxx` plus who ran the sync.
+- Create/edit in **Admin → Products** records `source` (`admin` / `staff` / `erp`), `created_by_name`, `updated_by_name` and timestamps. ERP sync sets `source=erp` and `source_label` like `Rokesh ERP · host · mrerp_….xxxx` plus who ran the sync. The provenance card sits under the save actions on the form.
 - Storefront product pages already show multiple images when more than one gallery URL exists.
 
 ### Storefront help and policies

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { bookImage } from '../utils/format';
@@ -45,6 +45,19 @@ export default function AdminProductForm() {
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [provenance, setProvenance] = useState(null);
+  const [pickParent, setPickParent] = useState('');
+  const [pickChild, setPickChild] = useState('');
+
+  const topCategories = useMemo(() => categories.filter((c) => !c.parent_id), [categories]);
+  const childCategories = useMemo(
+    () => (pickParent ? categories.filter((c) => String(c.parent_id) === String(pickParent)) : []),
+    [categories, pickParent]
+  );
+  const categoryById = useMemo(() => {
+    const m = new Map();
+    for (const c of categories) m.set(c.id, c);
+    return m;
+  }, [categories]);
 
   useEffect(() => {
     api
@@ -118,14 +131,28 @@ export default function AdminProductForm() {
     setForm((prev) => ({ ...prev, images: cleaned, imageUrl: cleaned[0] || '' }));
   }
 
-  function toggleCat(catId) {
+  function addCategoryId(catId) {
+    const idNum = Number(catId);
+    if (!idNum) return;
     setForm((prev) => {
-      const has = prev.categoryIds.includes(catId);
-      return {
-        ...prev,
-        categoryIds: has ? prev.categoryIds.filter((x) => x !== catId) : [...prev.categoryIds, catId],
-      };
+      if (prev.categoryIds.includes(idNum)) return prev;
+      return { ...prev, categoryIds: [...prev.categoryIds, idNum] };
     });
+  }
+
+  function removeCategoryId(catId) {
+    setForm((prev) => ({
+      ...prev,
+      categoryIds: prev.categoryIds.filter((x) => x !== catId),
+    }));
+  }
+
+  function addPickedCategory() {
+    const childId = Number(pickChild);
+    const parentId = Number(pickParent);
+    if (childId) addCategoryId(childId);
+    else if (parentId) addCategoryId(parentId);
+    setPickChild('');
   }
 
   function removeImage(url: string) {
@@ -217,40 +244,6 @@ export default function AdminProductForm() {
     <form className="erp-form" onSubmit={onSubmit}>
       <div className="stack erp-card" style={{ padding: '1rem' }}>
         {error ? <p className="erp-error">{error}</p> : null}
-        {id && provenance ? (
-          <div className="erp-provenance">
-            <div className="erp-provenance-head">
-              <span className={`erp-pill ${sourcePill(provenance.source).className}`}>
-                {sourcePill(provenance.source).label}
-              </span>
-              {provenance.erpId ? <span className="muted">ERP id {provenance.erpId}</span> : null}
-            </div>
-            <dl className="erp-provenance-grid">
-              <div>
-                <dt>Added by</dt>
-                <dd>{provenance.createdByName || (provenance.source === 'erp' ? 'Rokesh ERP sync' : '—')}</dd>
-              </div>
-              <div>
-                <dt>Added on</dt>
-                <dd>{formatWhen(provenance.createdAt)}</dd>
-              </div>
-              <div>
-                <dt>Last edited by</dt>
-                <dd>{provenance.updatedByName || '—'}</dd>
-              </div>
-              <div>
-                <dt>Last edited</dt>
-                <dd>{formatWhen(provenance.updatedAt)}</dd>
-              </div>
-              {provenance.sourceLabel ? (
-                <div className="erp-provenance-wide">
-                  <dt>Source</dt>
-                  <dd>{provenance.sourceLabel}</dd>
-                </div>
-              ) : null}
-            </dl>
-          </div>
-        ) : null}
         <label>
           Product name
           <input required value={form.title} onChange={(e) => set('title', e.target.value)} />
@@ -298,20 +291,80 @@ export default function AdminProductForm() {
           Description
           <textarea rows={6} value={form.description} onChange={(e) => set('description', e.target.value)} />
         </label>
-        <div>
+        <div className="erp-cat-picker">
           <span className="muted">Categories</span>
-          <div className="erp-cats">
-            {categories.map((c) => (
-              <label key={c.id}>
-                <input
-                  type="checkbox"
-                  checked={form.categoryIds.includes(c.id)}
-                  onChange={() => toggleCat(c.id)}
-                />
-                {c.name}
-              </label>
-            ))}
+          <p className="muted erp-gallery-hint">
+            Pick a category, then a subcategory (like Rokesh ERP). You can add more than one.
+          </p>
+          <div className="form-row erp-cat-cascade">
+            <label>
+              Category
+              <select
+                value={pickParent}
+                onChange={(e) => {
+                  setPickParent(e.target.value);
+                  setPickChild('');
+                }}
+              >
+                <option value="">Select category</option>
+                {topCategories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Subcategory
+              <select
+                value={pickChild}
+                onChange={(e) => setPickChild(e.target.value)}
+                disabled={!pickParent}
+              >
+                <option value="">{pickParent ? (childCategories.length ? 'Select subcategory' : 'No subcategories — use parent') : 'Choose a category first'}</option>
+                {childCategories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="erp-cat-add-wrap">
+              <button
+                type="button"
+                className="erp-btn"
+                disabled={!pickParent}
+                onClick={addPickedCategory}
+              >
+                Add category
+              </button>
+            </div>
           </div>
+          {form.categoryIds.length ? (
+            <div className="erp-cat-chips">
+              {form.categoryIds.map((cid) => {
+                const c = categoryById.get(cid);
+                const parent = c?.parent_id ? categoryById.get(c.parent_id) : null;
+                const label = c
+                  ? parent
+                    ? `${parent.name} → ${c.name}`
+                    : c.name
+                  : `Category #${cid}`;
+                return (
+                  <span key={cid} className="erp-cat-chip">
+                    {label}
+                    <button type="button" aria-label={`Remove ${label}`} onClick={() => removeCategoryId(cid)}>
+                      ×
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>
+              No categories assigned yet.
+            </p>
+          )}
         </div>
       </div>
       <div className="stack erp-card" style={{ padding: '1rem' }}>
@@ -428,12 +481,48 @@ export default function AdminProductForm() {
             <input type="checkbox" checked={form.codAllowed} onChange={(e) => set('codAllowed', e.target.checked)} /> Cash on delivery available
           </label>
         </div>
-        <button className="erp-btn primary" disabled={busy || uploading} type="submit">
-          {busy ? 'Saving…' : id ? 'Update product' : 'Create product'}
-        </button>
-        <button className="erp-btn ghost" type="button" onClick={() => navigate('/admin/products')}>
-          Cancel
-        </button>
+        <div className="erp-form-actions">
+          <button className="erp-btn primary" disabled={busy || uploading} type="submit">
+            {busy ? 'Saving…' : id ? 'Update product' : 'Create product'}
+          </button>
+          <button className="erp-btn ghost" type="button" onClick={() => navigate('/admin/products')}>
+            Cancel
+          </button>
+        </div>
+        {id && provenance ? (
+          <div className="erp-provenance" style={{ marginTop: '1rem' }}>
+            <div className="erp-provenance-head">
+              <span className={`erp-pill ${sourcePill(provenance.source).className}`}>
+                {sourcePill(provenance.source).label}
+              </span>
+              {provenance.erpId ? <span className="muted">ERP id {provenance.erpId}</span> : null}
+            </div>
+            <dl className="erp-provenance-grid">
+              <div>
+                <dt>Added by</dt>
+                <dd>{provenance.createdByName || (provenance.source === 'erp' ? 'Rokesh ERP sync' : '—')}</dd>
+              </div>
+              <div>
+                <dt>Added on</dt>
+                <dd>{formatWhen(provenance.createdAt)}</dd>
+              </div>
+              <div>
+                <dt>Last edited by</dt>
+                <dd>{provenance.updatedByName || '—'}</dd>
+              </div>
+              <div>
+                <dt>Last edited</dt>
+                <dd>{formatWhen(provenance.updatedAt)}</dd>
+              </div>
+              {provenance.sourceLabel ? (
+                <div className="erp-provenance-wide">
+                  <dt>Source</dt>
+                  <dd>{provenance.sourceLabel}</dd>
+                </div>
+              ) : null}
+            </dl>
+          </div>
+        ) : null}
       </div>
     </form>
   );
