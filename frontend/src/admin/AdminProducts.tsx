@@ -119,8 +119,7 @@ export default function AdminProducts() {
             e.preventDefault();
             load(1);
           }}
-          className="erp-toolbar"
-          style={{ padding: 0, border: 0, flex: 1 }}
+          style={{ padding: 0, border: 0, margin: 0 }}
         >
           <input
             type="search"

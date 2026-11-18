@@ -148,6 +148,17 @@
   padding: 0.85rem;
   border-bottom: 1px solid #e5e7eb;
   align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.erp-toolbar > form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  min-width: 0;
+  flex: 1 1 280px;
 }
 
 .erp-toolbar input,
@@ -159,11 +170,19 @@
   border-radius: 8px;
   padding: 0.45rem 0.65rem;
   background: #fff;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .erp-toolbar input[type='search'] {
-  min-width: 240px;
-  flex: 1;
+  min-width: 140px;
+  flex: 1 1 160px;
+}
+
+.erp-toolbar select {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 160px;
 }
 
 .erp-grow {
@@ -271,7 +290,15 @@ img.erp-thumb,
 
 .erp-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
+  justify-content: flex-end;
+  max-width: 100%;
+}
+
+.erp-actions .erp-btn {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
 }
 
 .erp-pager {
