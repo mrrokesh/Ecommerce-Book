@@ -188,13 +188,35 @@ export default function AdminProducts() {
         <tbody>
           {rows.map((b) => (
             <tr key={b.id}>
-              <td>
-                <CoverImage className="erp-thumb" book={b} alt="" />
+              <td style={{ width: 48 }}>
+                <span className="erp-thumb-wrap">
+                  <CoverImage className="erp-thumb" book={b} alt="" />
+                </span>
               </td>
               <td>{b.sku || b.isbn13 || `SBH-${b.id}`}</td>
               <td>
                 <strong>{b.title}</strong>
                 <div className="muted">{b.authorName}</div>
+                <div className="erp-product-meta">
+                  {b.source === 'erp' || b.erpId ? (
+                    <span className="erp-pill info" title={b.sourceLabel || 'Synced from Rokesh ERP'}>
+                      ERP
+                    </span>
+                  ) : b.source === 'admin' ? (
+                    <span className="erp-pill ok" title={b.createdByName || 'Added by admin'}>
+                      Admin
+                    </span>
+                  ) : b.source === 'staff' ? (
+                    <span className="erp-pill warn" title={b.createdByName || 'Added by staff'}>
+                      Staff
+                    </span>
+                  ) : null}
+                  {b.updatedByName ? (
+                    <span className="muted" title={b.updatedAt ? new Date(b.updatedAt).toLocaleString('en-IN') : ''}>
+                      · {b.updatedByName}
+                    </span>
+                  ) : null}
+                </div>
               </td>
               <td>{b.productType}</td>
               <td>{(b.categories || []).map((c) => c.name || c).join(', ') || '—'}</td>

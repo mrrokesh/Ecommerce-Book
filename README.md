@@ -13,7 +13,11 @@ Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeS
 - Reviews, store locator, exam-prep section and static storefront help and policy pages
 - New-order alerts in the admin: a chime, a toast and a desktop notification when a customer places an order while the admin is open (checked every 15 seconds by a background worker, so it keeps working while the tab is behind other tabs or apps; the bell in the top bar mutes it and your choice is remembered; leave the admin tab open, and click the page once so the browser allows sound and notifications)
 - Admin sign-in at `/admin/login` with a brand panel and centred form (collapses to a single card on phones)
-- Admin panel at `/admin` with a dark sidebar of collapsible groups with live count badges (orders to action, open returns, pending refunds, low stock) and a daily email usage meter, a jump-to-page search, a dashboard of pending actions, low stock and recent orders, and a layout that works on phones (separate sign-in, no storefront chrome): products, categories, orders, customers, reviews, coupons and banners, email outbox, staff accounts, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), ERP product sync
+- Admin panel at `/admin` with a dark sidebar of collapsible groups with live count badges (orders to action, open returns, pending refunds, low stock) and a daily email usage meter, a jump-to-page search, a dashboard of pending actions, low stock and recent orders, and a layout that works on phones (separate sign-in, no storefront chrome): products (multi-image gallery, provenance), categories, orders, customers (profile, orders and internal notes), reviews, coupons and banners (image upload), email outbox, staff accounts, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), Rokesh ERP product sync
+- Product provenance on every catalogue item: who added it (admin or staff), who last edited it, and for ERP rows a Rokesh source line with the API host and a masked key tip (never the secret); list pills show Admin / Staff / ERP at a glance
+- Product images: drag-and-drop or URL gallery on add/edit (first image is the shop cover; extras show on the product page); admin product-list thumbs stay fixed-size so covers do not collapse
+- Customers under **Sales → Customers**: search, view profile, order history and staff-only internal notes
+- Homepage banners under **Marketing**: title, link and image (URL or upload); empty banner images show a yellow fallback stack until a cover is set
 - Back-office operations in the admin: inventory and stock history, CSV import and bulk edits, payments and refunds, returns, sales reports, gift cards, store settings and delivery coverage, audit history, and optional authenticator-app two-factor sign-in
 - Branded HTML emails for every message (welcome with a real coupon, order receipt, shipping status tracker, returns, refunds, password reset, security alerts) and an admin **Promotional emails** section for seasonal sales (Diwali, Pongal, flash sales): templates, coupon attachment, preview, test send, send to opted-in customers, unsubscribe link and delivery stats, plus a **Subscribers** page (who agreed and when, add a person with a consent confirmation, remove, export CSV); a campaign goes to everyone subscribed or only the people you tick
 - All store email (orders, shipping, returns, refunds, account) is sent through Rokesh Notify from `noreply@salembookhouse.com`, with SMTP as a fallback and an admin outbox with automatic retries
@@ -59,7 +63,8 @@ All settings live in `backend/.env` (see `backend/.env.example`, which lists eve
 | `ROKESH_NOTIFY_API_URL`, `ROKESH_NOTIFY_API_KEY` | Outgoing email through Rokesh Notify (preferred). Needs `salembookhouse.com` verified in Notify (SPF + DKIM DNS records). Mail is sent from `MAIL_FROM`, default `Salem Book House <noreply@salembookhouse.com>` |
 | `SMTP_*` | Fallback email via SMTP, used only if Rokesh Notify is not set. With neither, mail stays in Admin → Email outbox (password-reset emails will not be delivered) |
 | `SHIPPING_WEBHOOK_SECRET` | Shared secret for carrier tracking webhooks |
-| `ERP_API_URL` / `ERP_API_KEY` | Optional product and stock sync |
+| `ERP_API_URL` / `ERP_API_KEY` | Optional Rokesh / Muruga store sync (`mrerp_…` key as `X-Api-Key`). Sync stamps products as ERP with a masked key tip and the staff member who clicked **Sync from ERP** |
+| `SHIPROCKET_EMAIL` / `SHIPROCKET_PASSWORD` / `SHIPROCKET_CHANNEL_ID` / `SHIPROCKET_PICKUP_*` | Optional Shiprocket (also configurable in **Admin → Shipping partners**) |
 
 ## Customer complaints
 
@@ -155,7 +160,7 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 3. Place a Cash on Delivery order and check it in **Admin → Orders**. Sign up with a real address and confirm the verification and welcome emails arrive.
 4. Test online payments with **test keys** first (test card above), then switch the Render variables to the live pair and place one small real order.
 5. Change the admin password if any database ever used a development default, and keep every key out of git.
-6. Make sure the schema step (`npm run db:init`) runs on deploy: new tables and columns (refunds, audit log, returns, `email_verified_at`) are created there.
+6. Make sure the schema step (`npm run db:init`) runs on deploy: new tables and columns (refunds, audit log, returns, `email_verified_at`, product `source` / provenance, `book_images`) are created there.
 7. As admin, open `/api/security/network`. If `ip` is a Vercel or Render address instead of yours, set `TRUST_PROXY_HOPS=4` (Vercel + Render) so rate limits are per visitor.
 
 ## Security notes
@@ -183,7 +188,13 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 
 ## Scripts
 
-One-off data scripts live in `backend/src/scripts` (cover backfill, category cleanup and nav sync, Kannada → Tamil migration, …). Read the header comment before running any of them; `replaceKannadaWithTamil.js` is a dry run unless you pass `--apply`.
+One-off data scripts live in `backend/src/scripts` (cover backfill, category cleanup and nav sync, banner image helpers, product provenance migration, Kannada → Tamil migration, …). Read the header comment before running any of them; `replaceKannadaWithTamil.js` is a dry run unless you pass `--apply`.
+
+## Product images and provenance
+
+- Gallery rows live in `book_images`; `books.image_url` is always the cover (first gallery image).
+- Create/edit in **Admin → Products** records `source` (`admin` / `staff` / `erp`), `created_by_name`, `updated_by_name` and timestamps. ERP sync sets `source=erp` and `source_label` like `Rokesh ERP · host · mrerp_….xxxx` plus who ran the sync.
+- Storefront product pages already show multiple images when more than one gallery URL exists.
 
 ### Storefront help and policies
 

@@ -220,12 +220,30 @@
   background: #f8fafc;
 }
 
-.erp-thumb {
+/* Fixed box so global `img { max-width:100% }` cannot collapse table thumbs to a thin strip */
+.erp-thumb-wrap {
+  display: block;
   width: 40px;
   height: 52px;
-  object-fit: cover;
+  flex: none;
+  overflow: hidden;
   border-radius: 4px;
   background: #f3f4f6;
+}
+
+.erp-thumb,
+img.erp-thumb,
+.erp-thumb-wrap .cover-img,
+.erp-thumb-wrap img {
+  width: 40px !important;
+  height: 52px !important;
+  max-width: none !important;
+  min-width: 40px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 4px;
+  background: #f3f4f6;
+  transform: none !important; /* ignore storefront cover-rotated in the admin list */
 }
 
 .erp-pill {
@@ -322,6 +340,340 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 0.5rem;
+}
+
+/* Override .erp-form label column stack so each category is [checkbox] Name on one row */
+.erp-cats label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.erp-gallery-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.erp-gallery-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.erp-gallery-hint {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.erp-gallery-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.erp-form label.erp-gallery-file-btn {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: #fff;
+}
+
+.erp-form label.erp-gallery-drop {
+  flex-direction: column;
+  font-weight: 400;
+  color: inherit;
+  gap: 0.35rem;
+}
+
+.erp-gallery-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 140px;
+  padding: 1.25rem;
+  border: 2px dashed #c5cad3;
+  border-radius: 10px;
+  background: #fafbfc;
+  text-align: center;
+  cursor: pointer;
+  color: #4b5563;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.erp-gallery-drop:hover,
+.erp-gallery-drop.is-over {
+  border-color: #408dfb;
+  background: #f3f8ff;
+}
+
+.erp-gallery-drop.is-busy {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.erp-gallery-drop-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e8f1ff;
+  color: #2563eb;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.erp-gallery-drop strong {
+  font-size: 0.9rem;
+  color: #1f2937;
+}
+
+.erp-gallery-drop small {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.erp-gallery-added {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.erp-gallery-added-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.erp-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.erp-gallery-item {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.erp-gallery-item.is-cover {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.erp-gallery-item img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  display: block;
+}
+
+.erp-gallery-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+}
+
+.erp-gallery-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.45rem;
+  background: linear-gradient(transparent, rgba(15, 23, 42, 0.78));
+}
+
+.erp-gallery-primary-btn {
+  border: 0;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.28rem 0.5rem;
+  cursor: pointer;
+}
+
+.erp-gallery-primary-btn.is-active {
+  cursor: default;
+}
+
+.erp-gallery-del {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex: none;
+}
+
+.erp-gallery-url {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.erp-gallery-url input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.erp-provenance {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.erp-provenance-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.erp-provenance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.65rem 1rem;
+  margin: 0;
+}
+
+.erp-provenance-grid dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.erp-provenance-grid dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #111827;
+  word-break: break-word;
+}
+
+.erp-provenance-wide {
+  grid-column: 1 / -1;
+}
+
+.erp-product-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.erp-product-meta .erp-pill {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+}
+
+.erp-table tr.is-selected td {
+  background: #eef5ff;
+}
+
+.erp-customer-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0 0 1.25rem;
+  padding: 0.85rem 1rem;
+  background: #f7f8fa;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.erp-customer-meta div {
+  margin: 0;
+}
+
+.erp-customer-meta dt {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.erp-customer-meta dd {
+  margin: 0.2rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+  word-break: break-word;
+}
+
+.erp-customer-meta a {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+.erp-note-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.erp-note-list li {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  background: #fff;
+}
+
+.erp-note-list p {
+  margin: 0 0 0.35rem;
+  white-space: pre-wrap;
+}
+
+.erp-note-list small {
+  color: #6b7280;
 }
 
 .erp-error {

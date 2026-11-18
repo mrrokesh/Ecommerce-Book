@@ -132,8 +132,10 @@ function OrderDetail({ id, onChanged, onClose }) {
         <tbody>
           {order.items.map((it) => (
             <tr key={it.id}>
-              <td>
-                <CoverImage className="erp-thumb" book={it} alt="" />
+              <td style={{ width: 48 }}>
+                <span className="erp-thumb-wrap">
+                  <CoverImage className="erp-thumb" book={it} alt="" />
+                </span>
               </td>
               <td>
                 {it.title}

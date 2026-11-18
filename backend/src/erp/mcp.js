@@ -87,6 +87,11 @@ export function isErpConfigured() {
   return Boolean(erpConfig().apiKey);
 }
 
+export function getErpConnectionMeta() {
+  const { origin, apiKey } = erpConfig();
+  return { origin, apiKeyConfigured: Boolean(apiKey), apiKey };
+}
+
 export async function listErpTools() {
   const init = await mcpRpc(null, 'initialize', {
     protocolVersion: '2024-11-05',
@@ -170,8 +175,15 @@ async function fetchStoreProducts() {
       throw new Error(`Could not reach ERP store API: ${err?.message || err}`);
     }
     const text = await res.text();
-    if (res.status === 401 || res.status === 403) {
-      throw new Error('ERP rejected the store API key. Use an mrerp_ key from ERP store settings in ERP_API_KEY.');
+    const authFailed =
+      res.status === 401 ||
+      res.status === 403 ||
+      /"error"\s*:\s*"Auth failed"/i.test(text) ||
+      /API key required/i.test(text);
+    if (authFailed) {
+      throw new Error(
+        'ERP rejected the store API key. In Muruga ERP open Store / API settings, generate a new mrerp_ key, put it in backend/.env as ERP_API_KEY, restart the API, then Sync again.'
+      );
     }
     if (!res.ok) {
       throw new Error(`ERP store HTTP ${res.status}: ${text.slice(0, 240)}`);

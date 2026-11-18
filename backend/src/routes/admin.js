@@ -10,6 +10,7 @@ import { requireBackOffice, ADMIN_MODULES } from '../middleware/auth.js';
 import { mapBook } from '../utils/bookMapper.js';
 import { isErpConfigured } from '../erp/mcp.js';
 import { syncErpProducts, lastErpSync } from '../erp/syncProducts.js';
+import { createProvenance, editProvenance } from '../utils/productProvenance.js';
 import { restockOrder, nextPaymentStatus } from './orders.js';
 import { refundRazorpayPayment } from './payments.js';
 import { notifyOrderEvent } from '../notify/index.js';
@@ -182,6 +183,44 @@ async function setBookCategories(bookId, categoryIds) {
       id,
     ]);
   }
+}
+
+function normalizeImageUrls(urls) {
+  const seen = new Set();
+  const out = [];
+  for (const raw of urls || []) {
+    const u = String(raw || '').trim();
+    if (!u || seen.has(u)) continue;
+    seen.add(u);
+    out.push(u);
+  }
+  return out;
+}
+
+/** Replace gallery rows; first URL is the product cover (`books.image_url`). */
+async function setBookImages(bookId, urls) {
+  const list = normalizeImageUrls(urls);
+  const cover = list[0] || '/placeholder-book.svg';
+  await query(`DELETE FROM book_images WHERE book_id = $1`, [bookId]);
+  for (let i = 0; i < list.length; i += 1) {
+    await query(`INSERT INTO book_images (book_id, image_url, sort_order) VALUES ($1,$2,$3)`, [
+      bookId,
+      list[i],
+      i,
+    ]);
+  }
+  await query(`UPDATE books SET image_url = $2 WHERE id = $1`, [bookId, cover]);
+  return list;
+}
+
+async function imagesForBook(bookId, coverUrl) {
+  const { rows } = await query(
+    `SELECT image_url FROM book_images WHERE book_id = $1 ORDER BY sort_order, id`,
+    [bookId]
+  );
+  const fromGallery = rows.map((r) => r.image_url).filter(Boolean);
+  if (fromGallery.length) return fromGallery;
+  return coverUrl ? [coverUrl] : [];
 }
 
 async function upsertAuthor(name) {
@@ -399,7 +438,9 @@ router.get('/books/:id', async (req, res) => {
     const { rows } = await query(`SELECT * FROM books WHERE id = $1`, [req.params.id]);
     if (!rows[0]) return res.status(404).json({ success: false, error: 'Product not found' });
     const catMap = await categoriesForBooks([rows[0].id]);
-    return res.json({ success: true, data: { book: mapBook(rows[0], catMap[rows[0].id] || []) } });
+    const images = await imagesForBook(rows[0].id, rows[0].image_url);
+    const book = mapBook({ ...rows[0], images }, catMap[rows[0].id] || []);
+    return res.json({ success: true, data: { book } });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, error: 'Failed to load product' });
@@ -426,12 +467,18 @@ router.post('/books', async (req, res) => {
     const discount = m > s && m > 0 ? Math.round(((m - s) / m) * 100) : 0;
     const slug = `${slugify(title)}-${Date.now().toString(36)}`;
     const authorId = await upsertAuthor(authorName);
+    const gallery = Array.isArray(body.images)
+      ? normalizeImageUrls(body.images)
+      : normalizeImageUrls(body.imageUrl ? [body.imageUrl] : []);
+    const cover = gallery[0] || '/placeholder-book.svg';
+    const prov = createProvenance(req.user);
     const { rows } = await query(
       `INSERT INTO books (
          title, slug, author_id, author_name, description, image_url,
          mrp, sale_price, discount_percent, stock, language, publisher, product_type,
-         isbn13, isbn10, binding, edition, publishing_date, is_active, is_featured, is_bestseller, sku, cod_allowed
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
+         isbn13, isbn10, binding, edition, publishing_date, is_active, is_featured, is_bestseller, sku, cod_allowed,
+         source, source_label, created_by, created_by_name, updated_by, updated_by_name, updated_at
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,NOW())
        RETURNING *`,
       [
         title,
@@ -439,7 +486,7 @@ router.post('/books', async (req, res) => {
         authorId,
         authorName,
         body.description || null,
-        body.imageUrl || '/placeholder-book.svg',
+        cover,
         m,
         s,
         discount,
@@ -457,11 +504,19 @@ router.post('/books', async (req, res) => {
         Boolean(body.isBestseller),
         sku,
         body.codAllowed !== false,
+        prov.source,
+        prov.sourceLabel,
+        prov.createdBy,
+        prov.createdByName,
+        prov.updatedBy,
+        prov.updatedByName,
       ]
     );
     await setBookCategories(rows[0].id, body.categoryIds);
+    const images = await setBookImages(rows[0].id, gallery.length ? gallery : [cover]);
     const catMap = await categoriesForBooks([rows[0].id]);
-    return res.status(201).json({ success: true, data: { book: mapBook(rows[0], catMap[rows[0].id] || []) } });
+    const book = mapBook({ ...rows[0], image_url: images[0] || cover, images }, catMap[rows[0].id] || []);
+    return res.status(201).json({ success: true, data: { book } });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, error: 'Failed to create product' });
@@ -494,6 +549,11 @@ router.patch('/books/:id', async (req, res) => {
     // Fields the form can blank out: undefined = leave alone, '' = clear.
     const clearable = (v, cur) => (v === undefined ? cur : optText(v) || null);
     const discount = nextMrp > nextSale && nextMrp > 0 ? Math.round(((nextMrp - nextSale) / nextMrp) * 100) : 0;
+    const hasGallery = Array.isArray(body.images);
+    const nextCover = hasGallery
+      ? normalizeImageUrls(body.images)[0] || '/placeholder-book.svg'
+      : body.imageUrl || null;
+    const edit = editProvenance(req.user);
     const upd = await query(
       `UPDATE books SET
          title = $1,
@@ -517,14 +577,17 @@ router.patch('/books/:id', async (req, res) => {
          is_featured = COALESCE($19, is_featured),
          is_bestseller = COALESCE($20, is_bestseller),
          sku = $21,
-         cod_allowed = COALESCE($23, cod_allowed)
+         cod_allowed = COALESCE($23, cod_allowed),
+         updated_by = $24,
+         updated_by_name = $25,
+         updated_at = NOW()
        WHERE id = $22 RETURNING *`,
       [
         title || b.title,
         authorId,
         authorName || b.author_name,
         body.description !== undefined ? body.description : null,
-        body.imageUrl || null,
+        nextCover,
         body.stock != null ? Number(body.stock) : null,
         nextMrp,
         nextSale,
@@ -543,11 +606,25 @@ router.patch('/books/:id', async (req, res) => {
         clearable(body.sku ?? body.isbn13, b.sku),
         req.params.id,
         typeof body.codAllowed === 'boolean' ? body.codAllowed : null,
+        edit.updatedBy,
+        edit.updatedByName,
       ]
     );
     if (body.categoryIds) await setBookCategories(upd.rows[0].id, body.categoryIds);
+    let images;
+    if (hasGallery) {
+      images = await setBookImages(upd.rows[0].id, body.images);
+    } else if (body.imageUrl) {
+      images = await setBookImages(upd.rows[0].id, [body.imageUrl]);
+    } else {
+      images = await imagesForBook(upd.rows[0].id, upd.rows[0].image_url);
+    }
     const catMap = await categoriesForBooks([upd.rows[0].id]);
-    return res.json({ success: true, data: { book: mapBook(upd.rows[0], catMap[upd.rows[0].id] || []) } });
+    const book = mapBook(
+      { ...upd.rows[0], image_url: images[0] || upd.rows[0].image_url, images },
+      catMap[upd.rows[0].id] || []
+    );
+    return res.json({ success: true, data: { book } });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, error: 'Failed to update product' });
@@ -1241,9 +1318,9 @@ router.get('/erp/status', (_req, res) => {
   });
 });
 
-router.post('/erp/sync', async (_req, res) => {
+router.post('/erp/sync', async (req, res) => {
   try {
-    const result = await syncErpProducts();
+    const result = await syncErpProducts(req.user);
     return res.json({ success: true, data: result });
   } catch (err) {
     console.error(err);

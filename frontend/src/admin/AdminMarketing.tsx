@@ -84,8 +84,39 @@ export default function AdminMarketing() {
           </label>
           <label>
             Image URL
-            <input data-validate="link" value={banner.imageUrl} onChange={(e) => setBanner({ ...banner, imageUrl: e.target.value })} />
+            <input data-validate="link" value={banner.imageUrl} onChange={(e) => setBanner({ ...banner, imageUrl: e.target.value })} placeholder="/uploads/media/… or https://…" />
           </label>
+          <label>
+            Upload image
+            <input
+              type="file"
+              accept="image/*"
+              disabled={busy}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setBusy(true);
+                setError('');
+                try {
+                  const fd = new FormData();
+                  fd.append('file', file);
+                  const { data } = await api.post('/admin/upload', fd);
+                  setBanner((prev) => ({ ...prev, imageUrl: data.url }));
+                  setOk('Image uploaded — save the banner to apply it.');
+                } catch (err) {
+                  setError((err as Error).message || 'Upload failed');
+                } finally {
+                  setBusy(false);
+                  e.target.value = '';
+                }
+              }}
+            />
+          </label>
+          {banner.imageUrl ? (
+            <div className="erp-thumb-wrap" style={{ width: 120, height: 80 }}>
+              <img className="erp-thumb" src={banner.imageUrl} alt="" style={{ width: 120, height: 80, objectFit: 'cover' }} />
+            </div>
+          ) : null}
           <div className="erp-actions">
             <button className="erp-btn primary" type="submit" disabled={busy}>
               {busy ? 'Saving…' : editBannerId ? 'Update banner' : 'Add banner'}
@@ -107,6 +138,7 @@ export default function AdminMarketing() {
         <table className="erp-table">
           <thead>
             <tr>
+              <th />
               <th>Title</th>
               <th>Link</th>
               <th>Status</th>
@@ -116,6 +148,15 @@ export default function AdminMarketing() {
           <tbody>
             {banners.map((b) => (
               <tr key={b.id}>
+                <td style={{ width: 56 }}>
+                  {b.imageUrl ? (
+                    <span className="erp-thumb-wrap" style={{ width: 48, height: 36 }}>
+                      <img src={b.imageUrl} alt="" style={{ width: 48, height: 36, objectFit: 'cover', borderRadius: 4 }} />
+                    </span>
+                  ) : (
+                    <span className="muted">No image</span>
+                  )}
+                </td>
                 <td>
                   <strong>{b.title}</strong>
                   {b.subtitle ? <div className="muted">{b.subtitle}</div> : null}

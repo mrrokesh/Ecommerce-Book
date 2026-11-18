@@ -52,8 +52,10 @@ export default function CoverImage({ book, alt, className, loading = 'lazy' }: P
         }
         // Uploaded book photos sometimes land as landscape pixels of a portrait cover.
         // Only book-shaped landscape images (a rotated ~2:3 cover) count as sideways.
+        // Skip rotation in admin thumbs (erp-thumb) — transform collapses the fixed box.
         const ratio = el.naturalWidth / el.naturalHeight;
-        if (isBookish && ratio >= 1.25 && ratio <= 1.9) {
+        const inAdminThumb = /\berp-thumb\b/.test(className || '');
+        if (!inAdminThumb && isBookish && ratio >= 1.25 && ratio <= 1.9) {
           setRotated(true);
         } else {
           setRotated(false);

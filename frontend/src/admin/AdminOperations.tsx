@@ -3,7 +3,7 @@ import { askText, confirmAction } from '../components/Dialogs';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 type Row = Record<string, unknown>;
-type Result = { rows?: Row[]; refunds?: Row[]; attempts?: Row[]; transactions?: Row[]; trend?: Row[]; bestsellers?: Row[]; stats?: Row; orders?: Row[]; notes?: Row[] } & Record<string, unknown>;
+type Result = { rows?: Row[]; refunds?: Row[]; attempts?: Row[]; transactions?: Row[]; trend?: Row[]; bestsellers?: Row[]; stats?: Row; orders?: Row[]; notes?: Row[]; customer?: Row } & Record<string, unknown>;
 const value = (v: unknown) => v == null ? '—' : typeof v === 'object' ? JSON.stringify(v) : String(v);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const cell = (v: unknown) => { const s = value(v); return UUID.test(s) ? s.slice(0, 8) + '…' : s; };
@@ -37,7 +37,18 @@ export default function AdminOperations({ section }: { section: string }) {
     catch (e) { setError((e as Error).message); return false; } finally { setBusy(false); }
   }
   function form(e: React.FormEvent<HTMLFormElement>) { e.preventDefault(); return Object.fromEntries(new FormData(e.currentTarget).entries()); }
-  async function customer(id: string) { try { const r = await api.get('/operations/customers/' + id); setDetail(r.data); setCustomerId(id); } catch (e) { setError((e as Error).message); } }
+  async function customer(id: string) {
+    try {
+      const r = await api.get('/operations/customers/' + id);
+      if (!r.data?.customer) throw new Error('Customer not found');
+      setDetail(r.data);
+      setCustomerId(id);
+      requestAnimationFrame(() => document.getElementById('ops-customer-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    } catch (e) {
+      setDetail(null);
+      setError((e as Error).message);
+    }
+  }
   const button = (label: string, fn: () => void) => <button type="button" className="erp-btn" disabled={busy} onClick={fn}>{label}</button>;
   return <div className="ops-stack">
     <div className="erp-card ops-panel"><div className="erp-toolbar">
@@ -67,7 +78,7 @@ export default function AdminOperations({ section }: { section: string }) {
     {!['settings', 'payments', 'products', 'reports', 'returns', 'gifts'].includes(section) && <div className="erp-toolbar">{button('Previous', () => setPage(p => Math.max(1, p - 1)))}<span>Page {page}</span>{button('Next', () => setPage(p => p + 1))}</div>}
     </div>
     {history.length > 0 && <div className="erp-card ops-panel"><h2>Stock movement history</h2><Table rows={history} /></div>}
-    {detail && <div className="erp-card ops-panel"><h2>Customer history</h2><Table rows={detail.orders} /><h3>Internal notes</h3><Table rows={detail.notes} /><form className="ops-form" onSubmit={async e => { if (await act(`customers/${customerId}/notes`, form(e))) await customer(customerId); }}><label>Note<textarea name="note" required maxLength={2000} /></label><button className="erp-btn primary">Add internal note</button></form></div>}
+    {detail && <div className="erp-card ops-panel" id="ops-customer-detail"><div className="erp-toolbar"><h2 style={{ margin: 0 }}>Customer</h2><button type="button" className="erp-btn ghost" onClick={() => setDetail(null)}>Close</button></div>{detail.customer ? <dl className="erp-customer-meta"><div><dt>Name</dt><dd>{String((detail.customer as Row).name || '—')}</dd></div><div><dt>Email</dt><dd>{String((detail.customer as Row).email || '—')}</dd></div><div><dt>Phone</dt><dd>{String((detail.customer as Row).phone || '—')}</dd></div><div><dt>Orders</dt><dd>{(detail.orders || []).length}</dd></div></dl> : null}<h3>Orders</h3>{(detail.orders || []).length ? <Table rows={detail.orders} /> : <p className="muted">No orders yet for this customer.</p>}<h3>Internal notes</h3>{(detail.notes || []).length ? <Table rows={detail.notes} /> : <p className="muted">No internal notes yet.</p>}<form className="ops-form" onSubmit={async e => { if (await act(`customers/${customerId}/notes`, form(e))) await customer(customerId); }}><label>Note<textarea name="note" required maxLength={2000} /></label><button className="erp-btn primary">Add internal note</button></form></div>}
     {section === 'settings' && <div className="erp-card ops-panel"><h2>Delivery coverage</h2><form className="ops-form" onSubmit={e => void act('settings/pincodes', form(e), 'put')}>
       {['pincode', 'city', 'state', 'shipping', 'etaDays'].map(k => <label key={k}>{k}<input name={k} required type={['shipping', 'etaDays'].includes(k) ? 'number' : 'text'} min="0" /></label>)}<button className="erp-btn primary">Save pincode</button></form>{button('Show delivery pincodes', () => { api.get('/operations/settings/pincodes').then(r => setHistory(r.data.rows)).catch(e => setError(e.message)); })}</div>}
   </div>;

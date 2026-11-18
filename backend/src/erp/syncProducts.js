@@ -1,5 +1,6 @@
 import { query } from '../db/pool.js';
-import { fetchErpProducts, isErpConfigured } from './mcp.js';
+import { fetchErpProducts, isErpConfigured, getErpConnectionMeta } from './mcp.js';
+import { erpProvenance } from '../utils/productProvenance.js';
 
 function slugify(s) {
   return String(s)
@@ -80,9 +81,9 @@ export function lastErpSync() {
 }
 
 /** Runs one sync at a time; concurrent callers share the in-flight run. */
-export function syncErpProducts() {
+export function syncErpProducts(actor = null) {
   if (!running) {
-    running = runSync()
+    running = runSync(actor)
       .then((result) => {
         lastSync = { at: new Date().toISOString(), ok: true, ...result, tools: undefined };
         return result;
@@ -111,10 +112,12 @@ export function startErpAutoSync() {
   setInterval(tick, minutes * 60_000).unref();
 }
 
-async function runSync() {
+async function runSync(actor = null) {
   if (!isErpConfigured()) {
     throw new Error('Set ERP_API_KEY (store key, header X-Api-Key)');
   }
+  const { origin, apiKey } = getErpConnectionMeta();
+  const prov = erpProvenance(actor, origin, apiKey);
   const { tool, tools, products } = await fetchErpProducts();
   let upserted = 0;
   let skipped = 0;
@@ -136,7 +139,9 @@ async function runSync() {
            title = $1, author_id = $2, author_name = $3, sku = $4, isbn13 = COALESCE($5, isbn13),
            description = COALESCE(NULLIF($6,''), description), image_url = $7,
            mrp = $8, sale_price = $9, discount_percent = $10, stock = $11, publisher = $12,
-           is_active = $13, product_type = COALESCE(product_type, 'book')
+           is_active = $13, product_type = COALESCE(product_type, 'book'),
+           source = 'erp', source_label = $15,
+           updated_by = $16, updated_by_name = $17, updated_at = NOW()
          WHERE id = $14`,
         [
           p.title,
@@ -153,6 +158,9 @@ async function runSync() {
           p.publisher,
           p.active,
           bookId,
+          prov.sourceLabel,
+          prov.updatedBy,
+          prov.updatedByName,
         ]
       );
     } else {
@@ -160,8 +168,9 @@ async function runSync() {
       const inserted = await query(
         `INSERT INTO books (
            title, slug, author_id, author_name, sku, isbn13, description, image_url,
-           mrp, sale_price, discount_percent, stock, publisher, product_type, is_active, erp_id
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'book',$14,$15)
+           mrp, sale_price, discount_percent, stock, publisher, product_type, is_active, erp_id,
+           source, source_label, created_by, created_by_name, updated_by, updated_by_name, updated_at
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'book',$14,$15,$16,$17,$18,$19,$20,$21,NOW())
          RETURNING id`,
         [
           p.title,
@@ -179,6 +188,12 @@ async function runSync() {
           p.publisher,
           p.active,
           p.erpId,
+          'erp',
+          prov.sourceLabel,
+          prov.updatedBy,
+          prov.updatedByName,
+          prov.updatedBy,
+          prov.updatedByName,
         ]
       );
       bookId = inserted.rows[0].id;

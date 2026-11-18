@@ -40,6 +40,12 @@ export function mapBook(row, categories = [], rating = null) {
     categories: categories.map((c) =>
       typeof c === 'string' ? c : { id: c.id, name: c.name, slug: c.slug }
     ),
+    source: row.source || (row.erp_id ? 'erp' : 'manual'),
+    sourceLabel: row.source_label || undefined,
+    createdAt: row.created_at || undefined,
+    updatedAt: row.updated_at || undefined,
+    createdByName: row.created_by_name || undefined,
+    updatedByName: row.updated_by_name || undefined,
   };
 }
 

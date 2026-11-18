@@ -73,7 +73,7 @@ export default function App() {
               <Route path="security" element={<AdminSecurity />} />
               <Route path="staff" element={<AdminStaff />} />
               <Route path="orders" element={<AdminOrders />} />
-              <Route path="customers" element={<AdminOperations section="customers" />} />
+              <Route path="customers" element={<AdminCustomers />} />
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="shipping" element={<AdminShipping />} />
               <Route path="marketing" element={<AdminMarketing />} />
