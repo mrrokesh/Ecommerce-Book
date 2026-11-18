@@ -24,11 +24,13 @@ Copy from `backend/.env.example`. Minimum for a working shop:
 
 ## Admin runbook
 
-1. **Products** — sync ERP (Products → Sync from ERP) or add manually.
-2. **Shipping** — enable a partner, paste credentials, set default, turn on auto-create if desired.
-3. **Orders** — open order → **Create shipment** (or auto). Paste `AWB ABC123` in note to force manual AWB.
-4. **Reviews** — hide spam under Reviews.
-5. **Invoice** — open order detail → Invoice link (HTML, print to PDF).
+1. **Products** — sync ERP (Products → Sync from ERP) or add manually (types: Book, Stationery, Toy, Gift card).
+2. **Shipping** — **Configure** a partner (centred modal), paste credentials, set default, turn on auto-create if desired.
+3. **Orders** — open order → packing slip / label / **Create shipment** (or auto). Paste `AWB ABC123` in note to force manual AWB.
+4. **Users** — Invite by email; **Suspend** / **Restore** blocks or returns portal access without removing the account; **Remove** demotes to customer.
+5. **Subscribers** — filter All / Subscribed / Unsubscribed; Unsubscribe keeps the row but stops offers.
+6. **Reviews** — hide spam under Reviews.
+7. **Invoice** — open order detail → Invoice link (HTML, print to PDF).
 
 ## Customer flows
 

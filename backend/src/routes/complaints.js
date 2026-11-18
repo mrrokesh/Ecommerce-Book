@@ -1,10 +1,12 @@
+import crypto from 'crypto';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { query } from '../db/pool.js';
 import { optionalAuth, requireAuth, requirePermission } from '../middleware/auth.js';
 import { mailBudgetOk } from '../mailer.js';
-import { firstError } from '../utils/validate.js';
-import { complaintReceivedEmail, complaintReplyEmail, complaintResolvedEmail } from '../notify/complaintMail.js';
+import { checks, firstError } from '../utils/validate.js';
+import { complaintReceivedEmail, complaintReplyEmail, complaintResolvedEmail, complaintAccessEmail } from '../notify/complaintMail.js';
+import { siteBase } from '../notify/emailTemplate.js';
 
 /**
  * Customer complaints: customers (signed in or not) raise a ticket and follow it with the ticket
@@ -38,6 +40,25 @@ const raiseLimiter = limiter(6, 'Too many complaints from this connection. Pleas
 const lookupLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 40, standardHeaders: true, legacyHeaders: false, message: { success: false, error: 'Too many attempts. Please wait and try again.' } });
 
 const cap = (name, fallback) => Number(process.env[name] || fallback);
+
+/**
+ * A ticket number is sequential and easy to guess, so it never proves ownership. A signed-in
+ * customer's ticket opens only for that account; a guest's ticket opens only with a random
+ * personal token that was emailed to the address on the ticket and expires.
+ */
+const hashToken = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
+async function issueToken(complaintId, hours) {
+  const raw = crypto.randomBytes(24).toString('hex');
+  await query('DELETE FROM complaint_access_tokens WHERE expires_at < NOW()');
+  await query("INSERT INTO complaint_access_tokens (complaint_id, token_hash, expires_at) VALUES ($1,$2, NOW() + ($3 || ' hours')::interval)", [complaintId, hashToken(raw), String(hours)]);
+  return raw;
+}
+/** Where the customer opens a ticket from an email: their account page, or a personal expiring link for guests. */
+async function trackLink(c, hours = 168) {
+  const base = siteBase();
+  if (c.user_id) return `${base}/complaint/track`;
+  return `${base}/complaint/track?n=${encodeURIComponent(c.ticket)}&t=${await issueToken(c.id, hours)}`;
+}
 
 function mapComplaint(r) {
   return {
@@ -106,7 +127,7 @@ router.post(
     const ticket = 'CMP-' + String(rows[0].id).padStart(6, '0');
     await query('UPDATE complaints SET ticket = $2 WHERE id = $1', [rows[0].id, ticket]);
     const c = { ...rows[0], ticket };
-    if (await mailBudgetOk(email, 'We received your complaint', { perRecipient: 5 })) void complaintReceivedEmail(c);
+    if (await mailBudgetOk(email, 'We received your complaint', { perRecipient: 5 })) void trackLink(c).then((link) => complaintReceivedEmail(c, link)).catch(() => undefined);
     return { ticket, status: c.status };
   })
 );
@@ -121,16 +142,25 @@ router.get(
   })
 );
 
-/** Customers can read a ticket when signed in as its owner, or with the ticket number plus the email on it. */
+/**
+ * Who may open a ticket: the signed-in account that raised it, or (for guest tickets only) the holder
+ * of an unexpired emailed token. The ticket number and the email address alone prove nothing.
+ */
 async function ownTicket(req) {
   const ticket = String(req.params.ticket || '').toUpperCase();
-  if (!/^CMP-\d{6,}$/.test(ticket)) throw fail('Ticket not found', 404);
+  const denied = () => fail('We could not open that complaint. If you used an emailed link it may have expired: ask for a new one.', 404);
+  if (!/^CMP-\d{6,}$/.test(ticket)) throw denied();
   const { rows } = await query('SELECT * FROM complaints WHERE ticket = $1', [ticket]);
   const c = rows[0];
-  const email = String(req.query.email || req.body?.email || '').trim().toLowerCase();
-  const ownerByLogin = req.user && c && c.user_id && c.user_id === req.user.id;
-  const ownerByEmail = c && email && email === String(c.email).toLowerCase();
-  if (!c || !(ownerByLogin || ownerByEmail)) throw fail('We could not find a complaint with that ticket number and email', 404);
+  if (!c) throw denied();
+  if (c.user_id) {
+    if (!req.user || req.user.id !== c.user_id) throw denied();
+    return c;
+  }
+  const token = String(req.body?.token || '').trim();
+  if (!/^[0-9a-f]{48}$/.test(token)) throw denied();
+  const ok = await query('SELECT 1 FROM complaint_access_tokens WHERE complaint_id = $1 AND token_hash = $2 AND expires_at > NOW()', [c.id, hashToken(token)]);
+  if (!ok.rows.length) throw denied();
   return c;
 }
 async function publicThread(id) {
@@ -141,19 +171,39 @@ async function publicThread(id) {
   return rows.map(mapMessage);
 }
 
-router.get(
-  '/t/:ticket',
+const viewTicket = wrap(async (req, res) => {
+  const c = await ownTicket(req);
+  res.set('Cache-Control', 'no-store');
+  const full = mapComplaint(c);
+  // Customers never see staff assignment details
+  delete full.assignedTo;
+  delete full.assignedName;
+  delete full.priority;
+  return { complaint: full, messages: await publicThread(c.id) };
+});
+// Signed-in owner: GET. Guest with an emailed token: POST (so the token never sits in a URL or access log).
+router.get('/t/:ticket', lookupLimiter, optionalAuth, viewTicket);
+router.post('/t/:ticket/view', lookupLimiter, optionalAuth, viewTicket);
+
+/**
+ * A guest asks for a fresh link. The answer is always the same, so nobody can use this to learn
+ * whether a ticket exists; the link goes only to the email address stored on the ticket.
+ */
+router.post(
+  '/access-link',
   lookupLimiter,
-  optionalAuth,
-  wrap(async (req, res) => {
-    const c = await ownTicket(req);
-    res.set('Cache-Control', 'no-store');
-    const full = mapComplaint(c);
-    // Customers never see staff assignment details
-    delete full.assignedTo;
-    delete full.assignedName;
-    delete full.priority;
-    return { complaint: full, messages: await publicThread(c.id) };
+  wrap(async (req) => {
+    const ticket = String(req.body?.ticket || '').trim().toUpperCase();
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const sent = { sent: true, hours: 24 };
+    if (!/^CMP-\d{6,}$/.test(ticket) || checks.email(email)) return sent;
+    const { rows } = await query('SELECT * FROM complaints WHERE ticket = $1 AND user_id IS NULL AND lower(email) = $2', [ticket, email]);
+    const c = rows[0];
+    if (c && (await mailBudgetOk(c.email, 'Your link to complaint', { perRecipient: 3 }))) {
+      const link = await trackLink(c, 24);
+      void complaintAccessEmail(c, link, 24);
+    }
+    return sent;
   })
 );
 
@@ -260,7 +310,7 @@ staff.post(
       // Answering an untouched ticket moves it along; the customer is told by email.
       if (c.status === 'open') await query("UPDATE complaints SET status = 'in_progress', updated_at = NOW() WHERE id = $1", [c.id]);
       else await query('UPDATE complaints SET updated_at = NOW() WHERE id = $1', [c.id]);
-      void complaintReplyEmail(c, body, req.user.name);
+      void trackLink(c).then((link) => complaintReplyEmail(c, body, req.user.name, link)).catch(() => undefined);
     }
     void audit(req, isNote ? 'COMPLAINT note ' + c.ticket : 'COMPLAINT reply ' + c.ticket, c.id);
     const msgs = await query('SELECT * FROM complaint_messages WHERE complaint_id = $1 ORDER BY created_at, id', [c.id]);
@@ -302,7 +352,7 @@ staff.patch(
     if (!sets.length) throw fail('Nothing to update');
     sets.push('updated_at = NOW()');
     const upd = await query(`UPDATE complaints SET ${sets.join(', ')} WHERE id = $1 RETURNING *`, params);
-    if (resolved) void complaintResolvedEmail(upd.rows[0]);
+    if (resolved) void trackLink(upd.rows[0]).then((link) => complaintResolvedEmail(upd.rows[0], link)).catch(() => undefined);
     void audit(req, 'COMPLAINT update ' + c.ticket + ' ' + JSON.stringify({ status: b.status, priority: b.priority, assign: b.assign }), c.id);
     return { complaint: mapComplaint(upd.rows[0]) };
   })

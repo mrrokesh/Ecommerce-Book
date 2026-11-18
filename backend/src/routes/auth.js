@@ -159,10 +159,17 @@ router.post('/login', async (req, res) => {
     if(user.mfa_secret&&!verifyTotp(decryptSecret(user.mfa_secret),req.body.code))return res.status(401).json({success:false,error:'Enter a valid authenticator code'});
     if (user.role === 'admin' || user.role === 'staff') {
       const status = await query(`SELECT staff_status FROM users WHERE id = $1`, [user.id]);
-      if (status.rows[0]?.staff_status === 'invited') {
+      const staffStatus = status.rows[0]?.staff_status;
+      if (staffStatus === 'invited') {
         return res.status(403).json({
           success: false,
           error: 'Accept your invite link and set a password before signing in',
+        });
+      }
+      if (staffStatus === 'suspended') {
+        return res.status(403).json({
+          success: false,
+          error: 'This portal account is suspended. Ask an admin to restore access.',
         });
       }
       await query(`UPDATE users SET last_sign_in_at = NOW() WHERE id = $1`, [user.id]);

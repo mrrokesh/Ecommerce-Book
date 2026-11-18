@@ -68,13 +68,19 @@ export default function AdminProducts() {
     setError('');
     setNotice('Refreshing covers… this can take a few minutes.');
     try {
-      const { data } = await api.post('/admin/covers/backfill');
+      const { data } = await api.post('/admin/covers/backfill', undefined, { timeout: 10 * 60 * 1000 });
       setNotice(
         `Covers updated: ${data.real || 0} real, ${data.svg || 0} branded, ${data.skipped || 0} kept, ${data.errors || 0} errors.`,
       );
       load(page);
     } catch (err) {
-      setError(err.message);
+      // A long run can outlast the browser wait; the server keeps working, so say that instead of showing an error.
+      if (/timeout/i.test(err.message || '')) {
+        setNotice('The cover refresh is still running on the server. Reload this list in a minute or two to see the new covers.');
+        load(page);
+      } else {
+        setError(err.message);
+      }
     } finally {
       setFillingCovers(false);
     }
@@ -179,7 +185,7 @@ export default function AdminProducts() {
       {erp.lastSync && !erp.lastSync.ok ? (
         <p className="erp-error" style={{ padding: '0 0.85rem' }}>Last ERP sync failed: {erp.lastSync.error}</p>
       ) : null}
-      <table className="erp-table">
+      <table className="erp-table erp-products-table">
         <thead>
           <tr>
             <th />

@@ -26,7 +26,7 @@ export async function requireAuth(req, res, next) {
     }
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     const { rows } = await query(
-      `SELECT id, name, email, phone, role, created_at, token_version, email_verified_at FROM users WHERE id = $1`,
+      `SELECT id, name, email, phone, role, created_at, token_version, email_verified_at, staff_status FROM users WHERE id = $1`,
       [payload.sub]
     );
     if (!rows[0]) {
@@ -87,6 +87,12 @@ export async function requireBackOffice(req, res, next) {
   await requireAuth(req, res, async () => {
     if (!BACK_OFFICE_ROLES.includes(req.user?.role)) {
       return res.status(403).json({ success: false, error: 'Admin access required' });
+    }
+    if (req.user?.staff_status === 'suspended') {
+      return res.status(403).json({ success: false, error: 'This portal account is suspended' });
+    }
+    if (req.user?.staff_status === 'invited') {
+      return res.status(403).json({ success: false, error: 'Accept your invite before using the portal' });
     }
     try {
       req.permissions = await loadPermissions(req.user);

@@ -122,12 +122,14 @@ function OrderDetail({ id, onChanged, onClose }) {
           </>
         ) : null}
       </p>
-      <a className="erp-btn" target="_blank" rel="noreferrer" href={'/api/operations/orders/'+id+'/document'}>Packing slip</a>
-      <a className="erp-btn" target="_blank" rel="noreferrer" href={'/api/operations/orders/'+id+'/document?kind=label'}>Address label</a>
-      <a className="erp-btn" href="/admin/payments">Refunds</a>
-      <button type="button" className="erp-btn primary" disabled={busy || !['placed','confirmed','packed'].includes(order.status)} onClick={createShipment}>
-        {order.awb ? 'Refresh / re-ship' : 'Create shipment'}
-      </button>
+      <div className="erp-detail-actions">
+        <a className="erp-btn" target="_blank" rel="noreferrer" href={'/api/operations/orders/'+id+'/document'}>Packing slip</a>
+        <a className="erp-btn" target="_blank" rel="noreferrer" href={'/api/operations/orders/'+id+'/document?kind=label'}>Address label</a>
+        <a className="erp-btn" href="/admin/payments">Refunds</a>
+        <button type="button" className="erp-btn primary" disabled={busy || !['placed','confirmed','packed'].includes(order.status)} onClick={createShipment}>
+          {order.awb ? 'Refresh / re-ship' : 'Create shipment'}
+        </button>
+      </div>
       <table className="erp-table">
         <tbody>
           {order.items.map((it) => (

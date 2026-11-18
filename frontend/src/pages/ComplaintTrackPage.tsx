@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -10,31 +10,65 @@ type Complaint = {
 };
 type Summary = Pick<Complaint, 'ticket' | 'subject' | 'status' | 'createdAt'>;
 
-/** Look up a ticket (ticket number + email, or from your account) and follow up on it. */
+/**
+ * Follow a complaint. Signed-in customers open their own tickets from their account. Guests open a
+ * ticket from the personal link we email them (the ticket number and email alone never open it);
+ * they can ask for a fresh link below, which is only ever sent to the email on the ticket.
+ */
 export default function ComplaintTrackPage() {
   const { user } = useAuth();
   const [mine, setMine] = useState<Summary[]>([]);
   const [lookup, setLookup] = useState({ ticket: '', email: '' });
-  const [active, setActive] = useState<{ ticket: string; email: string } | null>(null);
+  const [linkSent, setLinkSent] = useState(false);
+  const [active, setActive] = useState<{ ticket: string; token: string } | null>(null);
   const [data, setData] = useState<{ complaint: Complaint; messages: ComplaintMessage[] } | null>(null);
   const [reply, setReply] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const tried = useRef(false);
 
   useEffect(() => {
     if (!user) { setMine([]); return; }
     api.get('/complaints/mine').then(({ data: d }) => setMine(d.complaints)).catch(() => undefined);
   }, [user]);
 
-  async function open(ticket: string, email: string) {
+  async function open(ticket: string, token: string) {
     setBusy(true);
     setError('');
     try {
-      const { data: d } = await api.get(`/complaints/t/${encodeURIComponent(ticket.trim().toUpperCase())}`, { params: email ? { email } : undefined });
+      const t = encodeURIComponent(ticket.trim().toUpperCase());
+      const { data: d } = token ? await api.post(`/complaints/t/${t}/view`, { token }) : await api.get(`/complaints/t/${t}`);
       setData(d);
-      setActive({ ticket: ticket.trim().toUpperCase(), email });
+      setActive({ ticket: ticket.trim().toUpperCase(), token });
     } catch (err) {
       setData(null);
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Opened from the emailed link: take the token out of the address bar straight away.
+  useEffect(() => {
+    if (tried.current) return;
+    tried.current = true;
+    const p = new URLSearchParams(window.location.search);
+    const n = p.get('n');
+    const t = p.get('t');
+    if (n && t) {
+      window.history.replaceState(null, '', window.location.pathname);
+      void open(n, t);
+    }
+  }, []);
+
+  async function requestLink(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      await api.post('/complaints/access-link', { ticket: lookup.ticket.trim().toUpperCase(), email: lookup.email.trim().toLowerCase() });
+      setLinkSent(true);
+    } catch (err) {
       setError((err as Error).message);
     } finally {
       setBusy(false);
@@ -47,9 +81,9 @@ export default function ComplaintTrackPage() {
     setBusy(true);
     setError('');
     try {
-      await api.post(`/complaints/t/${encodeURIComponent(active.ticket)}/reply`, { email: active.email || undefined, message: reply });
+      await api.post(`/complaints/t/${encodeURIComponent(active.ticket)}/reply`, { token: active.token || undefined, message: reply });
       setReply('');
-      await open(active.ticket, active.email);
+      await open(active.ticket, active.token);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -66,32 +100,44 @@ export default function ComplaintTrackPage() {
         <h1>Check your complaint</h1>
         {!c ? (
           <>
-            <form onSubmit={(e) => { e.preventDefault(); void open(lookup.ticket, lookup.email.trim().toLowerCase()); }}>
-              <p className="muted">Enter the ticket number from your confirmation email and the email address you used.</p>
-              <label>
-                Ticket number
-                <input required value={lookup.ticket} onChange={(e) => setLookup({ ...lookup, ticket: e.target.value })} placeholder="CMP-000123" autoComplete="off" data-no-validate />
-              </label>
-              <label>
-                Email
-                <input type="email" required value={lookup.email} onChange={(e) => setLookup({ ...lookup, email: e.target.value })} autoComplete="email" />
-              </label>
-              {error ? <p className="form-error" role="alert">{error}</p> : null}
-              <button className="btn btn-navy block" disabled={busy}>{busy ? 'Looking…' : 'Find my complaint'}</button>
-            </form>
-            {mine.length ? (
-              <div className="complaint-mine">
-                <h2>Your complaints</h2>
-                <ul>
-                  {mine.map((m) => (
-                    <li key={m.ticket}>
-                      <button type="button" className="link-btn" onClick={() => void open(m.ticket, '')}>{m.ticket} · {m.subject}</button>
-                      <span className={`c-pill ${complaintTone(m.status)}`}>{COMPLAINT_STATUS_LABEL[m.status] || m.status}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
+            {error ? <p className="form-error" role="alert">{error}</p> : null}
+            {user ? (
+              <>
+                {mine.length ? (
+                  <div className="complaint-mine" style={{ borderTop: 0, paddingTop: 0, marginTop: 0 }}>
+                    <h2>Your complaints</h2>
+                    <ul>
+                      {mine.map((m) => (
+                        <li key={m.ticket}>
+                          <button type="button" className="link-btn" onClick={() => void open(m.ticket, '')}>{m.ticket} · {m.subject}</button>
+                          <span className={`c-pill ${complaintTone(m.status)}`}>{COMPLAINT_STATUS_LABEL[m.status] || m.status}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : <p className="muted">You have not raised a complaint from this account yet.</p>}
+                <p className="auth-switch">Raised one without signing in? Use the link in your confirmation email, or ask for a new one below.</p>
+              </>
+            ) : (
+              <p className="muted">Open the personal link from your confirmation email. If you signed in when you raised it, <Link to="/login" state={{ from: '/complaint/track' }}>sign in</Link> to see it.</p>
+            )}
+            {linkSent ? (
+              <p className="form-msg" role="status">If those details match a complaint, we have emailed a secure link to that address. It works for 24 hours. Check your spam folder too.</p>
+            ) : (
+              <form onSubmit={requestLink}>
+                <h2 style={{ fontSize: '1.05rem' }}>Lost your link?</h2>
+                <p className="muted">Enter the ticket number and the email address you used. We email a new link to that address.</p>
+                <label>
+                  Ticket number
+                  <input required value={lookup.ticket} onChange={(e) => setLookup({ ...lookup, ticket: e.target.value })} placeholder="CMP-000123" autoComplete="off" data-no-validate />
+                </label>
+                <label>
+                  Email
+                  <input type="email" required value={lookup.email} onChange={(e) => setLookup({ ...lookup, email: e.target.value })} autoComplete="email" />
+                </label>
+                <button className="btn btn-navy block" disabled={busy}>{busy ? 'Sending…' : 'Email me a new link'}</button>
+              </form>
+            )}
             <p className="auth-switch">Nothing yet? <Link to="/complaint">Raise a complaint</Link></p>
           </>
         ) : (
@@ -125,7 +171,7 @@ export default function ComplaintTrackPage() {
                 <button className="btn btn-navy block" disabled={busy}>{busy ? 'Sending…' : 'Send message'}</button>
               </form>
             )}
-            <p className="auth-switch"><button type="button" className="link-btn" onClick={() => { setData(null); setActive(null); setError(''); }}>Check another ticket</button></p>
+            <p className="auth-switch"><button type="button" className="link-btn" onClick={() => { setData(null); setActive(null); setError(''); }}>Back</button></p>
           </>
         )}
       </div>

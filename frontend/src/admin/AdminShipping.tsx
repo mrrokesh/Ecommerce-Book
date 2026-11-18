@@ -61,6 +61,17 @@ export default function AdminShipping() {
     }
   }
 
+  function openConfigure(p: Partner) {
+    setError('');
+    setNotice('');
+    setEdit({
+      ...p,
+      fields: Array.isArray(p.fields) ? p.fields : [],
+      credentials: p.credentials && typeof p.credentials === 'object' ? p.credentials : {},
+    });
+    setCreds({ ...(p.credentials && typeof p.credentials === 'object' ? p.credentials : {}) });
+  }
+
   async function savePartner(e: FormEvent) {
     e.preventDefault();
     if (!edit) return;
@@ -92,13 +103,13 @@ export default function AdminShipping() {
       {error ? <p className="erp-error">{error}</p> : null}
       {notice ? <p className="erp-ok">{notice}</p> : null}
 
-      <form className="erp-card" onSubmit={saveSettings} style={{ padding: '1rem' }}>
+      <form className="erp-card erp-form ops-panel" onSubmit={saveSettings}>
         <h2>Delivery automation</h2>
         <p className="muted">
           Configure Shiprocket, Shadowfax, BlueDart, Delhivery, DTDC, or manual AWB. Turn on auto-create to ship paid
           orders without clicking.
         </p>
-        <div className="form-row">
+        <div className="form-row ship-settings-row">
           <label>
             Default partner
             <select
@@ -112,11 +123,13 @@ export default function AdminShipping() {
               ))}
             </select>
           </label>
-          <label>
+          <label className="ship-pincode">
             Pickup pincode
             <input
               value={settings.pickupPincode}
               onChange={(e) => setSettings({ ...settings, pickupPincode: e.target.value })}
+              inputMode="numeric"
+              maxLength={6}
             />
           </label>
         </div>
@@ -125,9 +138,10 @@ export default function AdminShipping() {
           <input
             value={settings.pickupAddress}
             onChange={(e) => setSettings({ ...settings, pickupAddress: e.target.value })}
+            placeholder="Warehouse / store pickup address"
           />
         </label>
-        <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.75rem' }}>
+        <label className="ops-check">
           <input
             type="checkbox"
             checked={settings.autoCreate}
@@ -135,9 +149,11 @@ export default function AdminShipping() {
           />
           Auto-create shipment when an order is placed / paid
         </label>
-        <button className="erp-btn primary" type="submit" disabled={busy} style={{ marginTop: '0.75rem' }}>
-          Save settings
-        </button>
+        <div className="ops-form-actions">
+          <button className="erp-btn primary" type="submit" disabled={busy}>
+            Save settings
+          </button>
+        </div>
       </form>
 
       <div className="erp-card" style={{ padding: '1rem' }}>
@@ -174,10 +190,10 @@ export default function AdminShipping() {
                   <button
                     type="button"
                     className="erp-btn ghost"
-                    onClick={() => {
-                      setEdit(p);
-                      setCreds({ ...p.credentials });
-                      setNotice('');
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openConfigure(p);
                     }}
                   >
                     Configure
@@ -190,59 +206,93 @@ export default function AdminShipping() {
       </div>
 
       {edit ? (
-        <form className="erp-card" onSubmit={savePartner} style={{ padding: '1rem' }}>
-          <h2>{edit.name}</h2>
-          {edit.fields.length === 0 ? (
-            <p className="muted">Manual mode: enter AWB on each order after courier booking.</p>
-          ) : (
-            edit.fields.map((f) => (
-              <label key={f.key}>
-                {f.label}
+        <div
+          className="a-modal-backdrop"
+          role="presentation"
+          onClick={() => {
+            if (!busy) setEdit(null);
+          }}
+        >
+          <form
+            className="a-modal ship-config-modal"
+            onSubmit={savePartner}
+            onClick={(e) => e.stopPropagation()}
+            autoComplete="off"
+            data-lpignore="true"
+            data-1p-ignore="true"
+          >
+            <div className="a-modal-head">
+              <h2>Configure {edit.name}</h2>
+              <button
+                type="button"
+                className="a-modal-close"
+                aria-label="Close"
+                disabled={busy}
+                onClick={() => setEdit(null)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="a-modal-body erp-form">
+              {(edit.fields || []).length === 0 ? (
+                <p className="muted" style={{ margin: 0 }}>
+                  Manual mode: enter AWB on each order after courier booking.
+                </p>
+              ) : (
+                (edit.fields || []).map((f) => (
+                  <label key={f.key}>
+                    {f.label}
+                    <input
+                      type={f.secret ? 'password' : 'text'}
+                      value={creds[f.key] || ''}
+                      onChange={(e) => setCreds({ ...creds, [f.key]: e.target.value })}
+                      placeholder={f.secret ? '••••••••' : ''}
+                      autoComplete="off"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                    />
+                  </label>
+                ))
+              )}
+              {(edit.code === 'bluedart' || edit.code === 'dtdc') && (
+                <label>
+                  Custom API endpoint (optional)
+                  <input
+                    value={creds.endpoint || ''}
+                    onChange={(e) => setCreds({ ...creds, endpoint: e.target.value })}
+                    placeholder="https://…"
+                    autoComplete="off"
+                  />
+                </label>
+              )}
+              <label className="ops-check">
                 <input
-                  type={f.secret ? 'password' : 'text'}
-                  value={creds[f.key] || ''}
-                  onChange={(e) => setCreds({ ...creds, [f.key]: e.target.value })}
-                  placeholder={f.secret ? '••••••••' : ''}
-                  autoComplete="off"
+                  type="checkbox"
+                  checked={!!edit.enabled}
+                  onChange={(e) => setEdit({ ...edit, enabled: e.target.checked })}
                 />
+                Enabled
               </label>
-            ))
-          )}
-          {(edit.code === 'bluedart' || edit.code === 'dtdc') && (
-            <label>
-              Custom API endpoint (optional)
-              <input
-                value={creds.endpoint || ''}
-                onChange={(e) => setCreds({ ...creds, endpoint: e.target.value })}
-                placeholder="https://…"
-              />
-            </label>
-          )}
-          <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              checked={edit.enabled}
-              onChange={(e) => setEdit({ ...edit, enabled: e.target.checked })}
-            />
-            Enabled
-          </label>
-          <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              checked={edit.isDefault}
-              onChange={(e) => setEdit({ ...edit, isDefault: e.target.checked })}
-            />
-            Set as default partner
-          </label>
-          <div className="form-row" style={{ marginTop: '0.75rem' }}>
-            <button className="erp-btn primary" type="submit" disabled={busy}>
-              Save partner
-            </button>
-            <button className="erp-btn ghost" type="button" onClick={() => setEdit(null)}>
-              Cancel
-            </button>
-          </div>
-        </form>
+              <label className="ops-check">
+                <input
+                  type="checkbox"
+                  checked={!!edit.isDefault}
+                  onChange={(e) => setEdit({ ...edit, isDefault: e.target.checked })}
+                />
+                Set as default partner
+              </label>
+              {error ? <p className="erp-error">{error}</p> : null}
+              <div className="ops-form-actions">
+                <button className="erp-btn primary" type="submit" disabled={busy}>
+                  {busy ? 'Saving…' : 'Save partner'}
+                </button>
+                <button className="erp-btn ghost" type="button" disabled={busy} onClick={() => setEdit(null)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       ) : null}
     </div>
   );

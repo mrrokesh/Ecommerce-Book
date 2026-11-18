@@ -255,6 +255,241 @@
 .audience-list li { padding: 8px 12px; border-bottom: 1px solid var(--a-border); }
 .audience-list li:last-child { border-bottom: 0; }
 .audience-list em { font-style: normal; color: var(--a-text-2); }
+.check-row { display: flex; align-items: flex-start; gap: 8px; font-weight: 500; cursor: pointer; }
+.check-row input { margin-top: 2px; flex: none; width: auto; }
+
+/* Campaign composer: single-column fields so long hints don't stagger inputs */
+.campaign-lead { margin: 0 0 14px; }
+.campaign-presets { margin-bottom: 16px; }
+.campaign-presets > strong { display: block; margin-bottom: 8px; font-size: 13px; }
+.campaign-preset-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.campaign-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+}
+.campaign-form > label,
+.campaign-cta-row > label,
+.campaign-send-row > label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--a-text);
+}
+.campaign-label em {
+  font-style: normal;
+  font-weight: 400;
+  color: var(--a-text-3);
+}
+.campaign-form input,
+.campaign-form select,
+.campaign-form textarea,
+.campaign-cta-row input,
+.campaign-cta-row select,
+.campaign-send-row input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.campaign-cta-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+.campaign-send-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--a-border);
+}
+.campaign-send-row .ops-form-actions { margin: 0; grid-column: auto; }
+.campaign-preview { margin-top: 16px; }
+.sub-filter { display: flex; flex-wrap: wrap; gap: 6px; }
+.erp-table tr.is-muted td { color: var(--a-text-3); background: #fafbfc; }
+/* Categories: one straight form row; table columns hug content */
+.cat-editor {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.4fr) minmax(120px, 1.1fr) minmax(120px, 1.1fr) 100px 88px auto;
+  gap: 8px 10px;
+  align-items: end;
+  margin: 0;
+}
+.cat-editor > label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding-bottom: 1.15rem; /* room for validation so the row stays level */
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--a-text);
+}
+.cat-editor > label.cat-field-name,
+.cat-editor > label.cat-field-sm {
+  flex: unset;
+  max-width: none;
+}
+.cat-editor > label > input,
+.cat-editor > label > select {
+  width: 100%;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  line-height: 1.2;
+}
+.cat-editor .fg-error {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cat-add-btn {
+  height: 36px;
+  min-height: 36px;
+  margin: 0 0 1.15rem; /* match label padding so button lines up with inputs */
+  padding: 0 14px;
+  box-sizing: border-box;
+  align-self: end;
+}
+.cat-table {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+.cat-table th,
+.cat-table td {
+  padding: 6px 10px;
+  vertical-align: middle;
+  text-align: left;
+}
+.cat-table th.num,
+.cat-table td.num {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+}
+.cat-table th:last-child,
+.cat-table td:last-child {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+  overflow: visible;
+}
+.cat-table .cat-name {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cat-nest {
+  display: inline-block;
+  width: 1rem;
+  margin-right: 2px;
+  color: var(--a-text-3);
+}
+.cat-table .a-row-actions {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+@media (max-width: 960px) {
+  .cat-editor {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cat-add-btn {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
+    justify-self: start;
+  }
+}
+/* Inventory adjust row: fields + both buttons on one line */
+.inv-section {
+  border-top: 0;
+  margin-top: 0.5rem;
+  padding-top: 0;
+}
+.inv-section h2 {
+  margin-bottom: 0.65rem;
+}
+.inv-adjust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  align-items: flex-end;
+  margin: 0 0 1rem;
+}
+.inv-adjust > label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 1 150px;
+  min-width: 0;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--a-text);
+}
+.inv-adjust > label.inv-reason {
+  flex: 1 1 200px;
+  max-width: 280px;
+}
+.inv-adjust > label > input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.inv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.inv-actions .erp-btn {
+  margin: 0;
+  width: auto;
+}
+@media (max-width: 700px) {
+  .inv-adjust > label,
+  .inv-adjust > label.inv-reason {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}
+
+.settings-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.settings-pincode-form {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.settings-pincode-form input {
+  min-width: 0;
+}
+@media (max-width: 700px) {
+  .settings-form { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .campaign-cta-row { grid-template-columns: 1fr; }
+  .campaign-send-row { grid-template-columns: 1fr; }
+}
 
 /* order-alert bell */
 .erp-bell { position: relative; border: 0; background: transparent; cursor: pointer; }
@@ -342,6 +577,25 @@
   box-shadow: 0 20px 60px rgba(20, 24, 40, .28);
   overflow: hidden;
 }
+.a-modal.ship-config-modal {
+  width: min(520px, 100%);
+  max-height: min(90vh, 720px);
+  overflow: auto;
+}
+.a-modal.ship-config-modal .a-modal-body {
+  gap: 14px;
+}
+.a-modal.ship-config-modal .a-modal-body > label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+}
+.a-modal.ship-config-modal .ops-check {
+  grid-column: auto;
+}
 .a-modal-head {
   display: flex;
   align-items: center;
@@ -372,4 +626,108 @@
 .erp-form-actions .erp-btn {
   width: auto;
   flex: 0 0 auto;
+}
+
+/* Keep Edit / Hide / Delete on one row; avoid tall wrapped rows at 100% zoom */
+.erp-table td:last-child .erp-actions {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+.erp-table td:last-child .erp-actions .erp-btn {
+  flex: 0 0 auto;
+  padding: 0.28rem 0.55rem;
+  font-size: 12px;
+}
+
+.erp-detail {
+  max-width: 920px;
+  margin-inline: auto;
+}
+.erp-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  align-items: end;
+}
+.form-row.form-row-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.form-row > label > input,
+.form-row > label > select,
+.form-row > label > textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+@media (max-width: 720px) {
+  .form-row,
+  .form-row.form-row-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.erp-toolbar.erp-grow-safe .erp-grow,
+.erp-toolbar > .erp-grow {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Prefer wrapping toolbars over page-level horizontal scroll */
+.erp-card > .erp-toolbar,
+form.erp-toolbar {
+  flex-wrap: wrap;
+}
+
+.erp-table th.num,
+.erp-table td.num {
+  text-align: center;
+}
+
+/* ---- Validation messages must never move the layout ----
+   Every labelled field in the admin reserves one line under its control and the message sits in
+   that line, so typing, blurring or submitting an empty form changes nothing around it.
+   Grid rows align at the top (not the bottom) so labels stay level when one field shows an error. */
+.form-row { align-items: start; }
+.erp-shell label:has(> input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='file']), > select, > textarea) {
+  position: relative;
+  padding-bottom: 1.2rem;
+}
+.erp-shell label:has(> input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='file']), > select, > textarea) > .fg-error {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Inline editors (banners, coupons): top-aligned so labels line up, checkbox rows span the full width. */
+.erp-editor { align-items: start; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.erp-editor > .check-row { grid-column: 1 / -1; padding-bottom: 0; }
+.erp-editor > .erp-actions { align-self: end; margin-bottom: 1.2rem; }
+.erp-editor input[type='file'] { min-width: 0; font-size: 0.78rem; }
+.ops-toolbar[hidden] { display: none; }
+
+/* Generic list tables: keep columns compact so common screens need no sideways scroll at laptop width. */
+.ops-table td { max-width: 220px; }
+.ops-table td.wide { white-space: normal; min-width: 140px; max-width: 260px; }
+
+/* Phones: the product list keeps cover, name, sale price, stock and the actions; SKU, type, category and MRP are on the edit page. */
+@media (max-width: 720px) {
+  .erp-card .erp-products-table { min-width: 0; }
+  .erp-products-table th:nth-child(2), .erp-products-table td:nth-child(2),
+  .erp-products-table th:nth-child(4), .erp-products-table td:nth-child(4),
+  .erp-products-table th:nth-child(5), .erp-products-table td:nth-child(5),
+  .erp-products-table th:nth-child(6), .erp-products-table td:nth-child(6) { display: none; }
+  .erp-products-table td:nth-child(3) { white-space: normal; min-width: 130px; }
 }

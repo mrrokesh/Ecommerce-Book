@@ -25,6 +25,8 @@ router.use((req,res,next)=>{
 const wrap=fn=>async(req,res)=>{try{const data=await fn(req,res);if(!res.headersSent)res.json({success:true,data});}catch(e){res.status(400).json({success:false,error:e.message});}};
 async function transaction(fn){const c=await(await getPool()).connect();try{await c.query('BEGIN');const result=await fn(c);await c.query('COMMIT');return result;}catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}}
 const pageOf=req=>Math.max(1,parseInt(req.query.page)||1);
+/** LIKE pattern for a search box: wildcards typed by the user are matched literally. */
+const likeOf=q=>'%'+String(q||'').replace(/[%_\\]/g,m=>'\\'+m)+'%';
 router.get('/settings',wrap(()=>storeSettings()));
 router.put('/settings',wrap(async req=>{
   const s=req.body;
@@ -75,7 +77,7 @@ router.post('/payments/attempts/:id/refund',wrap(req=>transaction(async c=>{
  await audit(c,req.user,'payment.refund_requested',a.id);return {queued:true};
 })));
 router.post('/payments/attempts/:id/recover',wrap(req=>recoverPayment(req.params.id)));
-router.get('/returns',wrap(async()=>({rows:(await query("SELECT id,order_number,status,shipping_name,total,payment_status,delivered_at FROM orders WHERE status IN ('return_requested','return_approved','returned') ORDER BY updated_at DESC LIMIT 200")).rows})));
+router.get('/returns',wrap(async req=>({rows:(await query("SELECT id,order_number,status,shipping_name,total,payment_status,delivered_at FROM orders WHERE status IN ('return_requested','return_approved','returned') AND (order_number ILIKE $1 OR shipping_name ILIKE $1) ORDER BY updated_at DESC LIMIT 200",[likeOf(req.query.q)])).rows})));
 router.post('/returns/:id',wrap(req=>transaction(async c=>{
   const o=(await c.query('SELECT * FROM orders WHERE id=$1 FOR UPDATE',[req.params.id])).rows[0];if(!o)throw new Error('Order not found');
   if(!['return_approved','returned','delivered'].includes(req.body.status))throw new Error('Invalid return decision');
@@ -91,7 +93,7 @@ router.post('/customers/:id/notes',wrap(async req=>{
   const note=String(req.body.note||'').trim();if(!note||note.length>2000)throw new Error('Enter a note up to 2000 characters');
   await query('INSERT INTO customer_notes(user_id,actor_id,note) VALUES($1,$2,$3)',[req.params.id,req.user.id,note]);return {saved:true};
 }));
-router.get('/emails',wrap(async req=>({rows:(await query('SELECT id,to_email,subject,sent,error,attempts,created_at FROM email_outbox ORDER BY created_at DESC LIMIT 50 OFFSET $1',[(pageOf(req)-1)*50])).rows})));
+router.get('/emails',wrap(async req=>({rows:(await query("SELECT id,to_email,subject,sent,error,attempts,created_at FROM email_outbox WHERE to_email ILIKE $2 OR subject ILIKE $2 ORDER BY created_at DESC LIMIT 50 OFFSET $1",[(pageOf(req)-1)*50,likeOf(req.query.q)])).rows})));
 router.post('/emails/:id/retry',wrap(async req=>{await query('UPDATE email_outbox SET attempts=0,next_attempt_at=NOW() WHERE id=$1 AND sent=FALSE',[req.params.id]);return deliverEmail(req.params.id);}));
 router.get('/products',wrap(async()=>({rows:[]})));
 router.get('/products/export',wrap(async(req,res)=>{const rows=(await query('SELECT id,title,author_name,sku,mrp,sale_price,stock,is_active FROM books ORDER BY id')).rows;res.type('text/csv').attachment('products.csv').send(csv(rows));}));

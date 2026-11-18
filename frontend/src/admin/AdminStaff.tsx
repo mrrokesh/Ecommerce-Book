@@ -12,7 +12,7 @@ type Member = {
   role: 'admin' | 'staff';
   staffRoleId: number | null;
   staffRoleName: string | null;
-  status: 'active' | 'invited';
+  status: 'active' | 'invited' | 'suspended';
   lastSignInAt: string | null;
   createdAt: string;
 };
@@ -170,9 +170,29 @@ export default function AdminStaff() {
     if (done) setEditId(null);
   }
 
+  async function onSuspend(m: Member) {
+    if (
+      !(await confirmAction(
+        `Suspend ${m.name}? They cannot sign in to the admin portal until you restore them. Their account stays on the Users list.`,
+      ))
+    )
+      return;
+    run(() => api.patch(`/admin/staff/${m.id}/status`, { status: 'suspended' }), `Suspended ${m.name}`);
+  }
+
+  async function onRestore(m: Member) {
+    run(() => api.patch(`/admin/staff/${m.id}/status`, { status: 'active' }), `Restored ${m.name}`);
+  }
+
   async function onRemove(m: Member) {
     if (!(await confirmAction(`Remove portal access for ${m.name}? Their account stays as a normal customer.`))) return;
     run(() => api.delete(`/admin/staff/${m.id}`), `Removed ${m.name}`);
+  }
+
+  function statusPill(status: Member['status']) {
+    if (status === 'invited') return { className: 'warn', label: 'Invited' };
+    if (status === 'suspended') return { className: 'off', label: 'Suspended' };
+    return { className: 'ok', label: 'Active' };
   }
 
   function togglePermission(key: string) {
@@ -233,8 +253,10 @@ export default function AdminStaff() {
             {members.map((m) => {
               const self = m.id === user?.id;
               const invited = m.status === 'invited';
+              const suspended = m.status === 'suspended';
+              const pill = statusPill(m.status);
               return (
-                <tr key={m.id}>
+                <tr key={m.id} className={suspended ? 'is-muted' : undefined}>
                   <td>
                     <strong>{m.name}</strong>
                     {self ? <span className="muted"> (you)</span> : null}
@@ -242,7 +264,7 @@ export default function AdminStaff() {
                   <td>{m.email}</td>
                   <td>{roleLabel(m)}</td>
                   <td>
-                    <span className={`erp-pill ${invited ? 'warn' : 'ok'}`}>{invited ? 'INVITED' : 'ACTIVE'}</span>
+                    <span className={`erp-pill ${pill.className}`}>{pill.label}</span>
                   </td>
                   <td className="muted">{formatWhen(m.lastSignInAt)}</td>
                   <td>
@@ -256,16 +278,27 @@ export default function AdminStaff() {
                             New link
                           </button>
                         </>
-                      ) : !self ? (
+                      ) : !self && !suspended ? (
                         <button type="button" className="a-link" disabled={busy} onClick={() => onResetLink(m)}>
                           Password reset link
                         </button>
                       ) : null}
                       {!self ? (
                         <>
-                          <button type="button" className="a-link primary" disabled={busy} onClick={() => openEdit(m)}>
-                            Edit
-                          </button>
+                          {!invited ? (
+                            <button type="button" className="a-link primary" disabled={busy} onClick={() => openEdit(m)}>
+                              Edit
+                            </button>
+                          ) : null}
+                          {suspended ? (
+                            <button type="button" className="a-link primary" disabled={busy} onClick={() => onRestore(m)}>
+                              Restore
+                            </button>
+                          ) : !invited ? (
+                            <button type="button" className="a-link" disabled={busy} onClick={() => onSuspend(m)}>
+                              Suspend
+                            </button>
+                          ) : null}
                           <button type="button" className="a-link danger" disabled={busy} onClick={() => onRemove(m)}>
                             Remove
                           </button>
@@ -382,11 +415,11 @@ export default function AdminStaff() {
             </header>
             <form className="erp-form a-modal-body" onSubmit={onInvite}>
               <label>
-                Name <span className="req">*</span>
+                <span>Name <span className="req">*</span></span>
                 <input required value={invite.name} onChange={(e) => setInvite({ ...invite, name: e.target.value })} />
               </label>
               <label>
-                Email <span className="req">*</span>
+                <span>Email <span className="req">*</span></span>
                 <input
                   type="email"
                   required
@@ -396,7 +429,7 @@ export default function AdminStaff() {
                 />
               </label>
               <label>
-                Role <span className="req">*</span>
+                <span>Role <span className="req">*</span></span>
                 <select required value={invite.access} onChange={(e) => setInvite({ ...invite, access: e.target.value })}>
                   <option value="" disabled>
                     Select a role
@@ -431,7 +464,7 @@ export default function AdminStaff() {
                 {editing.name} · {editing.email}
               </p>
               <label>
-                Role <span className="req">*</span>
+                <span>Role <span className="req">*</span></span>
                 <select required value={editAccess} onChange={(e) => setEditAccess(e.target.value)}>
                   {accessOptions()}
                 </select>

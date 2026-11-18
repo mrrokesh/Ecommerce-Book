@@ -38,8 +38,12 @@ export default function ComplaintPage() {
           <h1>Complaint received</h1>
           <p className="muted">Thank you. We have emailed you a confirmation and our team will reply on this ticket.</p>
           <p className="complaint-ticket" aria-label="Your ticket number">{ticket}</p>
-          <p className="muted">Keep this number. You need it, with your email address, to check progress or reply.</p>
-          <Link className="btn btn-navy block" to="/complaint/track">Check my complaint</Link>
+          <p className="muted">
+            {user
+              ? 'Sign in to your account any time to follow this complaint.'
+              : 'The confirmation email has a personal link to follow this complaint and reply. Keep that email private; the link expires, and you can ask for a new one.'}
+          </p>
+          <Link className="btn btn-navy block" to="/complaint/track">{user ? 'My complaints' : 'Lost the link?'}</Link>
           <p className="auth-switch"><Link to="/">Back to the store</Link></p>
         </div>
       </div>

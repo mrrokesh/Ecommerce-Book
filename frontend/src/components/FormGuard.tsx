@@ -36,6 +36,9 @@ function ruleFor(el: Field): Rule | null {
   const explicit = (el as HTMLElement).dataset.validate as Rule | undefined;
   if (explicit) return explicit;
   if (el instanceof HTMLSelectElement) return null;
+  // Free-text boxes (complaint replies, notes, descriptions) often mention words like "email" or "name"
+  // in their hint text; never guess a format rule from that. Only an explicit data-validate applies.
+  if (el instanceof HTMLTextAreaElement) return null;
   const type = (el as HTMLInputElement).type;
   const name = (el.getAttribute('name') || '').toLowerCase();
   const hint = `${name} ${el.id} ${el.getAttribute('autocomplete') || ''} ${el.getAttribute('placeholder') || ''} ${labelText(el)}`.toLowerCase();

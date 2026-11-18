@@ -196,7 +196,7 @@ export default function AdminComplaints() {
               <button type="button" className={`erp-btn${mode === 'note' ? ' primary' : ''}`} onClick={() => setMode('note')}>Internal note</button>
             </div>
             <textarea aria-label={mode === 'note' ? 'Internal note' : 'Reply to customer'} required rows={4} minLength={2} maxLength={2000} value={reply} onChange={(e) => setReply(e.target.value)}
-              placeholder={mode === 'note' ? 'Only staff can see this note' : 'The customer receives this by email and sees it on their ticket'} />
+              placeholder={mode === 'note' ? 'Only staff can see this note' : 'The customer is notified and sees this on their ticket'} />
             <button className="erp-btn primary" disabled={busy}>{mode === 'note' ? 'Save note' : 'Send reply'}</button>
           </form>
         </div>

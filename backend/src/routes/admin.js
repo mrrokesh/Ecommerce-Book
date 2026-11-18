@@ -1076,7 +1076,12 @@ function publicStaff(u) {
     role: u.role,
     staffRoleId: u.staff_role_id ?? null,
     staffRoleName: u.staff_role_name ?? null,
-    status: u.staff_status === 'invited' ? 'invited' : 'active',
+    status:
+      u.staff_status === 'invited'
+        ? 'invited'
+        : u.staff_status === 'suspended'
+          ? 'suspended'
+          : 'active',
     lastSignInAt: u.last_sign_in_at || null,
     createdAt: u.created_at,
   };
@@ -1227,6 +1232,9 @@ router.post('/staff/:id/reset-link', async (req, res) => {
     if (rows[0].staff_status === 'invited') {
       return res.status(400).json({ success: false, error: 'This user has not accepted their invite yet' });
     }
+    if (rows[0].staff_status === 'suspended') {
+      return res.status(400).json({ success: false, error: 'Restore this user before sending a password reset' });
+    }
     const link = await issueStaffLink(rows[0].id, 2);
     staffResetEmail({ name: rows[0].name, email: rows[0].email }, link.token).catch(() => {});
     return res.json({ success: true, data: { resetUrl: link.url } });
@@ -1261,6 +1269,40 @@ router.patch('/staff/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, error: 'Could not update access' });
+  }
+});
+
+/** Temporarily blocks portal sign-in without removing the account (Restore to reverse). */
+router.patch('/staff/:id/status', async (req, res) => {
+  try {
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({ success: false, error: 'You cannot suspend your own account' });
+    }
+    const next = String(req.body?.status || '');
+    if (!['active', 'suspended'].includes(next)) {
+      return res.status(400).json({ success: false, error: 'Status must be active or suspended' });
+    }
+    const { rows } = await query(
+      `SELECT id, role, staff_status FROM users WHERE id = $1 AND role = ANY($2)`,
+      [req.params.id, STAFF_ROLES]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Staff member not found' });
+    if (rows[0].staff_status === 'invited') {
+      return res.status(400).json({ success: false, error: 'This user has not accepted their invite yet' });
+    }
+    if (next === 'suspended' && rows[0].role === 'admin' && !(await otherAdminsExist(req.params.id))) {
+      return res.status(400).json({ success: false, error: 'At least one active admin must remain' });
+    }
+    await query(
+      `UPDATE users SET staff_status = $1, token_version = CASE WHEN $1 = 'suspended' THEN token_version + 1 ELSE token_version END
+       WHERE id = $2`,
+      [next, req.params.id]
+    );
+    const updated = await query(`${STAFF_SELECT} WHERE u.id = $1`, [req.params.id]);
+    return res.json({ success: true, data: { staff: publicStaff(updated.rows[0]) } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: 'Could not update status' });
   }
 });
 

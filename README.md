@@ -13,14 +13,15 @@ Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeS
 - Reviews, store locator, exam-prep section and static storefront help and policy pages
 - New-order alerts in the admin: a chime, a toast and a desktop notification when a customer places an order while the admin is open (checked every 15 seconds by a background worker, so it keeps working while the tab is behind other tabs or apps; the bell in the top bar mutes it and your choice is remembered; leave the admin tab open, and click the page once so the browser allows sound and notifications)
 - Admin sign-in at `/admin/login` with a brand panel and centred form (collapses to a single card on phones)
-- Admin panel at `/admin` with a dark sidebar of collapsible groups with live count badges (orders to action, open returns, pending refunds, low stock) and a daily email usage meter, a jump-to-page search, green confirmation toasts, a dashboard of pending actions, low stock and recent orders, and a layout that works on phones (separate sign-in, no storefront chrome): products (multi-image gallery, provenance), categories, orders, customers (profile, orders and internal notes), reviews, coupons and banners (image upload), email outbox, **Users** (invite staff by email), multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), Rokesh ERP product sync
+- Admin panel at `/admin` with Rokesh-style chrome: dark sidebar of collapsible groups with live count badges (orders to action, open returns, pending refunds, low stock) and a daily email usage meter, jump-to-page search, green confirmation toasts, a dashboard of pending actions, low stock and recent orders, and a layout that works at 100% browser zoom and on phones (separate sign-in, no storefront chrome): products (four types — Book, Stationery, Toy, Gift card — with multi-image gallery and provenance), categories, orders, customers (profile, orders and internal notes), reviews, coupons and banners (image upload), email outbox, **Users** (invite staff by email, suspend / restore), multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax — Configure opens a centred modal), Rokesh ERP product sync when configured
+- Admin tables keep Edit / Hide / Delete (and similar actions) on one line; order detail cards are centred with packing slip, label, refunds and shipment actions in one row; inventory adjust and stock history sit on one form row with the fields
 - Product provenance on every catalogue item: who added it (admin or staff), who last edited it, and for ERP rows a Rokesh source line with the API host and a masked key tip (never the secret); shown at the bottom of the product form; list pills show Admin / Staff / ERP at a glance
 - Product images: drag-and-drop or URL gallery on add/edit (first image is the shop cover; extras show on the product page); admin product-list thumbs stay fixed-size so covers do not collapse
-- Product categories on add/edit use cascading Category → Subcategory dropdowns (same idea as Rokesh ERP), with chips for multiple assignments
+- Product categories on add/edit use cascading Category → Subcategory dropdowns (same idea as Rokesh ERP), with chips for multiple assignments; the Categories page uses a compact add row and a dense hierarchy table
 - Customers under **Sales → Customers**: search, view profile, order history and staff-only internal notes
 - Homepage banners under **Marketing**: title, link and image (URL or upload); empty banner images show a yellow fallback stack until a cover is set
-- Back-office operations in the admin: inventory and stock history, CSV import and bulk edits, payments and refunds, returns, sales reports, gift cards, store settings and delivery coverage, audit history, and optional authenticator-app two-factor sign-in
-- Branded HTML emails for every message (welcome with a real coupon, order receipt, shipping status tracker, returns, refunds, password reset, security alerts) and an admin **Promotional emails** section for seasonal sales (Diwali, Pongal, flash sales): templates, coupon attachment, preview, test send, send to opted-in customers, unsubscribe link and delivery stats, plus a **Subscribers** page (who agreed and when, add a person with a consent confirmation, remove, export CSV); a campaign goes to everyone subscribed or only the people you tick
+- Back-office operations in the admin: inventory and stock history, CSV import and bulk edits, payments and refunds, returns, sales reports (readable day labels and title-case KPIs), gift cards, store settings and delivery coverage, audit history, and optional authenticator-app two-factor sign-in
+- Branded HTML emails for every message (welcome with a real coupon, order receipt, shipping status tracker, returns, refunds, password reset, security alerts) and an admin **Promotional emails** section for seasonal sales (Diwali, Pongal, flash sales): templates, coupon attachment, preview, test send, send to opted-in customers, unsubscribe link and delivery stats, plus a **Subscribers** page (filter All / Subscribed / Unsubscribed, who agreed and when, add with consent confirmation, unsubscribe without deleting the row, export CSV); a campaign goes to everyone subscribed or only the people you tick
 - All store email (orders, shipping, returns, refunds, account) is sent through Rokesh Notify from `noreply@salembookhouse.com`, with SMTP as a fallback and an admin outbox with automatic retries
 - Live form validation on every form (names, email, Indian mobile numbers, pincodes, passwords, links, ISBNs) with matching server-side checks
 - Responsive layout (phones from 320px up) with 44px header tap targets and finger-friendly footer links, checked with no sideways scrolling at 320, 360, 440, 768 and 1024px, toast feedback, in-page dialogs (no browser pop-ups), 404 and error screens
@@ -67,11 +68,21 @@ All settings live in `backend/.env` (see `backend/.env.example`, which lists eve
 | `ERP_API_URL` / `ERP_API_KEY` | Optional Rokesh / Muruga store sync (`mrerp_…` key as `X-Api-Key`). Sync stamps products as ERP with a masked key tip and the staff member who clicked **Sync from ERP** |
 | `SHIPROCKET_EMAIL` / `SHIPROCKET_PASSWORD` / `SHIPROCKET_CHANNEL_ID` / `SHIPROCKET_PICKUP_*` | Optional Shiprocket (also configurable in **Admin → Shipping partners**) |
 
+### Admin list pages and screens (QA pass)
+
+Checked on a throwaway database with 16 products, 4 orders, coupons and complaints at 1366, 1280, 1024, 768 and 390 px: no page scrolls sideways; only wide tables (orders, categories, complaints, audit, email outbox on phones) scroll inside their own box. Fixes from that pass: the generic list pages (`AdminOperations.tsx`) show the search box only where the server filters by it (customers, inventory, gift cards, email outbox, returns), the toolbar is a form so Enter searches, the Email outbox shows a Sent / Not sent pill and hides the internal id, the Audit history hides actor id and empty details, timestamps in `_at` columns show date and time, and the Sales report range uses the browser's local day so today's orders are included. Banner and coupon editors align their labels and span the checkbox row, modal required-field asterisks stay on the label line, the product gallery no longer shows two "Primary" labels, and on phones the product list keeps name, sale price, stock and status. Free-text boxes (replies, notes, descriptions) never get a guessed format rule from words like "email" in their hint text (`FormGuard.tsx`).
+
+### Admin form validation
+
+Every labelled field in the admin portal reserves one line under its input for its validation message (`admin-v2.css`, last block), so typing, leaving a field or submitting an empty form never moves the layout, and fields in the same row stay level. Rows use top alignment. The product list's cover refresh waits up to 10 minutes and, if the browser gives up first, says the job is still running instead of showing an error.
+
 ## Customer complaints
 
-Customers raise a complaint at `/complaint` (category, optional order number, subject, details; name and email come from the account when signed in). It returns a ticket such as `CMP-000123` and sends a confirmation email. At `/complaint/track` a guest enters the ticket and the email address on it; a signed-in customer also sees their own list. Replies and a follow-up on a resolved ticket (which reopens it) are posted there. Closed tickets take no more replies.
+Customers raise a complaint at `/complaint` (category, optional order number, subject, details; name and email come from the account when signed in). It returns a ticket such as `CMP-000123` and sends a confirmation email.
 
-Staff need the **Complaints** permission (`support`, grantable on a staff role; admins have it). **Sales → Complaints** lists tickets by status with a count badge in the sidebar, searchable by ticket, name, email, order or subject. Opening one shows the customer's details, the linked order, and the thread. Staff can reply to the customer (emailed), add an internal note (never shown to the customer), set priority, assign it to themselves, and mark it resolved, which needs a written resolution that is emailed. Staff actions are written to the audit history. Tables: `complaints`, `complaint_messages`. API: `/api/complaints` (customer) and `/api/complaints/admin` (staff).
+**Who can open a ticket.** The ticket number is sequential, so it never proves ownership. A signed-in customer's ticket opens only for that account (`/complaint/track` lists them). A guest's ticket opens only from a personal link emailed to the address on the ticket (`/complaint/track?n=TICKET&t=TOKEN`). The token is random, stored hashed in `complaint_access_tokens`, expires (7 days for links in confirmation and reply emails, 24 hours for a requested link) and is removed from the address bar when the page opens. A guest who lost the link enters the ticket and email at `/complaint/track`; the answer is always the same and a new link is mailed only if both match (`POST /api/complaints/access-link`). Tokens are sent in a POST body, never in an API URL. Replies and a follow-up on a resolved ticket (which reopens it) are posted from the opened ticket; closed tickets take no more replies.
+
+Staff need the **Complaints** permission (`support`, grantable on a staff role; admins have it). **Sales → Complaints** lists tickets by status with a count badge in the sidebar, searchable by ticket, name, email, order or subject. Opening one shows the customer's details, the linked order, and the thread. Staff can reply to the customer (emailed), add an internal note (never shown to the customer), set priority, assign it to themselves, and mark it resolved, which needs a written resolution that is emailed. Staff actions are written to the audit history. Tables: `complaints`, `complaint_messages`, `complaint_access_tokens`. API: `/api/complaints` (customer) and `/api/complaints/admin` (staff).
 
 ## Admin portal and staff
 
@@ -85,8 +96,9 @@ Access is managed in **Settings → Users** (`/admin/staff`):
 - **Staff** get a **role**. A role is a name plus the **modules** (sections) it can open: Dashboard, Orders, Products, Categories, Customers, Reviews, Shipping partners, Banners & coupons, Email outbox, Complaints, and related edit/refund permissions. Staff only see those sections in the menu.
 - A starter role, **Order manager** (Orders only), is created on first run. Edit it or create your own under **Roles & modules** on the Users page (for example "Catalogue editor" with Products and Categories).
 - Changing a role's sections applies to everyone with that role on their next request. A role cannot be deleted while staff have it.
-- **Invite user** (name, email, role) creates an **INVITED** account and emails a personal set-password link (`/admin/set-password?token=…`, valid 7 days). The link is also copied for chat. Until they set a password they cannot sign in. Status becomes **ACTIVE** after they finish the link; last sign-in is recorded on each admin/staff login.
-- For invited users: **Copy invite link** / **New link** (re-emails). For active users: **Password reset link** (2-hour link, emailed). **Edit** changes role; **Remove** turns the account back into a normal customer (order history kept). You cannot change or remove your own access, or remove the last admin.
+- **Invite user** (name, email, role) creates an **INVITED** account and emails a personal set-password link (`/admin/set-password?token=…`, valid 7 days). The link is also copied for chat. Until they set a password they cannot sign in. Status becomes **Active** after they finish the link; last sign-in is recorded on each admin/staff login.
+- For invited users: **Copy invite link** / **New link** (re-emails). For active users: **Password reset link** (2-hour link, emailed), **Suspend** (blocks portal sign-in and ends open sessions; they stay on the Users list as Suspended), **Restore**, and **Edit** (role). **Remove** turns the account back into a normal customer (order history kept). You cannot suspend, change or remove your own access, or leave the store without an active admin.
+- Suspended staff cannot sign in or call admin APIs until restored. Invited staff must accept the invite before signing in.
 - Permissions are enforced by the API (`requireBackOffice` / `requirePermission` and the module map in `backend/src/routes/admin.js`), not just hidden in the menu.
 - The Orders section includes setting an order to cancelled or refunded, which issues the Razorpay refund.
 - Admin and staff accounts cannot use Google or Facebook sign-in; they sign in with their password after accepting the invite.
@@ -108,6 +120,7 @@ Customers who joined with Google or Facebook can set a password later with "Forg
 Categories are managed in **Admin → Catalogue → Categories** and the storefront reads them straight from the database, so admin changes appear on the next page load with no redeploy.
 
 - Two levels: top-level categories and subcategories (a parent must be top-level).
+- The Categories admin page uses a single compact **Add category** row (name, slug, parent, badge, sort, submit) and a hierarchy table with Edit / Hide / Delete links on one line.
 - On **Add / Edit product**, staff pick **Category** then **Subcategory** (cascading selects), then **Add category**; assigned paths show as removable chips (`Parent → Child`). A product can belong to more than one category.
 - **Sort order** sets the order everywhere. The first 7 shown top-level categories appear in the header nav; the rest go under **MORE**.
 - **Badge** (for example `NEW`) shows next to the header tab.
@@ -115,6 +128,15 @@ Categories are managed in **Admin → Catalogue → Categories** and the storefr
 - **Delete** is refused while a category has products or subcategories; hide it instead.
 
 `backend/src/scripts/syncCategoryNav.js` sets the initial visibility and order (hides legacy/internal categories such as `kannada` and `best-sellers`). It is safe to re-run.
+
+## Marketing subscribers
+
+**Marketing → Subscribers** lists everyone who opted in (customer accounts and people added by staff).
+
+- Filters: **All**, **Subscribed**, **Unsubscribed**. Counts always show how many are in each state.
+- **Unsubscribe** marks them inactive (they stay listed, never emailed). Customers who use the unsubscribe link in a promotion also appear as Unsubscribed.
+- People who unsubscribed cannot be re-added by an admin until they opt in again from their account or a sign-up form.
+- **Email selected** opens Promotional emails with those addresses pre-ticked. **Export CSV** includes status.
 
 ## Payments (Razorpay)
 
@@ -162,7 +184,7 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 3. Place a Cash on Delivery order and check it in **Admin → Orders**. Sign up with a real address and confirm the verification and welcome emails arrive.
 4. Test online payments with **test keys** first (test card above), then switch the Render variables to the live pair and place one small real order.
 5. Change the admin password if any database ever used a development default, and keep every key out of git.
-6. Make sure the schema step (`npm run db:init`) runs on deploy: new tables and columns (refunds, audit log, returns, `email_verified_at`, product `source` / provenance, `book_images`, users `staff_status` / `last_sign_in_at`) are created there.
+6. Make sure the schema step (`npm run db:init`) runs on deploy: new tables and columns (refunds, audit log, returns, `email_verified_at`, product `source` / provenance, `book_images`, users `staff_status` — including `invited` / `active` / `suspended` — and `last_sign_in_at`) are created there.
 7. As admin, open `/api/security/network`. If `ip` is a Vercel or Render address instead of yours, set `TRUST_PROXY_HOPS=4` (Vercel + Render) so rate limits are per visitor.
 
 ## Security notes

@@ -2,45 +2,74 @@
 
 Read @HANDOFF.md, then run `git status --short` and `git diff` before editing. Preserve working code and the current UI. Confirm your understanding of the state, then execute Step 5. Refresh this file before handing off or approaching the session limit.
 
-Updated 2026-11-13 (India). Workspace: `D:\Website\Book E-Commerce`. Baseline `0c04870` (the security and docs pass, already on `main`). The complaints feature below is committed on top of it. Stay in this folder.
+Updated 2026-11-19 (India). Workspace: `D:\Website\Book E-Commerce`. Baseline on `main` is `668adc7` (admin 100% zoom overflow fix). **Uncommitted work** in this tree covers staff Suspend/Restore, subscriber Unsubscribed visibility, shipping Configure modal, admin form/table layout polish, and README. Stay in this folder.
 
-**Warning (learned the hard way):** `backend/.env` has `DATABASE_URL` pointing at the LIVE Postgres. Starting the API locally with `npm start` connects to production and runs migrations and writes there. For any local run or browser QA, start the API with an empty `DATABASE_URL` (embedded Postgres) and `ROKESH_NOTIFY_API_KEY=""`, and set `CLIENT_URL` to include the dev server origin (the origin guard is now an exact allowlist). The integration tests use their own throwaway database and are safe.
+**Warning (learned the hard way):** `backend/.env` has `DATABASE_URL` pointing at the LIVE Postgres. Starting the API locally with `npm start` connects to production and runs migrations and writes there. For any local run or browser QA, start the API with an empty `DATABASE_URL` (embedded Postgres) and `ROKESH_NOTIFY_API_KEY=""`, and set `CLIENT_URL` to include the dev server origin (the origin guard is an exact allowlist). The integration tests use their own throwaway database and are safe.
+
+**Deploy pass (2026-11-19):** everything below and the other session's admin work was tested (37 backend tests, type check, build, browser audit at 5 widths on a throwaway database) and committed and pushed together. QA recipe: `cd backend && QA_PREVIEW_PORT=5100 node scripts/preview-qa.js`, then seed through the API, log in at `http://127.0.0.1:5100/admin/login` (`qa@example.invalid` / `LocalPreview123!`). Extra fixes in this pass: list pages search/Sent pill/local-day reports, marketing editor alignment, modal asterisks, gallery duplicate label, mobile product list, FormGuard no longer guesses rules for textareas (a complaint reply was flagged as an invalid email).
+
+**Latest pass (2026-11-19, on top of the tree above):**
+
+- **Admin validation never moves the layout.** Last block of `frontend/src/admin/admin-v2.css`: every `label:has(> input|select|textarea)` inside `.erp-shell` reserves one line under its control and the `.fg-error` message sits absolutely in it; `.form-row` is top-aligned. Measured in a browser on a throwaway fixture (`npm run preview:qa` from `backend`, `http://127.0.0.1:5100`, login `qa@example.invalid` / `LocalPreview123!`): 0 px shift on every admin form (products, categories, inventory, marketing, campaigns, payments, settings, staff, import). Overflow audit across 24 admin routes at 1024 and 390 px found only tables that scroll inside their own container.
+- **Cover refresh** (`AdminProducts.tsx`): 10 minute wait; a browser timeout now shows "still running on the server" instead of a red error.
+- **Complaint privacy fix** (`backend/src/routes/complaints.js`, `notify/complaintMail.js`, `ComplaintTrackPage.tsx`): ticket number plus email no longer opens a ticket. Signed-in customers' tickets open only for that account; guest tickets need a random expiring token emailed to the ticket address (`complaint_access_tokens`, hashed; 7 days in confirmation and reply emails, 24 h when requested via `POST /api/complaints/access-link`, which always answers the same). Token is sent in POST bodies and stripped from the address bar. Test updated; 37/37 pass.
+- Not done: no commit or push yet for this pass; the other session's uncommitted admin work in the same files was not reviewed line by line by this pass (build, type check and the browser audit pass).
 
 ## 1. Current objective
 
-Continue the defensive security review and responsive QA of the redesigned storefront and admin portal. Preserve recent verification, checkout, abuse guard, campaign, and order alert features.
+Finish and ship the uncommitted admin UX / staff-access pass, then resume defensive security review and responsive QA. Preserve invite flow, Rokesh-style portal chrome, product gallery/provenance, and verification/checkout/campaign features already on `main`.
 
-## 2. Completed work
+## 2. Completed work (on `main`)
 
-- `backend/src/app.js` now uses the exact `CLIENT_URL` allowlist for browser writes and credentialed CORS. Proxy host headers no longer expand browser trust. `README.md` documents the configuration.
-- `backend/test/integration.test.js` adds a configured/foreign browser origin regression and disables Rokesh Notify for the fixture. `backend/scripts/preview-qa.js` disables the same provider, lists local QA origins, and starts a fresh PostgreSQL fixture on a free loopback port.
-- `frontend/src/admin/AdminLayout.tsx` and `admin-v2.css` give the mobile drawer keyboard focus, Escape handling, and a dynamic viewport height. The header search can shrink without pushing actions offscreen at 320 and 390 px.
-- Verified this pass: frontend production build (including TypeScript), changed backend file syntax, and `git diff --check`. The preceding handoff recorded 34 backend tests passing before these changes.
-- **Customer complaints (new):** tables `complaints` and `complaint_messages` (`db/operationsMigration.js`); API `backend/src/routes/complaints.js` mounted at `/api/complaints` (customer: `POST /`, `GET /mine`, `GET /t/:ticket?email=`, `POST /t/:ticket/reply`) and `/api/complaints/admin` (staff, permission `support`: list with counts, `/counts`, detail, `/:id/reply` public or internal note, `PATCH /:id` status, priority, assign, resolution). Emails in `notify/complaintMail.js` (received, reply, resolved). New permission `support` in `ADMIN_MODULES` and `modules.ts`. Pages: `/complaint` (`ComplaintPage.tsx`), `/complaint/track` (`ComplaintTrackPage.tsx`), admin `/admin/complaints` (`AdminComplaints.tsx`, Sales group, sidebar badge). Limits: honeypot, 6 per hour per IP, `COMPLAINT_PER_EMAIL_DAILY` (5), `COMPLAINT_DAILY_CAP` (300), 30 customer messages per ticket; customers never see notes, priority or assignment. Resolving needs a written resolution; a customer reply reopens a resolved ticket; closed tickets take no replies. A new integration test covers the flow. Express 5 note: route params cannot use inline regex like `:id(\\d+)`; validate with `router.param`.
+- Admin Users invite flow + set-password emails; Rokesh-style chrome without a Settings dual-pane (`6fdabb4`).
+- Products: four types (Book, Stationery, Toy, Gift card) with labels; one Add button; ERP sync only when configured (`f312514`).
+- Admin layout overflow at 100% browser zoom (`668adc7`).
+- Earlier: cascading Category → Subcategory on product form, gallery, provenance, customer detail, banners, complaints, security allowlist (see older commits / README).
 
-## 3. Architecture and constraints
+## 3. Uncommitted work (this tree — not pushed)
 
-- React 19, Vite, TypeScript frontend. Express 5 and PostgreSQL backend. Frontend calls relative `/api`; Vite proxies locally and Vercel rewrites to Render in production. Keep CSP consistent across Express and Vercel when changing browser integrations.
-- Add idempotent migrations in `backend/src/db/init.js` or `db/operationsMigration.js`. Prices and payment state are server controlled. Keep existing phone uniqueness, email verification, and per-product COD rules intact.
-- Keep this workspace local. Use disposable test data. Disable real provider credentials and workers for QA. Never print or commit credentials. Commit/push only when asked. If committing, use the existing owner attribution without extra trailers.
-- Cloudflare skill is checked out under `.security-audit/skill/`. Current reconnaissance notes belong in `.security-audit/run-1/`. Previous audit coverage and 34 passing tests are reported by the prior handoff, not independently rerun here.
+**Backend**
 
-## 4. Known issues / blockers
+- `PATCH /admin/staff/:id/status` with `{ status: 'active' | 'suspended' }`. Suspend bumps `token_version` (ends sessions). Blocks suspending yourself or the last admin. Reset-link refused while suspended.
+- Login and `requireBackOffice` reject `staff_status === 'suspended'` (and invited still blocked until set-password).
+- `publicStaff` exposes `invited` | `active` | `suspended`.
+- Subscribers list includes opted-out customer accounts (`marketing_opt_in = false` but had `marketing_consent_at`) and inactive `marketing_subscribers`, ordered active first.
 
-- Full Cloudflare audit is incomplete. Its validator CLI rejected Windows file protection and independent reconnaissance hit a usage limit. The separate backend regression suite now runs in offline Linux Docker and passed 36/36, including the browser-origin and CSV pricing checks. The suite now has a complaints test (37/37 pass on the throwaway database).
-- In the local Chromium preview, the dashboard, orders, new-product route, shop, product detail, populated cart, checkout, and home showed no document-width overflow at 320, 390, 768, 1024, and 1440 px. Checkout, dashboard, and orders also fit 667×375. At 320 px the drawer took focus and Escape restored it to the toggle. Real devices, other browser engines, and populated admin order tables remain unverified. Vite warned about a 533 kB entry chunk.
-- Complaints UI not yet checked in a browser: the admin Complaints page, the track page and mobile layouts are unseen (only the empty form and a guest submit were loaded, and that test accidentally hit the live database; its test row and outbox row were deleted afterwards with the owner's approval). Do the browser check on a local throwaway database. The email-retry worker of that brief local run may have touched live outbox rows; unverified.
-- Before release, verify that every active storefront origin is in `CLIENT_URL`. Google is documented as configured but real end-to-end sign-in is still pending. Facebook awaits owner-side Meta Business verification.
+**Frontend**
 
-## 5. Immediate next step
+- **Users:** Suspend / Restore actions; status pills Invited / Active / Suspended.
+- **Subscribers:** filters All / Subscribed / Unsubscribed; Unsubscribe keeps the row; export includes status.
+- **Shipping partners:** Configure opens a centred modal (`a-modal`) instead of a panel below the fold.
+- **Orders:** detail card max-width centred; packing slip / label / refunds / Create shipment in one `erp-detail-actions` row.
+- **Categories:** compact `cat-editor` grid (reserved space under fields so validation does not skew the row); denser `cat-table` with Edit / Hide / Delete as text links.
+- **Inventory:** Adjust stock + Load stock history on one `inv-adjust` row with the fields.
+- **Campaigns / Payments / Reports / Store settings:** form layout CSS (`campaign-form`, `ops-form`, title-case KPIs, ISO day formatting in ops tables).
+- **Product form:** `form-row` / `form-row-3` with full-width inputs; password-manager ignore attrs on the form.
+- CSS: `admin.css` + `admin-v2.css` — `.form-row`, table action nowrap, ops-table compact rows, cat/inv/campaign helpers.
+- **README.md** updated for the above.
 
-Add focused regression coverage for the guest link and staff reset lifecycle with dummy accounts. The local offline test image is `sbh-local-backend-test:24`, with the runner under `.security-audit/docker-test-fixture/`. Review `backend/src/routes/shipping.js` webhook handler against each configured carrier's expected event format before release. Use the separate browser QA fixture to check Safari and Android if available. The owner asked to leave social sign-in alone.
+## 4. Architecture and constraints
 
-## Follow-up changes
+- React 19, Vite, TypeScript frontend. Express 5 and PostgreSQL backend. Frontend calls relative `/api`; Vite proxies locally and Vercel rewrites to Render in production.
+- Staff statuses live in `users.staff_status` (`invited` | `active` | `suspended`). Schema comes from `db:init` / migrations already on deploy.
+- Prices and payment state are server controlled. Keep phone uniqueness, email verification, and per-product COD rules intact.
+- Keep this workspace local. Use disposable test data. Disable real provider credentials for QA. Never print or commit credentials. Commit/push only when asked.
 
-- The staff guide is now a searchable webpage under Settings → Help & guide (`/admin/help`). The public Help Centre and static policies live in `frontend/src/pages/StoreHelp.tsx`. Removed the CMS editor, its permission, and the CMS API routes. Existing CMS database records are retained.
+## 5. Known issues / blockers
 
-- Added `ADMIN_GUIDE.md` with staff workflows, permission explanations, and prioritized gaps. The README links to it.
-- Hardened guest link expiry and revalidation, staff password reset revocation, carrier and AWB matching, and guest cart ownership. Older guest links need to be requested again. CSV and bulk pricing now keep the displayed discount synchronized. The new integration assertions still need execution in the audit sandbox.
-- The admin sign-in and populated Orders table passed Chromium checks at 320, 390, 667, 768, 1024 and 1440 px. Fixed clipping of the table's Manage action at 1024 px and opened sample order details after rebuilding. Physical devices and other browser engines remain unverified.
-- The populated QA preview checks its PostgreSQL host, port, and database before schema or sample-data writes. Use `QA_PREVIEW_PORT` to avoid an existing preview listener.
+- Uncommitted changes are **not** committed or deployed; live `salembookhouse.com` still lacks Suspend, Unsubscribed filter, Configure modal, and the latest layout CSS until push + deploy.
+- Categories / wide admin tables: owner reported sparse columns and “not straight” forms at 100% zoom; latest CSS targets that — re-verify in Chromium after a hard refresh.
+- Browser password-manager overlays can still paint numbered chips over the product gallery drop zone; form has `data-lpignore` / `data-1p-ignore` but extensions may ignore them.
+- Full Cloudflare / security-audit pass remains incomplete from earlier handoffs. Integration suite was last reported ~37/37 on throwaway DB; not re-run in this session.
+- Google social sign-in still needs a real end-to-end check; Facebook awaits Meta Business verification. Owner asked to leave social alone unless requested.
+
+## 6. Immediate next step
+
+1. Browser-check locally (empty `DATABASE_URL`): Categories add row + table, Inventory adjust row, Users Suspend/Restore, Subscribers Unsubscribed filter, Shipping Configure modal, Orders detail actions, product form at 100% zoom.
+2. When the owner asks: commit the uncommitted set (do not include `.env`), push `main`, confirm Vercel + Render deploy.
+3. Then resume: guest-link / staff-reset lifecycle tests in `sbh-local-backend-test:24` (see `.security-audit/docker-test-fixture/`), and carrier webhook format review in `backend/src/routes/shipping.js`.
+
+## Follow-up notes
+
+- Staff guide: Settings → Help & guide (`/admin/help`). Product backlog/gaps: `ADMIN_GUIDE.md`.
+- Client-facing runbook: `CLIENT_HANDOFF.md` (keys, smoke test). Update it if Suspend or Subscribers filters need client-facing wording after deploy.

@@ -110,12 +110,20 @@ router.get('/', wrap(async () => {
 
 /* ---------- subscriber list ---------- */
 router.get('/subscribers', wrap(async () => {
+  // Include people who opted out so staff can still see Unsubscribed (Remove / email link).
   const rows = (await query(`
-    SELECT 'account' AS source, u.id::text AS ref, u.email, u.name, COALESCE(u.marketing_consent_at, u.created_at) AS consent_at, TRUE AS active
-      FROM users u WHERE u.role = 'customer' AND u.marketing_opt_in = TRUE AND u.email_verified_at IS NOT NULL
+    SELECT 'account' AS source, u.id::text AS ref, u.email, u.name,
+           COALESCE(u.marketing_consent_at, u.created_at) AS consent_at,
+           u.marketing_opt_in AS active
+      FROM users u
+     WHERE u.role = 'customer'
+       AND u.email_verified_at IS NOT NULL
+       AND (u.marketing_opt_in = TRUE OR u.marketing_consent_at IS NOT NULL)
     UNION ALL
-    SELECT s.source, s.id::text, s.email, s.name, s.consent_at, s.active FROM marketing_subscribers s
-    ORDER BY consent_at DESC LIMIT 2000`)).rows;
+    SELECT s.source, s.id::text, s.email, s.name, s.consent_at, s.active
+      FROM marketing_subscribers s
+    ORDER BY active DESC, consent_at DESC
+    LIMIT 2000`)).rows;
   const unsubscribed = rows.filter((r) => !r.active).length;
   return { subscribers: rows, active: rows.length - unsubscribed, unsubscribed };
 }));

@@ -180,27 +180,27 @@ export default function AdminCategories() {
     }
     return (
       <tr key={c.id}>
-        <td style={isChild ? { paddingLeft: '2rem' } : { fontWeight: 600 }}>
-          {isChild ? '↳ ' : ''}
+        <td className="cat-name" style={isChild ? { paddingLeft: '1.75rem' } : { fontWeight: 600 }}>
+          {isChild ? <span className="cat-nest">↳</span> : null}
           {c.name}
         </td>
         <td className="muted">{c.slug}</td>
         <td>{isChild ? cats.find((p) => p.id === c.parent_id)?.name : '—'}</td>
         <td>{c.badge ? <span className="erp-pill warn">{c.badge}</span> : null}</td>
-        <td>{c.sort_order}</td>
-        <td>{c.product_count}</td>
+        <td className="num">{c.sort_order}</td>
+        <td className="num">{c.product_count}</td>
         <td>
           {c.is_visible && !parentHidden ? (
-            <span className="erp-pill ok">shown</span>
+            <span className="erp-pill ok">Shown</span>
           ) : (
-            <span className="erp-pill off">{c.is_visible ? 'parent hidden' : 'hidden'}</span>
+            <span className="erp-pill off">{c.is_visible ? 'Parent hidden' : 'Hidden'}</span>
           )}
         </td>
         <td>
-          <div className="erp-actions">
+          <div className="a-row-actions">
             <button
               type="button"
-              className="erp-btn ghost"
+              className="a-link primary"
               onClick={() => {
                 setEditId(c.id);
                 setEdit(toDraft(c));
@@ -208,10 +208,10 @@ export default function AdminCategories() {
             >
               Edit
             </button>
-            <button type="button" className="erp-btn ghost" disabled={busy} onClick={() => onToggle(c)}>
+            <button type="button" className="a-link" disabled={busy} onClick={() => onToggle(c)}>
               {c.is_visible ? 'Hide' : 'Show'}
             </button>
-            <button type="button" className="erp-btn danger" disabled={busy} onClick={() => onDelete(c)}>
+            <button type="button" className="a-link danger" disabled={busy} onClick={() => onDelete(c)}>
               Delete
             </button>
           </div>
@@ -221,11 +221,11 @@ export default function AdminCategories() {
   }
 
   return (
-    <>
-      <div className="erp-card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-        <h3 style={{ marginTop: 0 }}>Add category</h3>
-        <form className="erp-editor erp-form" onSubmit={onAdd}>
-          <label>
+    <div className="ops-stack">
+      <div className="erp-card ops-panel cat-add-card">
+        <h3 style={{ marginTop: 0, marginBottom: '0.65rem' }}>Add category</h3>
+        <form className="cat-editor erp-form" onSubmit={onAdd}>
+          <label className="cat-field-name">
             Name
             <input required value={adding.name} onChange={(e) => setAdding({ ...adding, name: e.target.value })} />
           </label>
@@ -248,8 +248,8 @@ export default function AdminCategories() {
               ))}
             </select>
           </label>
-          <label>
-            Badge (optional)
+          <label className="cat-field-sm">
+            Badge
             <input
               value={adding.badge}
               maxLength={20}
@@ -257,8 +257,8 @@ export default function AdminCategories() {
               onChange={(e) => setAdding({ ...adding, badge: e.target.value })}
             />
           </label>
-          <label>
-            Sort order (optional)
+          <label className="cat-field-sm">
+            Sort
             <input
               type="number"
               value={adding.sortOrder}
@@ -266,45 +266,44 @@ export default function AdminCategories() {
               onChange={(e) => setAdding({ ...adding, sortOrder: e.target.value })}
             />
           </label>
-          <div className="erp-actions">
-            <button type="submit" className="erp-btn primary" disabled={busy}>
-              Add category
-            </button>
-          </div>
+          <button type="submit" className="erp-btn primary cat-add-btn" disabled={busy}>
+            Add category
+          </button>
         </form>
-        <p className="muted" style={{ margin: 0 }}>
-          The storefront menus, Browse Categories, shop filters and footer read these directly. The first 7
-          shown top-level categories (lowest sort order first) appear in the header; the rest go under MORE.
+        <p className="muted" style={{ margin: '0.5rem 0 0', fontSize: '0.8rem' }}>
+          The first 7 shown top-level categories appear in the header; the rest go under MORE.
         </p>
       </div>
 
       <div className="erp-card">
         {error ? <p className="erp-error" style={{ padding: '0.75rem 1rem 0' }}>{error}</p> : null}
         {notice ? <p className="erp-ok" style={{ padding: '0.75rem 1rem 0' }}>{notice}</p> : null}
-        <table className="erp-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Slug</th>
-              <th>Parent</th>
-              <th>Badge</th>
-              <th>Order</th>
-              <th>Products</th>
-              <th>Storefront</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {tops.map((t) => (
-              <Fragment key={t.id}>
-                {renderRow(t, false, false)}
-                {(kidsOf.get(t.id) || []).map((k) => renderRow(k, true, !t.is_visible))}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
+        <div className="ops-table">
+          <table className="erp-table cat-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Parent</th>
+                <th>Badge</th>
+                <th className="num">Order</th>
+                <th className="num">Products</th>
+                <th>Storefront</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tops.map((t) => (
+                <Fragment key={t.id}>
+                  {renderRow(t, false, false)}
+                  {(kidsOf.get(t.id) || []).map((k) => renderRow(k, true, !t.is_visible))}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {!cats.length ? <p className="muted" style={{ padding: '1rem' }}>No categories yet.</p> : null}
       </div>
-    </>
+    </div>
   );
 }

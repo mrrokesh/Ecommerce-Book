@@ -242,12 +242,27 @@ export default function AdminProductForm() {
   }
 
   return (
-    <form className="erp-form" onSubmit={onSubmit}>
+    <form
+      className="erp-form"
+      onSubmit={onSubmit}
+      autoComplete="off"
+      data-lpignore="true"
+      data-1p-ignore="true"
+      data-bwignore="true"
+      data-form-type="other"
+    >
       <div className="stack erp-card" style={{ padding: '1rem' }}>
         {error ? <p className="erp-error">{error}</p> : null}
         <label>
           Product name
-          <input required value={form.title} onChange={(e) => set('title', e.target.value)} />
+          <input
+            required
+            value={form.title}
+            onChange={(e) => set('title', e.target.value)}
+            autoComplete="off"
+            data-lpignore="true"
+            data-1p-ignore="true"
+          />
         </label>
         <div className="form-row">
           <label>
@@ -269,7 +284,7 @@ export default function AdminProductForm() {
             <input value={form.publisher} onChange={(e) => set('publisher', e.target.value)} />
           </label>
         </div>
-        <div className="form-row">
+        <div className="form-row form-row-3">
           <label>
             Type
             <select value={form.productType} onChange={(e) => set('productType', e.target.value)}>
@@ -431,11 +446,9 @@ export default function AdminProductForm() {
                     <div className="erp-gallery-overlay">
                       {i !== 0 ? (
                         <button type="button" className="erp-gallery-primary-btn" onClick={() => setAsCover(url)}>
-                          Primary
+                          Make primary
                         </button>
-                      ) : (
-                        <span className="erp-gallery-primary-btn is-active">Primary</span>
-                      )}
+                      ) : null}
                       <button type="button" className="erp-gallery-del" aria-label="Remove image" onClick={() => removeImage(url)}>
                         ×
                       </button>

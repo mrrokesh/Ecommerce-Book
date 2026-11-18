@@ -297,9 +297,24 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       await new Promise(r=>setTimeout(r,300));
       assert.ok((await outbox('guest1@test.invalid','We received your complaint%')).length,'confirmation email queued');
       assert.equal((await request('/complaints/mine',{user})).data.complaints.length,1,'customer sees their own ticket');
-      // guests need ticket + email
-      assert.equal((await raw('/complaints/t/'+g.data.ticket+'?email=other@test.invalid')).status,404,'wrong email refused');
-      const seen=await raw('/complaints/t/'+g.data.ticket+'?email=guest1@test.invalid');
+      // the ticket number and the email address alone prove nothing: guests need the emailed personal token
+      assert.equal((await raw('/complaints/t/'+g.data.ticket+'?email=guest1@test.invalid')).status,404,'ticket + email no longer opens a ticket');
+      const view=(tok)=>raw('/complaints/t/'+g.data.ticket+'/view',{method:'POST',body:{token:tok}});
+      assert.equal((await view('0'.repeat(48))).status,404,'unknown token refused');
+      const mailBody=(await outbox('guest1@test.invalid','We received your complaint%'))[0].body;
+      const token=mailBody.match(/[?&]t=([0-9a-f]{48})/)[1];
+      assert.match(mailBody,new RegExp('n='+g.data.ticket),'link names the ticket');
+      // a signed-in customer's ticket opens only for that account
+      assert.equal((await request('/complaints/t/'+c.data.ticket,{user})).status,200,'owner opens their ticket');
+      assert.equal((await request('/complaints/t/'+c.data.ticket)).status,404,'another account cannot');
+      assert.equal((await raw('/complaints/t/'+c.data.ticket+'/view',{method:'POST',body:{token}})).status,404,'a guest token never opens an account ticket');
+      // asking for a fresh link always answers the same and only mails the address on the ticket
+      const al=await raw('/complaints/access-link',{method:'POST',body:{ticket:g.data.ticket,email:'guest1@test.invalid'}});assert.equal(al.status,200);assert.equal(al.data.sent,true);
+      assert.equal((await raw('/complaints/access-link',{method:'POST',body:{ticket:g.data.ticket,email:'attacker@test.invalid'}})).data.sent,true,'same answer for a wrong email');
+      await new Promise(r=>setTimeout(r,300));
+      assert.equal((await outbox('guest1@test.invalid','Your link to complaint%')).length,1,'one link mailed to the ticket email');
+      assert.equal((await outbox('attacker@test.invalid','%')).length,0,'nothing mailed to the wrong address');
+      const seen=await view(token);
       assert.equal(seen.status,200);assert.equal(seen.data.complaint.status,'open');assert.ok(!('priority' in seen.data.complaint),'no staff fields for customers');
       // staff access is permission based
       const plain=(await query("INSERT INTO users(name,email,password_hash,role) VALUES('Plain Staff','plain-staff@test.invalid','x','staff') RETURNING *")).rows[0];
@@ -316,7 +331,7 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       assert.equal((await request('/complaints/admin/'+id+'/reply',{method:'POST',body:{body:'We are sorry. A replacement is on its way.'},user:agent})).status,200);
       await new Promise(r=>setTimeout(r,300));
       assert.ok((await outbox('guest1@test.invalid','Update on your complaint%')).length,'reply email queued');
-      const thread=await raw('/complaints/t/'+g.data.ticket+'?email=guest1@test.invalid');
+      const thread=await view(token);
       assert.equal(thread.data.complaint.status,'in_progress');
       assert.ok(thread.data.messages.some(m=>/replacement/.test(m.body))&&!thread.data.messages.some(m=>/courier/.test(m.body)),'customer sees the reply but not the note');
       // resolving needs an explanation and emails the customer
@@ -327,11 +342,11 @@ test('commerce API integration with isolated PostgreSQL', {timeout:120000}, asyn
       await new Promise(r=>setTimeout(r,300));
       assert.ok((await outbox('guest1@test.invalid','Your complaint%is resolved')).length,'resolved email queued');
       // a customer reply reopens it
-      const re=await raw('/complaints/t/'+g.data.ticket+'/reply',{method:'POST',body:{email:'guest1@test.invalid',message:'The replacement also has a damaged cover.'}});
+      const re=await raw('/complaints/t/'+g.data.ticket+'/reply',{method:'POST',body:{token,message:'The replacement also has a damaged cover.'}});
       assert.equal(re.status,200,JSON.stringify(re));assert.equal(re.data.status,'open');
       // closed tickets take no more replies
       assert.equal((await request('/complaints/admin/'+id,{method:'PATCH',body:{status:'closed'},user:agent})).status,200);
-      assert.equal((await raw('/complaints/t/'+g.data.ticket+'/reply',{method:'POST',body:{email:'guest1@test.invalid',message:'Hello again'}})).status,400);
+      assert.equal((await raw('/complaints/t/'+g.data.ticket+'/reply',{method:'POST',body:{token,message:'Hello again'}})).status,400);
     });
     await t.test('run-3 audit fixes: no mail bodies for staff, masked gift codes, no coupon on gift cards, pincode bound to address, coupon limit by phone',async()=>{
       // 1. the admin email list never returns message bodies (they hold reset / verification / guest links)

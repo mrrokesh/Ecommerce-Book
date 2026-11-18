@@ -95,6 +95,10 @@ export async function migrateOperations(query) {
       author_type TEXT NOT NULL, author_id UUID, author_name TEXT, body TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    CREATE TABLE IF NOT EXISTS complaint_access_tokens (
+      id SERIAL PRIMARY KEY, complaint_id INT NOT NULL REFERENCES complaints(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL UNIQUE, expires_at TIMESTAMPTZ NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
     CREATE INDEX IF NOT EXISTS idx_complaints_status ON complaints(status, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_complaints_email ON complaints(lower(email));
     CREATE INDEX IF NOT EXISTS idx_complaint_messages_c ON complaint_messages(complaint_id, created_at);
