@@ -286,12 +286,12 @@ export default function AdminMarketing() {
             <input type="date" value={coupon.expiresAt} onChange={(e) => setCoupon({ ...coupon, expiresAt: e.target.value })} />
           </label>
           <label>
-            Total uses (blank = unlimited)
-            <input type="number" min="1" value={coupon.usageLimit} onChange={(e) => setCoupon({ ...coupon, usageLimit: e.target.value })} />
+            Total uses
+            <input type="number" min="1" placeholder="Unlimited" value={coupon.usageLimit} onChange={(e) => setCoupon({ ...coupon, usageLimit: e.target.value })} />
           </label>
           <label>
-            Uses per customer (blank = unlimited)
-            <input type="number" min="1" value={coupon.perCustomerLimit} onChange={(e) => setCoupon({ ...coupon, perCustomerLimit: e.target.value })} />
+            Uses per customer
+            <input type="number" min="1" placeholder="Unlimited" value={coupon.perCustomerLimit} onChange={(e) => setCoupon({ ...coupon, perCustomerLimit: e.target.value })} />
           </label>
           <div className="erp-actions">
             <button className="erp-btn primary" type="submit" disabled={busy}>

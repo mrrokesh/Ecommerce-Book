@@ -731,3 +731,16 @@ form.erp-toolbar {
   .erp-products-table th:nth-child(6), .erp-products-table td:nth-child(6) { display: none; }
   .erp-products-table td:nth-child(3) { white-space: normal; min-width: 130px; }
 }
+
+/* Row actions (Users, Roles, Categories) stay on one line on laptop and desktop widths. */
+@media (min-width: 721px) {
+  .a-row-actions { flex-wrap: nowrap; }
+  .erp-table td:last-child:has(> .a-row-actions) { width: 1%; white-space: nowrap; }
+}
+
+/* Fields reserve their own message line, so the gap between wrapped form rows can be tighter. */
+.ops-form { row-gap: 0.35rem; }
+
+/* Section headings inside the generic list pages get breathing room above them. */
+.ops-panel > h2:not(:first-child), .ops-panel > section > h2:not(:first-child) { margin-top: 1.5rem; }
+.ops-panel .ops-empty { margin: 0.4rem 0 0; }

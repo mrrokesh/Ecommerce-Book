@@ -54,8 +54,8 @@ function cell(v: unknown) {
   return UUID.test(s) ? `${s.slice(0, 8)}…` : s;
 }
 
-function Table({ rows = [], actions, hide = [] }: { rows?: Row[]; actions?: (row: Row) => ReactNode; hide?: string[] }) {
-  if (!rows.length) return <p className="muted ops-empty">No records found.</p>;
+function Table({ rows = [], actions, hide = [], empty = 'No records found.' }: { rows?: Row[]; actions?: (row: Row) => ReactNode; hide?: string[]; empty?: string }) {
+  if (!rows.length) return <p className="muted ops-empty">{empty}</p>;
   const keys = Object.keys(rows[0]).filter((k) => !['payload', 'quote', 'razorpay_payment_id', ...hide].includes(k));
   return (
     <div className="ops-table" role="region" tabIndex={0}>
@@ -102,6 +102,15 @@ function localDay(offsetDays = 0) {
   const d = new Date(Date.now() + offsetDays * 86400000);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+
+/** What each searchable list can be searched by. */
+const SEARCH_HINT: Record<string, string> = {
+  customers: 'Search name or email',
+  inventory: 'Search product name',
+  gifts: 'Search gift-card code',
+  emails: 'Search email address or subject',
+  returns: 'Search order number or customer name',
+};
 
 /** Sections whose list the server can filter by the search box. */
 const SEARCHABLE = ['customers', 'inventory', 'gifts', 'emails', 'returns'];
@@ -195,7 +204,7 @@ export default function AdminOperations({ section }: { section: string }) {
     <div className="ops-stack">
       <div className="erp-card ops-panel">
         <form
-          hidden={section === 'settings'}
+          hidden={['settings', 'payments'].includes(section)}
           className="erp-toolbar ops-toolbar"
           onSubmit={(e) => {
             e.preventDefault();
@@ -206,7 +215,7 @@ export default function AdminOperations({ section }: { section: string }) {
           {showSearch ? (
             <input
               aria-label="Search records"
-              placeholder="Search name or code"
+              placeholder={SEARCH_HINT[section] || 'Search'}
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -401,6 +410,7 @@ export default function AdminOperations({ section }: { section: string }) {
           <>
             <h2>Item returns</h2>
             <Table
+              empty="No item returns are waiting."
               rows={cases}
               actions={(r) => (
                 <>
@@ -441,6 +451,7 @@ export default function AdminOperations({ section }: { section: string }) {
               records are updated together.
             </p>
             <Table
+              empty="No whole-order returns are waiting."
               rows={data.rows}
               actions={(r) => (
                 <>
