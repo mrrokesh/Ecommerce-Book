@@ -178,6 +178,8 @@ const MIGRATIONS = [
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS staff_role_id INT REFERENCES staff_roles(id) ON DELETE SET NULL`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS staff_status VARCHAR(20) NOT NULL DEFAULT 'active'`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS last_sign_in_at TIMESTAMPTZ`,
   // First run only: a starter role matching the original orders-only staff access.
   `INSERT INTO staff_roles (name, permissions)
    SELECT 'Order manager', ARRAY['orders'] WHERE NOT EXISTS (SELECT 1 FROM staff_roles)`,

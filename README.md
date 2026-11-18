@@ -13,7 +13,7 @@ Online bookstore for Salem Book House, Salem, Tamil Nadu: **Vite + React + TypeS
 - Reviews, store locator, exam-prep section and static storefront help and policy pages
 - New-order alerts in the admin: a chime, a toast and a desktop notification when a customer places an order while the admin is open (checked every 15 seconds by a background worker, so it keeps working while the tab is behind other tabs or apps; the bell in the top bar mutes it and your choice is remembered; leave the admin tab open, and click the page once so the browser allows sound and notifications)
 - Admin sign-in at `/admin/login` with a brand panel and centred form (collapses to a single card on phones)
-- Admin panel at `/admin` with a dark sidebar of collapsible groups with live count badges (orders to action, open returns, pending refunds, low stock) and a daily email usage meter, a jump-to-page search, a dashboard of pending actions, low stock and recent orders, and a layout that works on phones (separate sign-in, no storefront chrome): products (multi-image gallery, provenance), categories, orders, customers (profile, orders and internal notes), reviews, coupons and banners (image upload), email outbox, staff accounts, multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), Rokesh ERP product sync
+- Admin panel at `/admin` with a dark sidebar of collapsible groups with live count badges (orders to action, open returns, pending refunds, low stock) and a daily email usage meter, a jump-to-page search, green confirmation toasts, a dashboard of pending actions, low stock and recent orders, and a layout that works on phones (separate sign-in, no storefront chrome): products (multi-image gallery, provenance), categories, orders, customers (profile, orders and internal notes), reviews, coupons and banners (image upload), email outbox, **Users** (invite staff by email), multi-carrier shipping (Shiprocket, Delhivery, Blue Dart, DTDC, Shadowfax), Rokesh ERP product sync
 - Product provenance on every catalogue item: who added it (admin or staff), who last edited it, and for ERP rows a Rokesh source line with the API host and a masked key tip (never the secret); shown at the bottom of the product form; list pills show Admin / Staff / ERP at a glance
 - Product images: drag-and-drop or URL gallery on add/edit (first image is the shop cover; extras show on the product page); admin product-list thumbs stay fixed-size so covers do not collapse
 - Product categories on add/edit use cascading Category → Subcategory dropdowns (same idea as Rokesh ERP), with chips for multiple assignments
@@ -79,17 +79,17 @@ Open **Settings → Help & guide** (`/admin/help`) for searchable staff document
 
 The admin portal lives at `/admin` with its own sign-in page (`/admin/login`). The storefront does not link to it, and the storefront `/login` is for customers only.
 
-Access is managed in **Admin → Store → Staff & roles**:
+Access is managed in **Settings → Users** (`/admin/staff`):
 
-- **Admins** have full access, including staff and role management.
-- **Staff** get a **role**. A role is a name plus the sections it can open: Dashboard, Orders, Products, Categories, Customers, Reviews, Shipping partners, Banners & coupons, Email outbox. Staff only see those sections in the menu.
-- A starter role, **Order manager** (Orders only), is created on first run. Edit it or create your own (for example "Catalogue editor" with Products and Categories).
+- **Admins** have full access, including user and role management.
+- **Staff** get a **role**. A role is a name plus the **modules** (sections) it can open: Dashboard, Orders, Products, Categories, Customers, Reviews, Shipping partners, Banners & coupons, Email outbox, Complaints, and related edit/refund permissions. Staff only see those sections in the menu.
+- A starter role, **Order manager** (Orders only), is created on first run. Edit it or create your own under **Roles & modules** on the Users page (for example "Catalogue editor" with Products and Categories).
 - Changing a role's sections applies to everyone with that role on their next request. A role cannot be deleted while staff have it.
-- Admins add staff with a name, email, password (shared with them directly; no email is sent) and role, change a member's role, reset passwords, and remove access.
-- **Remove access** turns the account back into a normal customer; order history is kept. You cannot change or remove your own access, or remove the last admin.
+- **Invite user** (name, email, role) creates an **INVITED** account and emails a personal set-password link (`/admin/set-password?token=…`, valid 7 days). The link is also copied for chat. Until they set a password they cannot sign in. Status becomes **ACTIVE** after they finish the link; last sign-in is recorded on each admin/staff login.
+- For invited users: **Copy invite link** / **New link** (re-emails). For active users: **Password reset link** (2-hour link, emailed). **Edit** changes role; **Remove** turns the account back into a normal customer (order history kept). You cannot change or remove your own access, or remove the last admin.
 - Permissions are enforced by the API (`requireBackOffice` / `requirePermission` and the module map in `backend/src/routes/admin.js`), not just hidden in the menu.
 - The Orders section includes setting an order to cancelled or refunded, which issues the Razorpay refund.
-- Admin and staff accounts cannot use Google or Facebook sign-in; they sign in with their password.
+- Admin and staff accounts cannot use Google or Facebook sign-in; they sign in with their password after accepting the invite.
 
 ## Social sign-in
 
@@ -162,7 +162,7 @@ The API refuses to start in production without a strong `JWT_SECRET` and an `ADM
 3. Place a Cash on Delivery order and check it in **Admin → Orders**. Sign up with a real address and confirm the verification and welcome emails arrive.
 4. Test online payments with **test keys** first (test card above), then switch the Render variables to the live pair and place one small real order.
 5. Change the admin password if any database ever used a development default, and keep every key out of git.
-6. Make sure the schema step (`npm run db:init`) runs on deploy: new tables and columns (refunds, audit log, returns, `email_verified_at`, product `source` / provenance, `book_images`) are created there.
+6. Make sure the schema step (`npm run db:init`) runs on deploy: new tables and columns (refunds, audit log, returns, `email_verified_at`, product `source` / provenance, `book_images`, users `staff_status` / `last_sign_in_at`) are created there.
 7. As admin, open `/api/security/network`. If `ip` is a Vercel or Render address instead of yours, set `TRUST_PROXY_HOPS=4` (Vercel + Render) so rate limits are per visitor.
 
 ## Security notes

@@ -157,6 +157,16 @@ router.post('/login', async (req, res) => {
     clearLoginFailures(email);
 
     if(user.mfa_secret&&!verifyTotp(decryptSecret(user.mfa_secret),req.body.code))return res.status(401).json({success:false,error:'Enter a valid authenticator code'});
+    if (user.role === 'admin' || user.role === 'staff') {
+      const status = await query(`SELECT staff_status FROM users WHERE id = $1`, [user.id]);
+      if (status.rows[0]?.staff_status === 'invited') {
+        return res.status(403).json({
+          success: false,
+          error: 'Accept your invite link and set a password before signing in',
+        });
+      }
+      await query(`UPDATE users SET last_sign_in_at = NOW() WHERE id = $1`, [user.id]);
+    }
     const token = signToken(user.id, user.token_version);
     setAuthCookie(res, token);
     const { password_hash: _, ...safe } = user;
@@ -241,7 +251,9 @@ router.post('/reset', async (req, res) => {
     if (!rows[0]) return res.status(400).json({ success: false, error: 'Invalid or expired reset token' });
     const hash = await bcrypt.hash(password, 10);
     await query(
-      `UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE id = $2`,
+      `UPDATE users SET password_hash = $1, token_version = token_version + 1,
+         staff_status = CASE WHEN role IN ('admin','staff') THEN 'active' ELSE staff_status END
+       WHERE id = $2`,
       [hash, rows[0].user_id]
     );
     await query(`UPDATE password_resets SET used = TRUE WHERE id = $1`, [rows[0].id]);

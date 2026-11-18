@@ -65,7 +65,7 @@ export const NAV_GROUPS: NavGroup[] = [
     key: 'settings', title: 'Settings', icon: 'settings',
     links: [
       { to: '/admin/settings', label: 'Store settings', module: 'staff' },
-      { to: '/admin/staff', label: 'Staff & roles', module: 'staff' },
+      { to: '/admin/staff', label: 'Users', module: 'staff' },
       { to: '/admin/audit', label: 'Audit history', module: 'staff' },
       { to: '/admin/security', label: 'Account security', module: 'any' },
       { to: '/admin/help', label: 'Help & guide', module: 'any' },

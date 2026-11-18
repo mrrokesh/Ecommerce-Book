@@ -299,9 +299,11 @@ export default function AdminOrders() {
                   <span className={`erp-pill ${statusPill(o.status)}`}>{o.status}</span>
                 </td>
                 <td>
-                  <button type="button" className="erp-btn ghost" onClick={() => setSelected(o.id)}>
-                    Manage
-                  </button>
+                  <div className="a-row-actions">
+                    <button type="button" className="a-link primary" onClick={() => setSelected(o.id)}>
+                      Manage
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

@@ -102,6 +102,15 @@ export default function AdminProducts() {
   }
 
   return (
+    <>
+    <div className="a-pagehead">
+      <p className="muted" style={{ margin: 0 }}>
+        Catalogue products, ERP sync and cover images. Hidden items stay out of the storefront.
+      </p>
+      <div className="a-pagehead-actions">
+        <Link className="erp-btn primary" to="/admin/products/new">+ Add product</Link>
+      </div>
+    </div>
     <div className="erp-card">
       <div className="erp-toolbar">
         <form
@@ -273,5 +282,6 @@ export default function AdminProducts() {
         </div>
       </div>
     </div>
+    </>
   );
 }

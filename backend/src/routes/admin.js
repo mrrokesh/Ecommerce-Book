@@ -3,6 +3,7 @@ import { safeLink } from '../utils/safeLink.js';
 import { transitionOrder } from '../domain/lifecycle.js';
 import { Router } from 'express';
 import path from 'path';
+import crypto from 'crypto';
 import multer from 'multer';
 import { query, getPool } from '../db/pool.js';
 import bcrypt from 'bcryptjs';
@@ -14,6 +15,8 @@ import { createProvenance, editProvenance } from '../utils/productProvenance.js'
 import { restockOrder, nextPaymentStatus } from './orders.js';
 import { refundRazorpayPayment } from './payments.js';
 import { notifyOrderEvent } from '../notify/index.js';
+import { siteBase } from '../notify/emailTemplate.js';
+import { staffInviteEmail, staffResetEmail } from '../notify/accountMail.js';
 
 const router = Router();
 router.use(requireBackOffice);
@@ -1046,6 +1049,7 @@ router.get('/customers', async (req, res) => {
 });
 
 const STAFF_ROLES = ['admin', 'staff'];
+const hashResetToken = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
 
 function publicStaff(u) {
   return {
@@ -1055,11 +1059,14 @@ function publicStaff(u) {
     role: u.role,
     staffRoleId: u.staff_role_id ?? null,
     staffRoleName: u.staff_role_name ?? null,
+    status: u.staff_status === 'invited' ? 'invited' : 'active',
+    lastSignInAt: u.last_sign_in_at || null,
     createdAt: u.created_at,
   };
 }
 
-const STAFF_SELECT = `SELECT u.id, u.name, u.email, u.role, u.staff_role_id, r.name AS staff_role_name, u.created_at
+const STAFF_SELECT = `SELECT u.id, u.name, u.email, u.role, u.staff_role_id, r.name AS staff_role_name,
+  u.staff_status, u.last_sign_in_at, u.created_at
   FROM users u LEFT JOIN staff_roles r ON r.id = u.staff_role_id`;
 
 /** Resolves { role, staffRoleId } from a request body, or returns { error }. */
@@ -1078,11 +1085,62 @@ async function otherAdminsExist(userId) {
   return rows[0].c > 0;
 }
 
+function setPasswordUrl(plainToken) {
+  return `${siteBase()}/admin/set-password?token=${encodeURIComponent(plainToken)}`;
+}
+
+async function issueStaffLink(userId, hours) {
+  const plain = crypto.randomBytes(24).toString('hex');
+  await query(`UPDATE password_resets SET used = TRUE WHERE user_id = $1 AND used = FALSE`, [userId]);
+  await query(
+    `INSERT INTO password_resets (user_id, token, expires_at)
+     VALUES ($1,$2, NOW() + make_interval(hours => $3::int))`,
+    [userId, hashResetToken(plain), Number(hours)]
+  );
+  return { url: setPasswordUrl(plain), token: plain };
+}
+
 router.get('/staff', async (_req, res) => {
   const { rows } = await query(`${STAFF_SELECT} WHERE u.role = ANY($1) ORDER BY u.role, u.created_at`, [
     STAFF_ROLES,
   ]);
   return res.json({ success: true, data: { staff: rows.map(publicStaff) } });
+});
+
+router.post('/staff/invite', async (req, res) => {
+  try {
+    const name = String(req.body?.name || '').trim();
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const access = await readAccess(req.body);
+    if (access.error) return res.status(400).json({ success: false, error: access.error });
+    if (!name || name.length > 120) return res.status(400).json({ success: false, error: 'Name is required' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: 'Enter a valid email address' });
+    }
+    const existing = await query(`SELECT role FROM users WHERE lower(email) = $1`, [email]);
+    if (existing.rows[0]) {
+      return res.status(409).json({
+        success: false,
+        error: STAFF_ROLES.includes(existing.rows[0].role)
+          ? 'This email already has portal access'
+          : 'This email already has a customer account — use a different email for staff',
+      });
+    }
+    const placeholder = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+    const { rows } = await query(
+      `INSERT INTO users (name, email, password_hash, role, staff_role_id, staff_status)
+       VALUES ($1,$2,$3,$4,$5,'invited') RETURNING id`,
+      [name, email, placeholder, access.role, access.staffRoleId]
+    );
+    const link = await issueStaffLink(rows[0].id, 24 * 7);
+    const created = await query(`${STAFF_SELECT} WHERE u.id = $1`, [rows[0].id]);
+    const staff = publicStaff(created.rows[0]);
+    staffInviteEmail({ name: staff.name, email: staff.email }, link.token).catch(() => {});
+    return res.status(201).json({ success: true, data: { staff, inviteUrl: link.url } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: 'Could not invite staff member' });
+  }
 });
 
 router.post('/staff', async (req, res) => {
@@ -1110,8 +1168,8 @@ router.post('/staff', async (req, res) => {
     }
     const hash = await bcrypt.hash(password, 10);
     const { rows } = await query(
-      `INSERT INTO users (name, email, password_hash, role, staff_role_id) VALUES ($1,$2,$3,$4,$5)
-       RETURNING id`,
+      `INSERT INTO users (name, email, password_hash, role, staff_role_id, staff_status)
+       VALUES ($1,$2,$3,$4,$5,'active') RETURNING id`,
       [name, email, hash, access.role, access.staffRoleId]
     );
     const created = await query(`${STAFF_SELECT} WHERE u.id = $1`, [rows[0].id]);
@@ -1119,6 +1177,45 @@ router.post('/staff', async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, error: 'Could not add staff member' });
+  }
+});
+
+router.post('/staff/:id/invite-link', async (req, res) => {
+  try {
+    const { rows } = await query(
+      `SELECT id, staff_status FROM users WHERE id = $1 AND role = ANY($2)`,
+      [req.params.id, STAFF_ROLES]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Staff member not found' });
+    if (rows[0].staff_status !== 'invited') {
+      return res.status(400).json({ success: false, error: 'This user is already active — use a password reset link' });
+    }
+    const link = await issueStaffLink(rows[0].id, 24 * 7);
+    const person = await query(`SELECT name, email FROM users WHERE id = $1`, [rows[0].id]);
+    staffInviteEmail(person.rows[0], link.token).catch(() => {});
+    return res.json({ success: true, data: { inviteUrl: link.url } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: 'Could not create invite link' });
+  }
+});
+
+router.post('/staff/:id/reset-link', async (req, res) => {
+  try {
+    const { rows } = await query(
+      `SELECT id, name, email, staff_status FROM users WHERE id = $1 AND role = ANY($2)`,
+      [req.params.id, STAFF_ROLES]
+    );
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Staff member not found' });
+    if (rows[0].staff_status === 'invited') {
+      return res.status(400).json({ success: false, error: 'This user has not accepted their invite yet' });
+    }
+    const link = await issueStaffLink(rows[0].id, 2);
+    staffResetEmail({ name: rows[0].name, email: rows[0].email }, link.token).catch(() => {});
+    return res.json({ success: true, data: { resetUrl: link.url } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, error: 'Could not create reset link' });
   }
 });
 
@@ -1182,7 +1279,10 @@ router.delete('/staff/:id', async (req, res) => {
     if (rows[0].role === 'admin' && !(await otherAdminsExist(req.params.id))) {
       return res.status(400).json({ success: false, error: 'At least one admin must remain' });
     }
-    await query(`UPDATE users SET role = 'customer', staff_role_id = NULL WHERE id = $1`, [req.params.id]);
+    await query(
+      `UPDATE users SET role = 'customer', staff_role_id = NULL, staff_status = 'active' WHERE id = $1`,
+      [req.params.id]
+    );
     return res.json({ success: true, data: { removed: true } });
   } catch (err) {
     console.error(err);

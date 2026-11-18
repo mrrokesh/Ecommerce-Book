@@ -132,7 +132,7 @@ export default function AdminCustomers() {
               <th>Orders</th>
               <th>Spent</th>
               <th>Joined</th>
-              <th>Actions</th>
+              <th style={{ textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -147,9 +147,9 @@ export default function AdminCustomers() {
                 <td>{c.orderCount ?? 0}</td>
                 <td>{formatPrice(c.spent || 0)}</td>
                 <td>{c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN') : '—'}</td>
-                <td>
-                  <button type="button" className="erp-btn" disabled={busy} onClick={() => void openCustomer(c.id)}>
-                    View customer
+                <td style={{ textAlign: 'center' }}>
+                  <button type="button" className="erp-btn ghost" disabled={busy} onClick={() => void openCustomer(c.id)}>
+                    View
                   </button>
                 </td>
               </tr>

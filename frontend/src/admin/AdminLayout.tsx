@@ -25,7 +25,7 @@ const TITLES = {
   '/admin/shipping': 'Shipping partners',
   '/admin/reviews': 'Reviews',
   '/admin/complaints': 'Complaints',
-  '/admin/staff': 'Staff & roles',
+  '/admin/staff': 'Users',
   '/admin/campaigns': 'Promotional emails',
   '/admin/subscribers': 'Subscribers',
 };
@@ -188,10 +188,12 @@ export default function AdminLayout() {
           </div>
         </header>
         <div className="erp-body">
-          <div className="erp-pagehead">
-            <p className="erp-crumb">{isAdmin ? 'Admin' : 'Staff'} / {title}</p>
-            {current !== 'any' || !/^\/admin\/help\/?$/i.test(loc.pathname) ? <h1>{title}</h1> : null}
-          </div>
+          {/^\/admin\/staff(\/|$)/i.test(loc.pathname) ? null : (
+            <div className="erp-pagehead">
+              <p className="erp-crumb">{isAdmin ? 'Admin' : 'Staff'} / {title}</p>
+              {current !== 'any' || !/^\/admin\/help\/?$/i.test(loc.pathname) ? <h1>{title}</h1> : null}
+            </div>
+          )}
           {pageAllowed ? (
             <Outlet />
           ) : (

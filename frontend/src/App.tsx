@@ -41,6 +41,7 @@ import AdminProductForm from './admin/AdminProductForm';
 import AdminCategories from './admin/AdminCategories';
 import AdminLogin from './admin/AdminLogin';
 import AdminStaff from './admin/AdminStaff';
+import AdminSetPassword from './admin/AdminSetPassword';
 import AdminOrders from './admin/AdminOrders';
 import AdminMarketing from './admin/AdminMarketing';
 import AdminHelp from './admin/AdminHelp';
@@ -63,6 +64,7 @@ export default function App() {
           <FormGuard />
           <Routes>
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/set-password" element={<AdminSetPassword />} />
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />

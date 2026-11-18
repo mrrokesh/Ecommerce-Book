@@ -86,6 +86,33 @@ export const passwordResetEmail = (user, token) =>
     note: 'If you did not ask for this, you can ignore this email; your password will not change.',
   });
 
+export const staffInviteEmail = (user, token) =>
+  deliver('staff-invite', user?.email, `You're invited to the ${STORE} admin portal`, {
+    badge: 'Staff invite',
+    title: 'Set up your admin access',
+    preheader: 'Choose a password to join the Salem Book House admin portal.',
+    greeting: `Hi ${first(user?.name)},`,
+    paragraphs: [
+      'You have been invited to the Salem Book House admin portal. Use the button below to choose your password. This link works once and expires in 7 days.',
+      'After you set a password, sign in at the admin portal with this email address.',
+    ],
+    cta: { label: 'Set my password', url: `${siteBase()}/admin/set-password?token=${token}` },
+    note: 'If you were not expecting this invite, you can ignore this email.',
+  });
+
+export const staffResetEmail = (user, token) =>
+  deliver('staff-reset', user?.email, `Reset your ${STORE} admin password`, {
+    badge: 'Password reset',
+    title: 'Reset your admin password',
+    preheader: 'Use this link to choose a new password. It expires in 2 hours.',
+    greeting: `Hi ${first(user?.name)},`,
+    paragraphs: [
+      'A store admin created a password-reset link for your portal account. Choose a new password with the button below. This link works once and expires in 2 hours.',
+    ],
+    cta: { label: 'Choose a new password', url: `${siteBase()}/admin/set-password?token=${token}` },
+    note: 'If you did not ask for this, contact the store admin; your password will not change until you use the link.',
+  });
+
 export const signInAlert = (user, req) => {
   const when = new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
   return deliver('sign-in', user?.email, `New sign-in to your ${STORE} account`, {
