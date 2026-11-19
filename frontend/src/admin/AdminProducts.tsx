@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { confirmAction } from '../components/Dialogs';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
@@ -24,13 +24,16 @@ export default function AdminProducts() {
   const [syncing, setSyncing] = useState(false);
   const [fillingCovers, setFillingCovers] = useState(false);
 
+  const loadSeq = useRef(0);
   async function load(nextPage = page) {
+    const mine = ++loadSeq.current;
     setBusy(true);
     setError('');
     try {
       const { data } = await api.get('/admin/books', {
         params: { q, productType, stock, status, page: nextPage, pageSize: 20 },
       });
+      if (mine !== loadSeq.current) return; // a newer search is already in flight; drop this stale answer
       setRows(data.books || []);
       setTotal(data.total || 0);
       setPage(data.page || 1);
@@ -38,7 +41,7 @@ export default function AdminProducts() {
     } catch (err) {
       setError(err.message);
     } finally {
-      setBusy(false);
+      if (mine === loadSeq.current) setBusy(false);
     }
   }
 
@@ -47,6 +50,18 @@ export default function AdminProducts() {
     api.get('/admin/erp/status').then(({ data }) => setErp(data)).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productType, stock, status]);
+
+  // Search while typing: wait a moment after the last keystroke, then reload from page 1.
+  const firstSearch = useRef(true);
+  useEffect(() => {
+    if (firstSearch.current) {
+      firstSearch.current = false;
+      return;
+    }
+    const t = setTimeout(() => load(1), 120);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
 
   async function syncErp() {
     setSyncing(true);

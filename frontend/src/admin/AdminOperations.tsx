@@ -54,7 +54,21 @@ function cell(v: unknown) {
   return UUID.test(s) ? `${s.slice(0, 8)}…` : s;
 }
 
-function Table({ rows = [], actions, hide = [], empty = 'No records found.' }: { rows?: Row[]; actions?: (row: Row) => ReactNode; hide?: string[]; empty?: string }) {
+function Table({
+  rows = [],
+  actions,
+  hide = [],
+  empty = 'No records found.',
+  onPick,
+  pickedId,
+}: {
+  rows?: Row[];
+  actions?: (row: Row) => ReactNode;
+  hide?: string[];
+  empty?: string;
+  onPick?: (row: Row) => void;
+  pickedId?: string;
+}) {
   if (!rows.length) return <p className="muted ops-empty">{empty}</p>;
   const keys = Object.keys(rows[0]).filter((k) => !['payload', 'quote', 'razorpay_payment_id', ...hide].includes(k));
   return (
@@ -70,7 +84,13 @@ function Table({ rows = [], actions, hide = [], empty = 'No records found.' }: {
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={String(r.id ?? i)}>
+            <tr
+              key={String(r.id ?? i)}
+              className={onPick ? `is-pickable${pickedId && String(r.id) === pickedId ? ' is-picked' : ''}` : undefined}
+              tabIndex={onPick ? 0 : undefined}
+              onClick={onPick ? () => onPick(r) : undefined}
+              onKeyDown={onPick ? (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onPick(r)) : undefined}
+            >
               {keys.map((k) => (
                 <td
                   key={k}
@@ -113,7 +133,7 @@ const SEARCH_HINT: Record<string, string> = {
 };
 
 /** Sections whose list the server can filter by the search box. */
-const SEARCHABLE = ['customers', 'inventory', 'gifts', 'emails', 'returns'];
+const SEARCHABLE = ['customers', 'gifts', 'emails', 'returns'];
 
 export default function AdminOperations({ section }: { section: string }) {
   const [data, setData] = useState<Result>({});
@@ -128,13 +148,15 @@ export default function AdminOperations({ section }: { section: string }) {
   const [customerId, setCustomerId] = useState('');
   const [cases, setCases] = useState<Row[]>([]);
   const [history, setHistory] = useState<Row[]>([]);
+  const [lowOnly, setLowOnly] = useState(true);
+  const [pickId, setPickId] = useState('');
 
   async function load() {
     setBusy(true);
     setError('');
     try {
       const r = await api.get('/operations/' + section, {
-        params: { page, q, from, to, low: section === 'inventory' ? 'true' : undefined },
+        params: { page, q, from, to, low: section === 'inventory' ? String(lowOnly) : undefined },
       });
       setData(r.data);
       if (section === 'returns') {
@@ -147,6 +169,14 @@ export default function AdminOperations({ section }: { section: string }) {
       setBusy(false);
     }
   }
+
+  // Inventory searches while typing (after a short pause) and when the low-stock switch changes.
+  useEffect(() => {
+    if (section !== 'inventory') return;
+    const t = setTimeout(() => void load(), 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, lowOnly]);
 
   useEffect(() => {
     setDetail(null);
@@ -204,7 +234,7 @@ export default function AdminOperations({ section }: { section: string }) {
     <div className="ops-stack">
       <div className="erp-card ops-panel">
         <form
-          hidden={['settings', 'payments'].includes(section)}
+          hidden={['settings', 'payments', 'inventory'].includes(section)}
           className="erp-toolbar ops-toolbar"
           onSubmit={(e) => {
             e.preventDefault();
@@ -299,11 +329,11 @@ export default function AdminOperations({ section }: { section: string }) {
 
         {section === 'inventory' ? (
           <section className="ops-section inv-section">
-            <h2>Low stock</h2>
+            <h2>Adjust stock</h2>
             <form className="inv-adjust" onSubmit={(e) => void act('inventory/adjust', form(e))}>
               <label>
                 Product ID
-                <input name="bookId" type="number" required />
+                <input name="bookId" type="number" required value={pickId} onChange={(e) => setPickId(e.target.value)} />
               </label>
               <label>
                 Quantity adjustment
@@ -332,6 +362,21 @@ export default function AdminOperations({ section }: { section: string }) {
                 </button>
               </div>
             </form>
+            <div className="inv-listbar">
+              <h2>{lowOnly ? 'Low stock' : 'All products'}</h2>
+              <input
+                aria-label="Search products"
+                placeholder="Search product name"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                data-no-validate
+              />
+              <label className="check-row">
+                <input type="checkbox" checked={lowOnly} onChange={(e) => setLowOnly(e.target.checked)} data-no-validate />
+                <span>Low stock only</span>
+              </label>
+            </div>
+            <p className="muted inv-hint">Click a product below to choose it for the adjustment above.</p>
           </section>
         ) : null}
 
@@ -513,6 +558,9 @@ export default function AdminOperations({ section }: { section: string }) {
           <Table
             rows={data.rows}
             hide={section === 'emails' ? ['id'] : section === 'audit' ? ['actor_id', 'details'] : undefined}
+            onPick={section === 'inventory' ? (r) => setPickId(String(r.id)) : undefined}
+            pickedId={section === 'inventory' ? pickId : undefined}
+            empty={section === 'inventory' ? (lowOnly ? 'Nothing is low on stock.' : 'No products match.') : undefined}
             actions={
               section === 'customers'
                 ? (r) => button('View customer', () => void customer(String(r.id)))

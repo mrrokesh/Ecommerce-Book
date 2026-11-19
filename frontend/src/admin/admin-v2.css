@@ -744,3 +744,13 @@ form.erp-toolbar {
 /* Section headings inside the generic list pages get breathing room above them. */
 .ops-panel > h2:not(:first-child), .ops-panel > section > h2:not(:first-child) { margin-top: 1.5rem; }
 .ops-panel .ops-empty { margin: 0.4rem 0 0; }
+
+/* Inventory: the list has its own search next to it; rows are clickable to pick a product. */
+.inv-listbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-top: 1.5rem; }
+.inv-listbar h2 { margin: 0; margin-right: auto; }
+.inv-listbar input[type='text'], .inv-listbar input:not([type]) { min-width: 240px; flex: 0 1 320px; }
+.inv-hint { margin: 0.35rem 0 0.5rem; }
+.erp-table tr.is-pickable { cursor: pointer; }
+.erp-table tr.is-pickable:hover td { background: #f4f8ff; }
+.erp-table tr.is-pickable:focus-visible { outline: 2px solid #3b82f6; outline-offset: -2px; }
+.erp-table tr.is-picked td { background: #e8f0ff; font-weight: 600; }
