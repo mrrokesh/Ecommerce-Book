@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react';
+import { reportClientError } from '../lib/reportError';
 
 type State = { failed: boolean };
 
@@ -11,6 +12,13 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, St
 
   componentDidCatch(error: unknown) {
     console.error(error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    reportClientError({
+      message: err.message,
+      stack: err.stack,
+      path: typeof location !== 'undefined' ? location.pathname : undefined,
+      url: typeof location !== 'undefined' ? location.href : undefined,
+    });
   }
 
   render() {

@@ -26,6 +26,7 @@ const TITLES = {
   '/admin/reviews': 'Reviews',
   '/admin/complaints': 'Complaints',
   '/admin/staff': 'Users',
+  '/admin/errors': 'Site errors',
   '/admin/campaigns': 'Promotional emails',
   '/admin/subscribers': 'Subscribers',
 };
@@ -89,6 +90,12 @@ export default function AdminLayout() {
     }
     if (role === 'admin' || permissions.includes('marketing')) {
       api.get('/campaigns').then(({ data }) => alive && setUsage({ used: Number(data.sentToday || 0), cap: Number(data.dailyCap || 0) })).catch(() => undefined);
+    }
+    if (role === 'admin') {
+      api
+        .get('/errors/counts')
+        .then(({ data }) => alive && setBadges((b) => ({ ...b, '/admin/errors': Number(data.open || 0) })))
+        .catch(() => undefined);
     }
     return () => { alive = false; };
   }, [inPortal, permissions, loc.pathname, role, refreshTick]);

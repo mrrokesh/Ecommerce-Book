@@ -66,6 +66,7 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { to: '/admin/settings', label: 'Store settings', module: 'staff' },
       { to: '/admin/staff', label: 'Users', module: 'staff' },
+      { to: '/admin/errors', label: 'Site errors', module: 'staff' },
       { to: '/admin/audit', label: 'Audit history', module: 'staff' },
       { to: '/admin/security', label: 'Account security', module: 'any' },
       { to: '/admin/help', label: 'Help & guide', module: 'any' },
@@ -99,6 +100,7 @@ export function moduleForPath(pathname: string) {
     security: 'any',
     emails: 'emails',
     staff: 'staff',
+    errors: 'staff',
   };
   return map[seg] || 'staff';
 }

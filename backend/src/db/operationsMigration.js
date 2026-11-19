@@ -104,5 +104,29 @@ export async function migrateOperations(query) {
     CREATE INDEX IF NOT EXISTS idx_complaint_messages_c ON complaint_messages(complaint_id, created_at);
     CREATE INDEX IF NOT EXISTS idx_refund_order ON refund_requests(order_id);
     CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_log(created_at DESC);
+    CREATE TABLE IF NOT EXISTS site_errors (
+      id SERIAL PRIMARY KEY,
+      fingerprint TEXT NOT NULL UNIQUE,
+      source TEXT NOT NULL DEFAULT 'server',
+      severity TEXT NOT NULL DEFAULT 'error',
+      message TEXT NOT NULL,
+      stack TEXT,
+      path TEXT,
+      method TEXT,
+      status_code INT,
+      user_agent TEXT,
+      url TEXT,
+      meta JSONB NOT NULL DEFAULT '{}'::jsonb,
+      occurrences INT NOT NULL DEFAULT 1,
+      first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      status TEXT NOT NULL DEFAULT 'open',
+      resolved_at TIMESTAMPTZ,
+      resolved_by UUID,
+      last_emailed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_site_errors_status ON site_errors(status, last_seen_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_site_errors_source ON site_errors(source, last_seen_at DESC);
   `);
 }

@@ -32,8 +32,10 @@ import paymentsRoutes from './routes/payments.js';
 import couponsRoutes from './routes/coupons.js';
 import shippingRoutes from './routes/shipping.js';
 import seoRoutes from './routes/seo.js';
+import errorRoutes from './routes/errors.js';
 import { query } from './db/pool.js';
 import { ensureShippingTables } from './shipping/index.js';
+import { recordError } from './errors/tracker.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -180,6 +182,7 @@ app.use('/api/complaints', complaintRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/coupons', couponsRoutes);
 app.use('/api/shipping', shippingRoutes);
+app.use('/api/errors', errorRoutes);
 app.use('/api', seoRoutes);
 
 ensureShippingTables().catch((err) => console.warn('shipping tables:', err.message));
@@ -192,8 +195,18 @@ if (fs.existsSync(distDir)) {
   });
 }
 
-app.use((err, _req, res, _next) => {
+app.use((err, req, res, _next) => {
   console.error(err);
+  recordError({
+    source: 'server',
+    message: err?.message || 'Internal server error',
+    stack: err?.stack,
+    path: req.originalUrl || req.url,
+    method: req.method,
+    statusCode: 500,
+    userAgent: req.get('user-agent'),
+    url: `${req.protocol}://${req.get('host') || ''}${req.originalUrl || ''}`,
+  }).catch(() => undefined);
   res.status(500).json({ success: false, error: 'Internal server error' });
 });
 

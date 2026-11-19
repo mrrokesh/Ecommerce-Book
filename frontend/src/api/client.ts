@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { reportClientError } from '../lib/reportError';
 
 const SESSION_KEY = 'sbh_session_id';
 const LEGACY_TOKEN_KEY = 'sbh_token';
@@ -55,8 +56,22 @@ api.interceptors.response.use(
     }
     return response;
   },
-  (error: { response?: { data?: { error?: string; message?: string } }; message?: string }) => {
+  (error: {
+    config?: { url?: string; method?: string };
+    response?: { status?: number; data?: { error?: string; message?: string } };
+    message?: string;
+  }) => {
     const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+    const status = error.response?.status;
+    const url = String(error.config?.url || '');
+    // Capture API 5xx (skip the reporter itself to avoid loops)
+    if (status && status >= 500 && !url.includes('/errors/report')) {
+      reportClientError({
+        message: typeof msg === 'string' ? msg : `API ${status}`,
+        path: url,
+        url: typeof location !== 'undefined' ? location.href : undefined,
+      });
+    }
     return Promise.reject(new Error(typeof msg === 'string' ? msg : 'Request failed'));
   }
 );

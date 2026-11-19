@@ -35,3 +35,5 @@ services:
         sync: false
       - key: FACEBOOK_APP_SECRET
         sync: false
+      - key: ERROR_ALERT_EMAILS
+        value: rokeshuvaraj17@gmail.com,sashkumarjay@gmail.com

@@ -2,7 +2,7 @@
 
 Read @HANDOFF.md, then run `git status --short` and `git diff` before editing. Preserve working code and the current UI. Confirm your understanding of the state, then execute Step 5. Refresh this file before handing off or approaching the session limit.
 
-Updated 2026-11-19 (India). Workspace: `D:\Website\Book E-Commerce`. Baseline on `main` is `668adc7` (admin 100% zoom overflow fix). **Uncommitted work** in this tree covers staff Suspend/Restore, subscriber Unsubscribed visibility, shipping Configure modal, admin form/table layout polish, and README. Stay in this folder.
+Updated 2026-11-19 (India). Workspace: `D:\Website\Book E-Commerce`. Site-errors dashboard (`/admin/errors`) and README/env docs are in this deploy pass. Stay in this folder.
 
 **Warning (learned the hard way):** `backend/.env` has `DATABASE_URL` pointing at the LIVE Postgres. Starting the API locally with `npm start` connects to production and runs migrations and writes there. For any local run or browser QA, start the API with an empty `DATABASE_URL` (embedded Postgres) and `ROKESH_NOTIFY_API_KEY=""`, and set `CLIENT_URL` to include the dev server origin (the origin guard is an exact allowlist). The integration tests use their own throwaway database and are safe.
 
@@ -34,9 +34,11 @@ Finish and ship the uncommitted admin UX / staff-access pass, then resume defens
 - Login and `requireBackOffice` reject `staff_status === 'suspended'` (and invited still blocked until set-password).
 - `publicStaff` exposes `invited` | `active` | `suspended`.
 - Subscribers list includes opted-out customer accounts (`marketing_opt_in = false` but had `marketing_consent_at`) and inactive `marketing_subscribers`, ordered active first.
+- **Site errors:** `site_errors` table + `errors/tracker.js` (fingerprint dedupe, email via `ERROR_ALERT_EMAILS`). Public `POST /api/errors/report` (rate-limited); admin `GET /api/errors`, `/counts`, `PATCH /:id`. Express 500s also recorded in `app.js`.
 
 **Frontend**
 
+- **Site errors dashboard** at `/admin/errors` (Settings → Site errors); open-count nav badge; client `reportError` + ErrorBoundary + axios 5xx reporter.
 - **Users:** Suspend / Restore actions; status pills Invited / Active / Suspended.
 - **Subscribers:** filters All / Subscribed / Unsubscribed; Unsubscribe keeps the row; export includes status.
 - **Shipping partners:** Configure opens a centred modal (`a-modal`) instead of a panel below the fold.
@@ -57,7 +59,7 @@ Finish and ship the uncommitted admin UX / staff-access pass, then resume defens
 
 ## 5. Known issues / blockers
 
-- Uncommitted changes are **not** committed or deployed; live `salembookhouse.com` still lacks Suspend, Unsubscribed filter, Configure modal, and the latest layout CSS until push + deploy.
+- `ERROR_ALERT_EMAILS` is set in `render.yaml` for the live Render service; confirm Blueprint sync applied it after deploy.
 - Categories / wide admin tables: owner reported sparse columns and “not straight” forms at 100% zoom; latest CSS targets that — re-verify in Chromium after a hard refresh.
 - Browser password-manager overlays can still paint numbered chips over the product gallery drop zone; form has `data-lpignore` / `data-1p-ignore` but extensions may ignore them.
 - Full Cloudflare / security-audit pass remains incomplete from earlier handoffs. Integration suite was last reported ~37/37 on throwaway DB; not re-run in this session.

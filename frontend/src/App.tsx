@@ -52,6 +52,7 @@ import AdminEmails from './admin/AdminEmails';
 import AdminCustomers from './admin/AdminCustomers';
 import AdminShipping from './admin/AdminShipping';
 import AdminReviews from './admin/AdminReviews';
+import AdminErrors from './admin/AdminErrors';
 
 export default function App() {
   return (
@@ -74,6 +75,7 @@ export default function App() {
               {['inventory','payments','returns','reports','gifts','settings','audit','catalogue-tools'].map(section=><Route key={section} path={section} element={<AdminOperations section={section==='catalogue-tools'?'products':section} />} />)}
               <Route path="security" element={<AdminSecurity />} />
               <Route path="staff" element={<AdminStaff />} />
+              <Route path="errors" element={<AdminErrors />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="reviews" element={<AdminReviews />} />
