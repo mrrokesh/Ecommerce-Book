@@ -6,46 +6,57 @@ import type { CategoryNode } from '../types';
 import { loadCategories } from '../api/cache';
 import api from '../api/client';
 
-/** Top-level categories beyond this many (by admin sort order) go under MORE. */
-const MAIN_NAV_COUNT = 7;
+/** How many top-level tabs to show; remaining admin categories go under MORE. */
+const MAIN_NAV_COUNT = 8;
 
-/** Short tab labels for long category names; anything else shows its own name. */
-const NAV_LABELS: Record<string, string> = {
-  'school-board': 'School',
-  'competitive-exams': 'Exams',
-};
-
-/** Myntra-style column groups (title + child slugs). Unknown slugs are skipped. */
+/**
+ * Categories themselves always come from Admin → Categories (`GET /api/categories`).
+ * Optional mega-column hints only group known child slugs; any other children still appear.
+ */
 const MEGA_GROUPS: Record<string, { title: string; slugs: string[] }[]> = {
   books: [
-    { title: 'Languages', slugs: ['tamil'] },
-    { title: 'Popular Reads', slugs: ['novels', 'fiction', 'non-fiction', 'general-books'] },
-    { title: 'Children & Classics', slugs: ['children-books', 'epics', 'astrology'] },
+    { title: 'Browse', slugs: ['new-arrivals', 'best-sellers', 'pre-order', 'featured-author'] },
+    { title: 'Fiction & Stories', slugs: ['fiction', 'novels', 'young-adult', 'children', 'children-books'] },
+    { title: 'Non-Fiction', slugs: ['non-fiction', 'general-books', 'astrology', 'epics'] },
+    { title: 'Languages', slugs: ['tamil', 'kannada', 'english', 'hindi'] },
   ],
   'school-board': [
-    { title: 'Boards', slugs: ['ncert', 'cbse-guides', 'state-board-guides', 'scert'] },
+    { title: 'Boards & Guides', slugs: ['ncert', 'cbse-guides', 'cbse', 'state-board-guides', 'scert', 'tn-board'] },
+  ],
+  cbse: [
+    { title: 'CBSE', slugs: ['cbse', 'cbse-guides', 'ncert', 'sample-papers', 'olympiad'] },
   ],
   'competitive-exams': [
-    { title: 'Exams', slugs: ['tnpsc', 'neet', 'jee', 'upsc', 'banking'] },
+    { title: 'Entrance', slugs: ['neet', 'jee', 'neet-jee'] },
+    { title: 'Government & Banking', slugs: ['tnpsc', 'upsc', 'banking'] },
+  ],
+  'neet-jee': [
+    { title: 'NEET & JEE', slugs: ['neet', 'jee'] },
   ],
   college: [
-    { title: 'College', slugs: ['college-textbooks', 'medical', 'nursing'] },
+    { title: 'College', slugs: ['college-textbooks', 'medical', 'nursing', 'engineering'] },
   ],
   stationery: [
-    {
-      title: 'Stationery',
-      slugs: ['school-bags', 'notebooks', 'art-supplies', 'pens'],
-    },
+    { title: 'Writing', slugs: ['pens', 'notebooks'] },
+    { title: 'School & Art', slugs: ['school-bags', 'art-supplies'] },
+  ],
+  toys: [
+    { title: 'Toys', slugs: ['soft-toys', 'puzzles', 'educational-toys'] },
+  ],
+  accessories: [
+    { title: 'Accessories', slugs: ['shoes', 'socks', 'jute-bags'] },
   ],
 };
+
+/** Use admin sort order from the API tree; only cap how many sit on the bar vs MORE. */
+function splitMainAndMore(tree: CategoryNode[]) {
+  const main = tree.slice(0, MAIN_NAV_COUNT);
+  const more = tree.slice(MAIN_NAV_COUNT);
+  return { main, more };
+}
 
 function buildMegaColumns(slug: string, title: string, kids: CategoryNode[]) {
   if (!kids.length) return [];
-
-  // Few links → one tight column (no giant empty panel)
-  if (kids.length <= 6) {
-    return [{ title, links: kids }];
-  }
 
   const bySlug = new Map(kids.map((k) => [k.slug, k]));
   const groups = MEGA_GROUPS[slug];
@@ -59,20 +70,21 @@ function buildMegaColumns(slug: string, title: string, kids: CategoryNode[]) {
       })
       .filter((c) => c.links.length);
     const leftover = kids.filter((k) => !used.has(k.slug));
-    if (leftover.length) {
-      if (cols.length === 1) cols[0].links.push(...leftover);
-      else cols.push({ title: 'More', links: leftover });
-    }
-    return cols;
+    if (leftover.length) cols.push({ title: 'More in ' + title, links: leftover });
+    if (cols.length) return cols;
   }
 
-  const size = Math.max(4, Math.ceil(kids.length / 3) || 4);
+  if (kids.length <= 6) {
+    return [{ title, links: kids }];
+  }
+
+  const size = Math.max(5, Math.ceil(kids.length / Math.min(4, Math.ceil(kids.length / 5))));
   const cols: { title: string; links: CategoryNode[] }[] = [];
   for (let i = 0; i < kids.length; i += size) {
     const slice = kids.slice(i, i + size);
     cols.push({
-      title: slice[0]?.name || 'Shop',
-      links: slice.length > 1 ? slice.slice(1) : slice,
+      title: i === 0 ? title : 'More',
+      links: slice,
     });
   }
   return cols;
@@ -148,8 +160,7 @@ export default function Header() {
     };
   }, [drawer]);
 
-  const mainNav = tree.slice(0, MAIN_NAV_COUNT);
-  const moreNav = tree.slice(MAIN_NAV_COUNT);
+  const { main: mainNav, more: moreNav } = splitMainAndMore(tree);
 
   async function checkPin(e: FormEvent) {
     e.preventDefault();
@@ -267,7 +278,7 @@ export default function Header() {
               return (
                 <div key={cat.slug} className={`nav-item ${kids.length ? 'has-mega' : ''}`}>
                   <Link to={item.to} className="nav-link">
-                    {(NAV_LABELS[cat.slug] || cat.name || cat.slug).toUpperCase()}
+                    {(cat.name || cat.slug).toUpperCase()}
                     {cat.badge ? <span className="nav-badge">{cat.badge}</span> : null}
                   </Link>
                   {columns.length ? (

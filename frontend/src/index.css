@@ -163,7 +163,7 @@ p {
   letter-spacing: 0.02em;
 }
 
-/* Category tabs on their own row under logo/search/actions */
+/* Category tabs on their own row — no horizontal scrollbar; tabs share the width */
 .main-nav,
 .header-nav-row {
   position: relative;
@@ -173,14 +173,24 @@ p {
   flex: none;
   width: 100%;
   min-width: 0;
-  justify-content: flex-start;
+  justify-content: space-between;
   flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow: visible;
   margin: 0;
   padding: 0;
   border-top: 1px solid var(--border);
-  scrollbar-width: thin;
+}
+
+.header-nav-row > .nav-item {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+}
+
+.header-nav-row .nav-link {
+  width: 100%;
+  justify-content: center;
+  padding-inline: 0.35rem;
 }
 
 .nav-link {
@@ -190,10 +200,10 @@ p {
   gap: 0.28rem;
   height: 100%;
   min-height: 40px;
-  padding: 0.45rem 0.7rem;
-  font-size: 0.76rem;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: #282c3f;
   white-space: nowrap;
   border-bottom: 3px solid transparent;
@@ -2541,13 +2551,19 @@ textarea:focus {
     display: none;
   }
 
-  .nav-link {
-    padding: 0.45rem 0.55rem;
-    font-size: 0.72rem;
+  .header-nav-row .nav-link {
+    padding-inline: 0.2rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
   }
 }
 
 @media (max-width: 1100px) {
+  .header-nav-row .nav-link {
+    font-size: 0.64rem;
+    padding-block: 0.4rem;
+  }
+
   .brand-logo {
     width: 44px;
     height: 44px;
