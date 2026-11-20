@@ -3476,3 +3476,48 @@ textarea:focus {
   }
   .md-sub a:active, .md-row:active { background: #f3f4f6; }
 }
+
+/* Phone: the header hamburger is the category menu, so hide the duplicate Browse button */
+@media (max-width: 800px) {
+  .browse-wrap { display: none; }
+  .search-bar-inner { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Header search (replaces the old second search row), Myntra-style beside Profile / Wishlist / Bag */
+.header-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 1 280px;
+  min-width: 160px;
+  padding: 0 0.8rem;
+  height: 40px;
+  border-radius: 4px;
+  background: #f5f5f6;
+  color: var(--muted);
+}
+.header-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text, #1f2937);
+}
+.header-search:focus-within { background: #fff; box-shadow: 0 0 0 2px var(--gold, #f5c518); }
+@media (max-width: 1100px) {
+  .header-search { order: 2; flex: 1 1 100%; margin: 0.1rem 0 0.4rem; }
+}
+@media (max-width: 800px) {
+  .header-inner { flex-wrap: wrap; }
+}
+
+/* Phones: search is an icon in the header (like Myntra); tapping it opens the box under the header */
+.search-toggle { display: none; }
+@media (max-width: 800px) {
+  .search-toggle { display: inline-flex; }
+  .header-search { display: none; }
+  .header-search.is-open { display: flex; }
+}

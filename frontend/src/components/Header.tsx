@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import type { CategoryNode } from '../types';
@@ -115,6 +115,18 @@ export default function Header() {
     };
   }, []);
 
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const [q, setQ] = useState(params.get('q') || '');
+  useEffect(() => setQ(params.get('q') || ''), [params]);
+  function onSearch(e: FormEvent) {
+    e.preventDefault();
+    const query = q.trim();
+    if (query) navigate(`/search?q=${encodeURIComponent(query)}`);
+  }
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInput = useRef<HTMLInputElement | null>(null);
   const [drawer, setDrawer] = useState(false);
   const [openSlug, setOpenSlug] = useState('');
   const location = useLocation();
@@ -122,7 +134,8 @@ export default function Header() {
   // Phone menu: close on navigation or Escape, and stop the page scrolling behind it.
   useEffect(() => {
     setDrawer(false);
-  }, [location.pathname]);
+    setSearchOpen(false);
+  }, [location.pathname, params]);
   useEffect(() => {
     if (!drawer) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setDrawer(false);
@@ -237,7 +250,31 @@ export default function Header() {
             ) : null}
           </nav>
 
+          <form className={`header-search${searchOpen ? ' is-open' : ''}`} onSubmit={onSearch} role="search">
+            <SearchIcon />
+            <input
+              ref={searchInput}
+              type="search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search books by title, author, ISBN"
+              aria-label="Search books"
+            />
+          </form>
+
           <div className="header-actions">
+            <button
+              type="button"
+              className="action-btn search-toggle"
+              aria-label="Search"
+              aria-expanded={searchOpen}
+              onClick={() => {
+                setSearchOpen((v) => !v);
+                setTimeout(() => searchInput.current?.focus(), 0);
+              }}
+            >
+              <SearchIcon />
+            </button>
             <div className="profile-menu">
               {isAuthenticated ? (
                 <>
@@ -374,6 +411,15 @@ export default function Header() {
         </div>
       </div>
     </>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" />
+    </svg>
   );
 }
 
