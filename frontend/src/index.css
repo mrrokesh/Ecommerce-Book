@@ -91,6 +91,7 @@ p {
 .site-header {
   background: var(--white);
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(40, 44, 63, 0.08);
   position: sticky;
   top: 0;
   /* Above sticky search (42) so mega menus never paint underneath */
@@ -98,11 +99,18 @@ p {
 }
 
 .header-inner {
+  display: block;
+  padding-block: 0;
+}
+
+/* Myntra-style single row: logo | categories | search | actions */
+.header-main {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  min-height: 72px;
-  padding-block: 0.6rem;
+  flex-wrap: nowrap;
+  gap: 1rem;
+  min-height: 68px;
+  padding-block: 0.45rem;
 }
 
 .brand {
@@ -156,15 +164,17 @@ p {
 }
 
 .main-nav {
+  position: relative;
   display: flex;
   align-items: stretch;
   gap: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: nowrap;
   overflow: visible;
   align-self: stretch;
+  margin-left: 0.25rem;
 }
 
 .nav-link {
@@ -174,8 +184,8 @@ p {
   gap: 0.28rem;
   height: 100%;
   min-height: 42px;
-  padding: 0.55rem 0.7rem;
-  font-size: 0.78rem;
+  padding: 0.55rem 0.55rem;
+  font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: #282c3f;
@@ -207,8 +217,9 @@ p {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.85rem;
   flex-shrink: 0;
+  margin-left: 0.25rem;
 }
 
 .profile-menu {
@@ -2519,30 +2530,25 @@ textarea:focus {
   gap: 0.35rem;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1280px) {
   .brand-tagline {
     display: none;
+  }
+
+  .nav-link {
+    padding: 0.5rem 0.42rem;
+    font-size: 0.7rem;
+  }
+
+  .header-search {
+    max-width: 360px;
   }
 }
 
 @media (max-width: 1100px) {
-  .header-inner {
-    flex-wrap: wrap;
-    row-gap: 0.15rem;
-  }
-
   .brand-logo {
     width: 44px;
     height: 44px;
-  }
-
-  .main-nav {
-    order: 3;
-    flex: 1 1 100%;
-    width: 100%;
-    justify-content: flex-start;
-    padding: 0.15rem 0 0.35rem;
-    border-top: 1px solid var(--border);
   }
 
   .search-bar {
@@ -2624,7 +2630,8 @@ textarea:focus {
 }
 
 .nav-item {
-  position: relative;
+  /* static so wide mega panels position against .main-nav (Myntra-style) */
+  position: static;
   flex: 0 0 auto;
   display: flex;
   align-items: stretch;
@@ -2651,6 +2658,12 @@ textarea:focus {
   right: 0;
 }
 
+.nav-item:last-child .mega-panel-wide,
+.nav-item:nth-last-child(-n + 2) .mega-panel-wide {
+  right: auto;
+  left: 0;
+}
+
 .mega-panel {
   width: max-content;
   max-width: min(920px, 94vw);
@@ -2663,6 +2676,11 @@ textarea:focus {
 
 .mega-panel-compact {
   min-width: 0;
+}
+
+.mega-panel-wide {
+  max-width: min(1100px, 96vw);
+  padding: 1.15rem 1.4rem 1.35rem;
 }
 
 .mega-panel-more {
@@ -2784,22 +2802,6 @@ textarea:focus {
   .mega-cols {
     flex-direction: column;
     gap: 0.85rem;
-  }
-  .action-btn span:not(.cart-badge) {
-    display: none;
-  }
-
-  /* Phone: hide overflowing desktop mega-nav; Browse Categories is the menu */
-  .main-nav {
-    display: none;
-  }
-
-  .header-inner {
-    flex-wrap: nowrap;
-  }
-
-  .header-actions {
-    margin-left: auto;
   }
 
   .search-bar,
@@ -3381,116 +3383,16 @@ textarea:focus {
 .complaint-reply textarea { width: 100%; resize: vertical; }
 .complaints-admin tr.is-selected td { background: #f4f8ff; }
 
-/* Phone menu: slide-in drawer with expandable categories */
-.menu-toggle { display: none; }
-.mobile-drawer-wrap { display: none; }
-@media (max-width: 800px) {
-  .menu-toggle {
-    display: inline-grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    margin-left: -0.35rem;
-    border: 0;
-    background: transparent;
-    color: var(--navy);
-    cursor: pointer;
-    flex: 0 0 auto;
-  }
-  .header-inner { gap: 0.5rem; }
-  .brand-text { display: none; }
-  .mobile-drawer-wrap {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 300;
-    pointer-events: none;
-  }
-  .mobile-drawer-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    transition: opacity 0.22s ease;
-  }
-  .mobile-drawer {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: min(86vw, 340px);
-    display: flex;
-    flex-direction: column;
-    background: #fff;
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
-  }
-  .mobile-drawer-wrap.is-open { pointer-events: auto; }
-  .mobile-drawer-wrap.is-open .mobile-drawer-overlay { opacity: 1; }
-  .mobile-drawer-wrap.is-open .mobile-drawer { transform: none; }
-  .mobile-drawer-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem 1rem;
-    background: var(--navy);
-    color: #fff;
-    font-weight: 700;
-  }
-  .mobile-drawer-head a { color: #fff; }
-  .mobile-drawer-close {
-    border: 0;
-    background: transparent;
-    color: #fff;
-    font-size: 1.8rem;
-    line-height: 1;
-    cursor: pointer;
-  }
-  .mobile-drawer-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
-  .md-list { list-style: none; margin: 0; padding: 0; }
-  .md-extra { border-top: 1px solid var(--border); margin-top: 0.4rem; padding-top: 0.4rem; }
-  .md-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 0.95rem 1.1rem;
-    border: 0;
-    background: transparent;
-    font: inherit;
-    font-weight: 600;
-    color: var(--text, #1f2937);
-    text-align: left;
-    cursor: pointer;
-  }
-  .md-extra .md-row { font-weight: 500; }
-  .md-chev { transition: transform 0.2s ease; color: var(--muted); }
-  .md-list > li.is-open > .md-row .md-chev { transform: rotate(90deg); }
-  .md-sub { list-style: none; margin: 0; padding: 0 0 0.4rem; }
-  .md-sub a {
-    display: block;
-    padding: 0.7rem 1.1rem 0.7rem 2rem;
-    color: var(--muted);
-    font-weight: 500;
-  }
-  .md-sub a:active, .md-row:active { background: #f3f4f6; }
-}
-
-/* Phone: the header hamburger is the category menu, so hide the duplicate Browse button */
-@media (max-width: 800px) {
-  .browse-wrap { display: none; }
-  .search-bar-inner { grid-template-columns: minmax(0, 1fr); }
-}
-
-/* Header search (replaces the old second search row), Myntra-style beside Profile / Wishlist / Bag */
+/* Header search — grows like Myntra’s gray field between nav and actions */
 .header-search {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex: 0 1 280px;
-  min-width: 160px;
-  padding: 0 0.8rem;
+  flex: 1 1 320px;
+  min-width: 180px;
+  max-width: 520px;
+  margin-left: auto;
+  padding: 0 0.85rem;
   height: 40px;
   border-radius: 4px;
   background: #f5f5f6;
@@ -3506,18 +3408,141 @@ textarea:focus {
   font-size: 0.9rem;
   color: var(--text, #1f2937);
 }
-.header-search:focus-within { background: #fff; box-shadow: 0 0 0 2px var(--gold, #f5c518); }
-@media (max-width: 1100px) {
-  .header-search { order: 2; flex: 1 1 100%; margin: 0.1rem 0 0.4rem; }
-}
-@media (max-width: 800px) {
-  .header-inner { flex-wrap: wrap; }
+.header-search:focus-within {
+  background: #fff;
+  box-shadow: 0 0 0 2px var(--gold, #f5c518);
 }
 
-/* Phones: search is an icon in the header (like Myntra); tapping it opens the box under the header */
 .search-toggle { display: none; }
+
+/* Slide-in category drawer (shown from tablet collapse) */
+.menu-toggle { display: none; }
+.mobile-drawer-wrap { display: none; }
+
+.mobile-drawer-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+.mobile-drawer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(86vw, 340px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+}
+.mobile-drawer-wrap.is-open { pointer-events: auto; }
+.mobile-drawer-wrap.is-open .mobile-drawer-overlay { opacity: 1; }
+.mobile-drawer-wrap.is-open .mobile-drawer { transform: none; }
+.mobile-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1rem;
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+}
+.mobile-drawer-head a { color: #fff; }
+.mobile-drawer-close {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.mobile-drawer-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+.md-list { list-style: none; margin: 0; padding: 0; }
+.md-extra { border-top: 1px solid var(--border); margin-top: 0.4rem; padding-top: 0.4rem; }
+.md-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.95rem 1.1rem;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text, #1f2937);
+  text-align: left;
+  cursor: pointer;
+}
+.md-extra .md-row { font-weight: 500; }
+.md-chev { transition: transform 0.2s ease; color: var(--muted); }
+.md-list > li.is-open > .md-row .md-chev { transform: rotate(90deg); }
+.md-sub { list-style: none; margin: 0; padding: 0 0 0.4rem; }
+.md-sub a {
+  display: block;
+  padding: 0.7rem 1.1rem 0.7rem 2rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+.md-sub a:active, .md-row:active { background: #f3f4f6; }
+
+/* ≤1024: collapse category tabs into hamburger drawer; keep one header row */
+@media (max-width: 1024px) {
+  .menu-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin-left: -0.35rem;
+    border: 0;
+    background: transparent;
+    color: var(--navy);
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .main-nav { display: none; }
+  .header-main { gap: 0.65rem; }
+  .header-search {
+    flex: 1 1 auto;
+    max-width: none;
+    min-width: 140px;
+    margin-left: 0.35rem;
+  }
+  .header-actions { margin-left: 0; }
+  .mobile-drawer-wrap {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    pointer-events: none;
+  }
+  .browse-wrap { display: none; }
+}
+
+/* ≤800: Myntra phone — search icon; open search as full-width row under the bar */
 @media (max-width: 800px) {
+  .brand-text { display: none; }
+  .header-main {
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    min-height: 56px;
+    padding-block: 0.35rem;
+  }
   .search-toggle { display: inline-flex; }
-  .header-search { display: none; }
+  .header-search {
+    display: none;
+    order: 5;
+    flex: 1 1 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0 0 0.15rem;
+  }
   .header-search.is-open { display: flex; }
+  .action-btn span:not(.cart-badge) { display: none; }
+  .action-btn { min-width: 40px; }
+  .header-actions { gap: 0.35rem; margin-left: auto; }
+  .search-bar-inner { grid-template-columns: minmax(0, 1fr); }
 }

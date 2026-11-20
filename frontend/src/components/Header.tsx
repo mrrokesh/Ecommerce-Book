@@ -175,142 +175,144 @@ export default function Header() {
     <>
       <header className="site-header" ref={headerRef}>
         <div className="container header-inner">
-          <button
-            type="button"
-            className="menu-toggle"
-            aria-label="Open menu"
-            aria-expanded={drawer}
-            onClick={() => setDrawer(true)}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M4 7h16M4 12h16M4 17h16" />
-            </svg>
-          </button>
-          <Link to="/" className="brand" aria-label="Salem Book House home">
-            <img className="brand-logo" src="/sbh-logo.jpg" alt="" width={52} height={52} />
-            <span className="brand-text">
-              <span className="brand-name">Salem Book House</span>
-              <span className="brand-tagline">Salem&apos;s Favourite Book Mall</span>
-            </span>
-          </Link>
+          <div className="header-main">
+            <button
+              type="button"
+              className="menu-toggle"
+              aria-label="Open menu"
+              aria-expanded={drawer}
+              onClick={() => setDrawer(true)}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </button>
+            <Link to="/" className="brand" aria-label="Salem Book House home">
+              <img className="brand-logo" src="/sbh-logo.jpg" alt="" width={52} height={52} />
+              <span className="brand-text">
+                <span className="brand-name">Salem Book House</span>
+                <span className="brand-tagline">Salem&apos;s Favourite Book Mall</span>
+              </span>
+            </Link>
 
-          <nav className="main-nav" aria-label="Primary">
-            {mainNav.map((cat) => {
-              const kids = cat.children || [];
-              const item = { slug: cat.slug, to: `/shop/${cat.slug}` };
-              const columns = buildMegaColumns(cat.slug, cat.name || cat.slug, kids);
-              return (
-                <div key={cat.slug} className={`nav-item ${kids.length ? 'has-mega' : ''}`}>
-                  <Link to={item.to} className="nav-link">
-                    {(NAV_LABELS[cat.slug] || cat.name || cat.slug).toUpperCase()}
-                    {cat.badge ? <span className="nav-badge">{cat.badge}</span> : null}
-                  </Link>
-                  {columns.length ? (
-                    <div
-                      className={`mega-menu mega-panel ${columns.length === 1 ? 'mega-panel-compact' : ''}`}
-                      role="menu"
-                    >
-                      <div className="mega-cols">
-                        {columns.map((col) => (
-                          <div className="mega-col" key={`${item.slug}-${col.title}`}>
-                            <Link to={item.to} className="mega-heading" role="menuitem">
-                              {col.title}
-                            </Link>
-                            {col.links.map((c) => (
-                              <Link key={c.slug} to={`/shop/${c.slug}`} role="menuitem">
-                                {c.name}
+            <nav className="main-nav" aria-label="Primary">
+              {mainNav.map((cat) => {
+                const kids = cat.children || [];
+                const item = { slug: cat.slug, to: `/shop/${cat.slug}` };
+                const columns = buildMegaColumns(cat.slug, cat.name || cat.slug, kids);
+                return (
+                  <div key={cat.slug} className={`nav-item ${kids.length ? 'has-mega' : ''}`}>
+                    <Link to={item.to} className="nav-link">
+                      {(NAV_LABELS[cat.slug] || cat.name || cat.slug).toUpperCase()}
+                      {cat.badge ? <span className="nav-badge">{cat.badge}</span> : null}
+                    </Link>
+                    {columns.length ? (
+                      <div
+                        className={`mega-menu mega-panel ${columns.length === 1 ? 'mega-panel-compact' : columns.length >= 3 ? 'mega-panel-wide' : ''}`}
+                        role="menu"
+                      >
+                        <div className="mega-cols">
+                          {columns.map((col) => (
+                            <div className="mega-col" key={`${item.slug}-${col.title}`}>
+                              <Link to={item.to} className="mega-heading" role="menuitem">
+                                {col.title}
                               </Link>
-                            ))}
-                          </div>
+                              {col.links.map((c) => (
+                                <Link key={c.slug} to={`/shop/${c.slug}`} role="menuitem">
+                                  {c.name}
+                                </Link>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+              {moreNav.length ? (
+                <div className="nav-item has-mega">
+                  <span className="nav-link nav-more-label" tabIndex={0}>
+                    MORE
+                  </span>
+                  <div className="mega-menu mega-panel mega-panel-more" role="menu">
+                    <div className="mega-cols">
+                      <div className="mega-col">
+                        <span className="mega-heading">More to explore</span>
+                        {moreNav.map((cat) => (
+                          <Link key={cat.slug} to={`/shop/${cat.slug}`} role="menuitem">
+                            {cat.name}
+                          </Link>
                         ))}
                       </div>
                     </div>
-                  ) : null}
-                </div>
-              );
-            })}
-            {moreNav.length ? (
-              <div className="nav-item has-mega">
-                <span className="nav-link nav-more-label" tabIndex={0}>
-                  MORE
-                </span>
-                <div className="mega-menu mega-panel mega-panel-more" role="menu">
-                  <div className="mega-cols">
-                    <div className="mega-col">
-                      <span className="mega-heading">More to explore</span>
-                      {moreNav.map((cat) => (
-                        <Link key={cat.slug} to={`/shop/${cat.slug}`} role="menuitem">
-                          {cat.name}
-                        </Link>
-                      ))}
-                    </div>
                   </div>
                 </div>
-              </div>
-            ) : null}
-          </nav>
+              ) : null}
+            </nav>
 
-          <form className={`header-search${searchOpen ? ' is-open' : ''}`} onSubmit={onSearch} role="search">
-            <SearchIcon />
-            <input
-              ref={searchInput}
-              type="search"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search books by title, author, ISBN"
-              aria-label="Search books"
-            />
-          </form>
-
-          <div className="header-actions">
-            <button
-              type="button"
-              className="action-btn search-toggle"
-              aria-label="Search"
-              aria-expanded={searchOpen}
-              onClick={() => {
-                setSearchOpen((v) => !v);
-                setTimeout(() => searchInput.current?.focus(), 0);
-              }}
-            >
+            <form className={`header-search${searchOpen ? ' is-open' : ''}`} onSubmit={onSearch} role="search">
               <SearchIcon />
-            </button>
-            <div className="profile-menu">
-              {isAuthenticated ? (
-                <>
-                  <button type="button" className="action-btn" aria-haspopup="true">
+              <input
+                ref={searchInput}
+                type="search"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search for books, authors and more"
+                aria-label="Search books"
+              />
+            </form>
+
+            <div className="header-actions">
+              <button
+                type="button"
+                className="action-btn search-toggle"
+                aria-label="Search"
+                aria-expanded={searchOpen}
+                onClick={() => {
+                  setSearchOpen((v) => !v);
+                  setTimeout(() => searchInput.current?.focus(), 0);
+                }}
+              >
+                <SearchIcon />
+              </button>
+              <div className="profile-menu">
+                {isAuthenticated ? (
+                  <>
+                    <button type="button" className="action-btn" aria-haspopup="true">
+                      <UserIcon />
+                      <span>Profile</span>
+                    </button>
+                    <div className="profile-dropdown" role="menu">
+                      <p className="profile-hello">Hi, {user?.name?.split(' ')[0] || 'there'}</p>
+                      <Link to="/account" role="menuitem">
+                        My Account
+                      </Link>
+                      <Link to="/account/orders" role="menuitem">
+                        Orders
+                      </Link>
+                      <button type="button" role="menuitem" onClick={logout}>
+                        Logout
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <Link to="/login" className="action-btn" title="Login">
                     <UserIcon />
                     <span>Profile</span>
-                  </button>
-                  <div className="profile-dropdown" role="menu">
-                    <p className="profile-hello">Hi, {user?.name?.split(' ')[0] || 'there'}</p>
-                    <Link to="/account" role="menuitem">
-                      My Account
-                    </Link>
-                    <Link to="/account/orders" role="menuitem">
-                      Orders
-                    </Link>
-                    <button type="button" role="menuitem" onClick={logout}>
-                      Logout
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <Link to="/login" className="action-btn" title="Login">
-                  <UserIcon />
-                  <span>Profile</span>
-                </Link>
-              )}
+                  </Link>
+                )}
+              </div>
+              <Link to="/wishlist" className="action-btn" title="Wishlist">
+                <HeartIcon />
+                <span>Wishlist</span>
+              </Link>
+              <Link to="/cart" className="action-btn cart-btn" title="Cart">
+                <CartIcon />
+                <span>Bag</span>
+                {itemCount > 0 ? <span className="cart-badge">{itemCount > 99 ? '99+' : itemCount}</span> : null}
+              </Link>
             </div>
-            <Link to="/wishlist" className="action-btn" title="Wishlist">
-              <HeartIcon />
-              <span>Wishlist</span>
-            </Link>
-            <Link to="/cart" className="action-btn cart-btn" title="Cart">
-              <CartIcon />
-              <span>Bag</span>
-              {itemCount > 0 ? <span className="cart-badge">{itemCount > 99 ? '99+' : itemCount}</span> : null}
-            </Link>
           </div>
         </div>
       </header>
