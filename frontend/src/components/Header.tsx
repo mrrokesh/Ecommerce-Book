@@ -195,62 +195,6 @@ export default function Header() {
               </span>
             </Link>
 
-            <nav className="main-nav" aria-label="Primary">
-              {mainNav.map((cat) => {
-                const kids = cat.children || [];
-                const item = { slug: cat.slug, to: `/shop/${cat.slug}` };
-                const columns = buildMegaColumns(cat.slug, cat.name || cat.slug, kids);
-                return (
-                  <div key={cat.slug} className={`nav-item ${kids.length ? 'has-mega' : ''}`}>
-                    <Link to={item.to} className="nav-link">
-                      {(NAV_LABELS[cat.slug] || cat.name || cat.slug).toUpperCase()}
-                      {cat.badge ? <span className="nav-badge">{cat.badge}</span> : null}
-                    </Link>
-                    {columns.length ? (
-                      <div
-                        className={`mega-menu mega-panel ${columns.length === 1 ? 'mega-panel-compact' : columns.length >= 3 ? 'mega-panel-wide' : ''}`}
-                        role="menu"
-                      >
-                        <div className="mega-cols">
-                          {columns.map((col) => (
-                            <div className="mega-col" key={`${item.slug}-${col.title}`}>
-                              <Link to={item.to} className="mega-heading" role="menuitem">
-                                {col.title}
-                              </Link>
-                              {col.links.map((c) => (
-                                <Link key={c.slug} to={`/shop/${c.slug}`} role="menuitem">
-                                  {c.name}
-                                </Link>
-                              ))}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
-              {moreNav.length ? (
-                <div className="nav-item has-mega">
-                  <span className="nav-link nav-more-label" tabIndex={0}>
-                    MORE
-                  </span>
-                  <div className="mega-menu mega-panel mega-panel-more" role="menu">
-                    <div className="mega-cols">
-                      <div className="mega-col">
-                        <span className="mega-heading">More to explore</span>
-                        {moreNav.map((cat) => (
-                          <Link key={cat.slug} to={`/shop/${cat.slug}`} role="menuitem">
-                            {cat.name}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </nav>
-
             <form className={`header-search${searchOpen ? ' is-open' : ''}`} onSubmit={onSearch} role="search">
               <SearchIcon />
               <input
@@ -314,10 +258,66 @@ export default function Header() {
               </Link>
             </div>
           </div>
+
+          <nav className="main-nav header-nav-row" aria-label="Primary">
+            {mainNav.map((cat) => {
+              const kids = cat.children || [];
+              const item = { slug: cat.slug, to: `/shop/${cat.slug}` };
+              const columns = buildMegaColumns(cat.slug, cat.name || cat.slug, kids);
+              return (
+                <div key={cat.slug} className={`nav-item ${kids.length ? 'has-mega' : ''}`}>
+                  <Link to={item.to} className="nav-link">
+                    {(NAV_LABELS[cat.slug] || cat.name || cat.slug).toUpperCase()}
+                    {cat.badge ? <span className="nav-badge">{cat.badge}</span> : null}
+                  </Link>
+                  {columns.length ? (
+                    <div
+                      className={`mega-menu mega-panel ${columns.length === 1 ? 'mega-panel-compact' : columns.length >= 3 ? 'mega-panel-wide' : ''}`}
+                      role="menu"
+                    >
+                      <div className="mega-cols">
+                        {columns.map((col) => (
+                          <div className="mega-col" key={`${item.slug}-${col.title}`}>
+                            <Link to={item.to} className="mega-heading" role="menuitem">
+                              {col.title}
+                            </Link>
+                            {col.links.map((c) => (
+                              <Link key={c.slug} to={`/shop/${c.slug}`} role="menuitem">
+                                {c.name}
+                              </Link>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+            {moreNav.length ? (
+              <div className="nav-item has-mega">
+                <span className="nav-link nav-more-label" tabIndex={0}>
+                  MORE
+                </span>
+                <div className="mega-menu mega-panel mega-panel-more" role="menu">
+                  <div className="mega-cols">
+                    <div className="mega-col">
+                      <span className="mega-heading">More to explore</span>
+                      {moreNav.map((cat) => (
+                        <Link key={cat.slug} to={`/shop/${cat.slug}`} role="menuitem">
+                          {cat.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </nav>
         </div>
       </header>
 
-      <div className={`mobile-drawer-wrap${drawer ? ' is-open' : ''}`} aria-hidden={!drawer}>
+      <div className={`mobile-drawer-wrap${drawer ? ' is-open' : ''}`} {...(drawer ? {} : { inert: true })}>
         <div className="mobile-drawer-overlay" onClick={() => setDrawer(false)} />
         <aside className="mobile-drawer" aria-label="Menu">
           <div className="mobile-drawer-head">

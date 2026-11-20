@@ -103,14 +103,14 @@ p {
   padding-block: 0;
 }
 
-/* Myntra-style single row: logo | categories | search | actions */
+/* Top row: logo | search | Profile / Wishlist / Bag */
 .header-main {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
   gap: 1rem;
-  min-height: 68px;
-  padding-block: 0.45rem;
+  min-height: 64px;
+  padding-block: 0.4rem;
 }
 
 .brand {
@@ -163,18 +163,24 @@ p {
   letter-spacing: 0.02em;
 }
 
-.main-nav {
+/* Category tabs on their own row under logo/search/actions */
+.main-nav,
+.header-nav-row {
   position: relative;
   display: flex;
   align-items: stretch;
   gap: 0;
-  flex: 0 1 auto;
+  flex: none;
+  width: 100%;
   min-width: 0;
   justify-content: flex-start;
   flex-wrap: nowrap;
-  overflow: visible;
-  align-self: stretch;
-  margin-left: 0.25rem;
+  overflow-x: auto;
+  overflow-y: visible;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+  scrollbar-width: thin;
 }
 
 .nav-link {
@@ -183,9 +189,9 @@ p {
   align-items: center;
   gap: 0.28rem;
   height: 100%;
-  min-height: 42px;
-  padding: 0.55rem 0.55rem;
-  font-size: 0.74rem;
+  min-height: 40px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: #282c3f;
@@ -219,7 +225,7 @@ p {
   align-items: center;
   gap: 0.85rem;
   flex-shrink: 0;
-  margin-left: 0.25rem;
+  margin-left: 0;
 }
 
 .profile-menu {
@@ -2536,12 +2542,8 @@ textarea:focus {
   }
 
   .nav-link {
-    padding: 0.5rem 0.42rem;
-    font-size: 0.7rem;
-  }
-
-  .header-search {
-    max-width: 360px;
+    padding: 0.45rem 0.55rem;
+    font-size: 0.72rem;
   }
 }
 
@@ -3383,15 +3385,16 @@ textarea:focus {
 .complaint-reply textarea { width: 100%; resize: vertical; }
 .complaints-admin tr.is-selected td { background: #f4f8ff; }
 
-/* Header search — grows like Myntra’s gray field between nav and actions */
+/* Header search — grows between logo and actions */
 .header-search {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex: 1 1 320px;
   min-width: 180px;
-  max-width: 520px;
-  margin-left: auto;
+  max-width: none;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
   padding: 0 0.85rem;
   height: 40px;
   border-radius: 4px;
@@ -3489,7 +3492,7 @@ textarea:focus {
 }
 .md-sub a:active, .md-row:active { background: #f3f4f6; }
 
-/* ≤1024: collapse category tabs into hamburger drawer; keep one header row */
+/* ≤1024: category row → hamburger drawer */
 @media (max-width: 1024px) {
   .menu-toggle {
     display: inline-grid;
@@ -3503,13 +3506,15 @@ textarea:focus {
     cursor: pointer;
     flex: 0 0 auto;
   }
-  .main-nav { display: none; }
+  .main-nav,
+  .header-nav-row { display: none; }
   .header-main { gap: 0.65rem; }
   .header-search {
     flex: 1 1 auto;
     max-width: none;
     min-width: 140px;
     margin-left: 0.35rem;
+    margin-right: 0.35rem;
   }
   .header-actions { margin-left: 0; }
   .mobile-drawer-wrap {
