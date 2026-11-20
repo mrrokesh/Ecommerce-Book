@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import type { CategoryNode } from '../types';
@@ -115,6 +115,26 @@ export default function Header() {
     };
   }, []);
 
+  const [drawer, setDrawer] = useState(false);
+  const [openSlug, setOpenSlug] = useState('');
+  const location = useLocation();
+
+  // Phone menu: close on navigation or Escape, and stop the page scrolling behind it.
+  useEffect(() => {
+    setDrawer(false);
+  }, [location.pathname]);
+  useEffect(() => {
+    if (!drawer) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setDrawer(false);
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [drawer]);
+
   const mainNav = tree.slice(0, MAIN_NAV_COUNT);
   const moreNav = tree.slice(MAIN_NAV_COUNT);
 
@@ -142,6 +162,17 @@ export default function Header() {
     <>
       <header className="site-header" ref={headerRef}>
         <div className="container header-inner">
+          <button
+            type="button"
+            className="menu-toggle"
+            aria-label="Open menu"
+            aria-expanded={drawer}
+            onClick={() => setDrawer(true)}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+          </button>
           <Link to="/" className="brand" aria-label="Salem Book House home">
             <img className="brand-logo" src="/sbh-logo.jpg" alt="" width={52} height={52} />
             <span className="brand-text">
@@ -246,6 +277,75 @@ export default function Header() {
           </div>
         </div>
       </header>
+
+      <div className={`mobile-drawer-wrap${drawer ? ' is-open' : ''}`} aria-hidden={!drawer}>
+        <div className="mobile-drawer-overlay" onClick={() => setDrawer(false)} />
+        <aside className="mobile-drawer" aria-label="Menu">
+          <div className="mobile-drawer-head">
+            {isAuthenticated ? (
+              <Link to="/account">Hi, {user?.name?.split(' ')[0] || 'there'}</Link>
+            ) : (
+              <Link to="/login">Sign up / Log in</Link>
+            )}
+            <button type="button" className="mobile-drawer-close" aria-label="Close menu" onClick={() => setDrawer(false)}>
+              ×
+            </button>
+          </div>
+          <div className="mobile-drawer-body">
+            <ul className="md-list">
+              {tree.map((cat) => {
+                const kids = cat.children || [];
+                const open = openSlug === cat.slug;
+                return (
+                  <li key={cat.slug} className={open ? 'is-open' : ''}>
+                    {kids.length ? (
+                      <button
+                        type="button"
+                        className="md-row"
+                        aria-expanded={open}
+                        onClick={() => setOpenSlug(open ? '' : cat.slug)}
+                      >
+                        <span>{cat.name || cat.slug}</span>
+                        <svg className="md-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M9 6l6 6-6 6" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <Link className="md-row" to={`/shop/${cat.slug}`}>
+                        <span>{cat.name || cat.slug}</span>
+                      </Link>
+                    )}
+                    {open ? (
+                      <ul className="md-sub">
+                        <li>
+                          <Link to={`/shop/${cat.slug}`}>All {cat.name}</Link>
+                        </li>
+                        {kids.map((c) => (
+                          <li key={c.slug}>
+                            <Link to={`/shop/${c.slug}`}>{c.name}</Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+            <ul className="md-list md-extra">
+              <li><Link className="md-row" to="/account/orders"><span>My orders</span></Link></li>
+              <li><Link className="md-row" to="/wishlist"><span>Wishlist</span></Link></li>
+              <li><Link className="md-row" to="/complaint"><span>Raise a complaint</span></Link></li>
+              {isAuthenticated ? (
+                <li>
+                  <button type="button" className="md-row" onClick={() => { setDrawer(false); logout(); }}>
+                    <span>Logout</span>
+                  </button>
+                </li>
+              ) : null}
+            </ul>
+          </div>
+        </aside>
+      </div>
 
       <div className="promo-strip promo-strip-pin">
         <div className="container promo-strip-inner">
