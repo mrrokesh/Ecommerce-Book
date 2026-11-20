@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { reportClientError } from '../lib/reportError';
+import { isLogicalClientNoise, reportClientError } from '../lib/reportError';
 
 const SESSION_KEY = 'sbh_session_id';
 const LEGACY_TOKEN_KEY = 'sbh_token';
@@ -64,13 +64,16 @@ api.interceptors.response.use(
     const msg = error.response?.data?.error || error.response?.data?.message || error.message;
     const status = error.response?.status;
     const url = String(error.config?.url || '');
-    // Capture API 5xx (skip the reporter itself to avoid loops)
-    if (status && status >= 500 && !url.includes('/errors/report')) {
-      reportClientError({
-        message: typeof msg === 'string' ? msg : `API ${status}`,
-        path: url,
-        url: typeof location !== 'undefined' ? location.href : undefined,
-      });
+    const text = typeof msg === 'string' ? msg : status ? `API ${status}` : 'Network error';
+    // Technical failures only: 5xx + network/timeout. Skip 4xx (validation, auth, not found).
+    if (!url.includes('/errors/report') && !isLogicalClientNoise(text, status)) {
+      if (!status || status >= 500) {
+        reportClientError({
+          message: text,
+          path: url,
+          url: typeof location !== 'undefined' ? location.href : undefined,
+        });
+      }
     }
     return Promise.reject(new Error(typeof msg === 'string' ? msg : 'Request failed'));
   }

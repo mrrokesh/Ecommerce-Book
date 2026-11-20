@@ -79,8 +79,10 @@ export default function AdminErrors() {
       <div className="erp-card ops-panel">
         <h2 style={{ marginTop: 0 }}>Site errors</h2>
         <p className="muted" style={{ marginTop: 0 }}>
-          Live storefront and admin crashes are stored here and emailed to the alert list. Ask Cursor to “fix the
-          latest errors” and point at an open row — the fingerprint and stack are enough to patch.
+          Technical failures from the live storefront and admin are stored here and emailed to the alert list —
+          server crashes, browser exceptions, failed script loads, API 5xx / network faults, and console.error /
+          console.warn. Form validation and expected input checks (for example phone or required fields) are not
+          recorded. Open rows include a fingerprint and stack so engineering can investigate and ship a fix.
         </p>
         {error ? <p className="erp-error">{error}</p> : null}
         <div className="erp-toolbar" style={{ padding: 0, border: 0, marginBottom: 12 }}>

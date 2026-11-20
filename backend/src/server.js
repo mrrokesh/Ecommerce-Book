@@ -9,6 +9,26 @@ import app from './app.js';
 import { query } from './db/pool.js';
 import { initSchema } from './db/init.js';
 import { seedDatabase } from './db/seed.js';
+import { recordError } from './errors/tracker.js';
+
+process.on('uncaughtException', (err) => {
+  console.error('uncaughtException:', err);
+  recordError({
+    source: 'server',
+    message: err?.message || 'uncaughtException',
+    stack: err?.stack,
+  }).catch(() => undefined);
+});
+
+process.on('unhandledRejection', (reason) => {
+  const err = reason instanceof Error ? reason : new Error(String(reason));
+  console.error('unhandledRejection:', err);
+  recordError({
+    source: 'server',
+    message: err.message || 'unhandledRejection',
+    stack: err.stack,
+  }).catch(() => undefined);
+});
 
 if (process.env.NODE_ENV === 'production') {
   const s = String(process.env.JWT_SECRET || '');

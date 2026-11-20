@@ -5,6 +5,25 @@ import { renderEmail, siteBase } from '../notify/emailTemplate.js';
 
 const EMAIL_COOLDOWN_MS = 60 * 60 * 1000; // one alert email per fingerprint per hour
 
+/** Form / field / expected-input noise — never persist these. */
+const LOGICAL_NOISE =
+  /\b(this field is required|field is required|please (enter|choose|select|provide|fix)|must be|must match|too (short|long)|at least \d|at most \d|validation (failed|error)|form field|invalid (phone|mobile|email|pincode|pin code|password|otp|name|address|number|format|value|input)|enter a valid|password must|confirm password|otp|captcha|already (exists|taken|registered)|not available|out of stock|coupon (invalid|expired|not)|insufficient (stock|balance|funds))\b/i;
+
+export function isLogicalNoise(message, statusCode) {
+  if (statusCode != null && statusCode >= 400 && statusCode < 500) return true;
+  const m = String(message || '').trim();
+  if (!m) return true;
+  if (LOGICAL_NOISE.test(m)) return true;
+  if (
+    m.length < 80 &&
+    /^(please |this field|enter a |choose |select )/i.test(m) &&
+    !/\b(TypeError|ReferenceError|SyntaxError|Internal server|ECONN|ETIMEDOUT|failed to fetch)\b/i.test(m)
+  ) {
+    return true;
+  }
+  return false;
+}
+
 /** Who gets live-site error alerts. Override with ERROR_ALERT_EMAILS (comma-separated). */
 export function alertRecipients() {
   const raw = process.env.ERROR_ALERT_EMAILS || 'rokeshuvaraj17@gmail.com,sashkumarjay@gmail.com';
@@ -82,6 +101,7 @@ async function emailAlert(row) {
 export async function recordError(raw) {
   try {
     const data = sanitize(raw);
+    if (isLogicalNoise(data.message, data.statusCode)) return null;
     const fingerprint = fingerprintOf(data);
     const { rows } = await query(
       `INSERT INTO site_errors (
